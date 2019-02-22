@@ -36,6 +36,10 @@ class UnsupportedSystem(Exception):
         self.system = system
 
 
+class MissingConfiguration(Exception):
+    """Indicates that the configuration is missing."""
+
+
 class DataUnchanged(Exception):
     """Indicates that there is no change to the digital signage data."""
 
@@ -120,8 +124,15 @@ def strip_tree(directory):
 def _get_config_linux():
     """Returns the configuration on a Linux system."""
 
-    with open('/etc/hostname', 'r') as file:
-        hostname = file.read()
+    try:
+        with open('/etc/hostname', 'r') as file:
+            hostname = file.read()
+    except FileNotFoundError:
+        LOGGER.error('/etc/hostname does not exist.')
+        raise MissingConfiguration()
+    except PermissionError:
+        LOGGER.error('Cannot read /etc/hostname. Insufficient permissions.')
+        raise MissingConfiguration()
 
     hostname = hostname.strip()
 
@@ -132,7 +143,7 @@ def _get_config_linux():
             return {'id': int(hostname)}    # For future global terminal IDs.
         except ValueError:
             LOGGER.error('No valid configuration found in /etc/hostname.')
-            return {}
+            raise MissingConfiguration()
 
     return {'tid': int(tid), 'cid': int(cid)}
 
@@ -175,11 +186,13 @@ def _get_config_windows():
 
     try:
         with OpenKey(HKEY_LOCAL_MACHINE, REG_KEY, access=access) as key:
-            return dict(read_config(key))
+            configuration = dict(read_config(key))
     except FileNotFoundError:
         LOGGER.error('Registry key not set: %s.', REG_KEY)
+        raise MissingConfiguration()
 
-    return {}
+    if not configuration:
+        raise MissingConfiguration()
 
 
 def get_config():
@@ -238,6 +251,9 @@ def do_sync(args):
 
     try:
         tar_xz = retrieve()
+    except MissingConfiguration:
+        LOGGER.error('Cannot download data due to missing configuration.')
+        return False
     except DataUnchanged:
         return True
     except ConnectionError as connection_error:
