@@ -15,13 +15,6 @@ from tempfile import TemporaryDirectory
 from urllib.parse import urlencode, ParseResult
 from urllib.request import urlopen
 
-with suppress(ModuleNotFoundError):
-    from winreg import HKEY_LOCAL_MACHINE   # pylint: disable=E0401
-    from winreg import KEY_READ             # pylint: disable=E0401
-    from winreg import KEY_WOW64_64KEY      # pylint: disable=E0401
-    from winreg import OpenKey              # pylint: disable=E0401
-    from winreg import QueryValueEx         # pylint: disable=E0401
-
 
 DESCRIPTION = 'HOMEINFO multi-platform digital signage client.'
 SERVER = ('http', '10.8.0.1', '/appcmd/digsig')
@@ -134,7 +127,37 @@ def _get_config_linux():
 
 
 def _get_config_windows():
-    """Returns the configuration on a Windows system."""
+    """Returns the configuration from the windows registry."""
+    from winreg import HKEY_LOCAL_MACHINE   # pylint: disable=E0401
+    from winreg import KEY_READ             # pylint: disable=E0401
+    from winreg import KEY_WOW64_64KEY      # pylint: disable=E0401
+    from winreg import OpenKey              # pylint: disable=E0401
+    from winreg import QueryValueEx         # pylint: disable=E0401
+
+    def read_config(key):
+        """Reads the configuration from the respective key."""
+        for config_option in ('tid', 'cid', 'id'):
+            try:
+                value, type_ = QueryValueEx(key, config_option)
+            except FileNotFoundError:
+                LOGGER.warning('Key not found: %s.', config_option)
+                continue
+
+            if type_ != 1:
+                LOGGER.error(
+                    'Unexpected registry type %i for key "%s".',
+                    type_, config_option)
+                continue
+
+            try:
+                value = int(value)
+            except ValueError:
+                LOGGER.error(
+                    'Expected int value for key %s not "%s".',
+                    config_option, value)
+                continue
+
+            yield (config_option, value)
 
     access = KEY_READ
     arch, _ = architecture()
@@ -142,30 +165,13 @@ def _get_config_windows():
     if arch == '32bit':
         access |= KEY_WOW64_64KEY
 
-    configuration = {}
-
     try:
         with OpenKey(HKEY_LOCAL_MACHINE, REG_KEY, access=access) as key:
-            for config_option in ('tid', 'cid', 'id'):
-                value, type_ = QueryValueEx(key, config_option)
-
-                if type_ != 1:
-                    LOGGER.error(
-                        'Unexpected registry type %i for key "%s".',
-                        type_, config_option)
-                    continue
-
-                try:
-                    configuration[config_option] = int(value)
-                except ValueError:
-                    LOGGER.error(
-                        'Expected int value for key %s not "%s".',
-                        config_option, value)
-                    continue
+            return dict(read_config(key))
     except FileNotFoundError:
         LOGGER.error('Registry key not set: %s.', REG_KEY)
 
-    return configuration
+    return {}
 
 
 def get_config():
