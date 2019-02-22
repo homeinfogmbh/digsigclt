@@ -14,6 +14,7 @@ from socket import gethostname
 from subprocess import DEVNULL, Popen
 from tarfile import open as tar_open
 from tempfile import gettempdir, TemporaryDirectory
+from urllib.error import URLError
 from urllib.parse import urlencode, ParseResult
 from urllib.request import urlopen
 
@@ -247,6 +248,9 @@ def do_sync(args):
         tar_xz = retrieve()
     except MissingConfiguration:
         LOGGER.error('Cannot download data due to missing configuration.')
+        return False
+    except URLError as url_error:
+        LOGGER.error('Could not download data: %s.', url_error.reason)
         return False
     except DataUnchanged:
         return True
