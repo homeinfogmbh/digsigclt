@@ -250,7 +250,7 @@ def do_sync(args):
         LOGGER.error('Cannot download data due to missing configuration.')
         return False
     except URLError as url_error:
-        LOGGER.error('Could not download data: %s.', url_error.reason)
+        LOGGER.error('Could not download data: %s.', url_error)
         return False
     except DataUnchanged:
         return True
