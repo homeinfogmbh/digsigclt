@@ -9,11 +9,18 @@ from io import BytesIO
 from json import dumps, loads
 from logging import INFO, basicConfig, getLogger
 from pathlib import Path
-from platform import system
+from platform import architecture, system
 from tarfile import open as tar_open
 from tempfile import TemporaryDirectory
 from urllib.parse import urlencode, ParseResult
 from urllib.request import urlopen
+
+with suppress(ModuleNotFoundError):
+    from winreg import HKEY_LOCAL_MACHINE   # pylint: disable=E0401
+    from winreg import KEY_READ             # pylint: disable=E0401
+    from winreg import KEY_WOW64_64KEY      # pylint: disable=E0401
+    from winreg import OpenKey              # pylint: disable=E0401
+    from winreg import QueryValueEx         # pylint: disable=E0401
 
 
 DESCRIPTION = 'HOMEINFO multi-platform digital signage client.'
@@ -21,6 +28,7 @@ SERVER = ('http', '10.8.0.1', '/appcmd/digsig')
 LOCKFILE_NAME = 'digsigclt.sync.lock'
 LOG_FORMAT = '[%(levelname)s] %(name)s: %(message)s'
 LOGGER = getLogger('digsigclt')
+REG_KEY = r'SOFTWARE\HOMEINFO\digsigclt'
 
 
 class UnsupportedSystem(Exception):
@@ -116,7 +124,11 @@ def _get_config_linux():
     try:
         tid, cid = hostname.split('.')
     except ValueError:
-        return {'id': int(hostname)}    # For future global terminal IDs.
+        try:
+            return {'id': int(hostname)}    # For future global terminal IDs.
+        except ValueError:
+            LOGGER.error('No valid configuration found in /etc/hostname.')
+            return {}
 
     return {'tid': int(tid), 'cid': int(cid)}
 
@@ -124,7 +136,36 @@ def _get_config_linux():
 def _get_config_windows():
     """Returns the configuration on a Windows system."""
 
-    raise NotImplementedError()
+    access = KEY_READ
+    arch, _ = architecture()
+
+    if arch == '32bit':
+        access |= KEY_WOW64_64KEY
+
+    configuration = {}
+
+    try:
+        with OpenKey(HKEY_LOCAL_MACHINE, REG_KEY, access=access) as key:
+            for config_option in ('tid', 'cid', 'id'):
+                value, type_ = QueryValueEx(key, config_option)
+
+                if type_ != 1:
+                    LOGGER.error(
+                        'Unexpected registry type %i for key "%s".',
+                        type_, config_option)
+                    continue
+
+                try:
+                    configuration[config_option] = int(value)
+                except ValueError:
+                    LOGGER.error(
+                        'Expected int value for key %s not "%s".',
+                        config_option, value)
+                    continue
+    except FileNotFoundError:
+        LOGGER.error('Registry key not set: %s.', REG_KEY)
+
+    return configuration
 
 
 def get_config():
@@ -228,6 +269,7 @@ def server(args):
 
     socket = ('localhost', args.port)
     httpd = HTTPServer(socket, HTTPRequestHandler)
+    LOGGER.info('Listening on %s:%i.', *socket)
 
     try:
         httpd.serve_forever()
@@ -241,7 +283,8 @@ def main():
     parser = ArgumentParser(description=DESCRIPTION)
     parser.add_argument(
         '--server', '-S', action='store_true', help='run in server mode')
-    parser.add_argument('--port', '-p', type=int, help='port to listen on')
+    parser.add_argument(
+        '--port', '-p', type=int, default=5000, help='port to listen on')
     parser.add_argument(
         '--directory', '-d', type=Path, default=Path.cwd(),
         help='base directory')
