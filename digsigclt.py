@@ -9,7 +9,7 @@ from io import BytesIO
 from json import dumps, loads
 from logging import INFO, basicConfig, getLogger
 from pathlib import Path
-from platform import architecture, system
+from platform import architecture, machine, system
 from tarfile import open as tar_open
 from tempfile import TemporaryDirectory
 from urllib.parse import urlencode, ParseResult
@@ -22,6 +22,7 @@ LOCKFILE_NAME = 'digsigclt.sync.lock'
 LOG_FORMAT = '[%(levelname)s] %(name)s: %(message)s'
 LOGGER = getLogger('digsigclt')
 REG_KEY = r'SOFTWARE\HOMEINFO\digsigclt'
+OS64BIT = ('AMD64', 'x86_64')
 
 
 class UnsupportedSystem(Exception):
@@ -50,6 +51,16 @@ class InvalidContentType(Exception):
 
 class Locked(Exception):
     """Indicates that the synchronization is currently locked."""
+
+
+def is32on64():
+    """Determines whether we run 32 bit
+    python on a 64 bit oeprating system.
+    """
+
+    py_arch, _ = architecture()
+    sys_arch = machine()
+    return py_arch == '32bit' and sys_arch in OS64BIT
 
 
 def copydir(source_dir, dest_dir):
@@ -160,9 +171,8 @@ def _get_config_windows():
             yield (config_option, value)
 
     access = KEY_READ
-    arch, _ = architecture()
 
-    if arch == '32bit':
+    if is32on64():
         access |= KEY_WOW64_64KEY
 
     try:
