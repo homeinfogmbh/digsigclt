@@ -11,7 +11,6 @@ from logging import INFO, basicConfig, getLogger
 from pathlib import Path
 from platform import architecture, machine, system
 from socket import gethostname
-from subprocess import DEVNULL, Popen
 from tarfile import open as tar_open
 from tempfile import gettempdir, TemporaryDirectory
 from urllib.error import URLError
@@ -277,17 +276,6 @@ def sync(args):
         return False
 
 
-def trigger_sync(args):
-    """Triggers the synchronization."""
-
-    script = Path(__file__).resolve()
-    command = (str(script), '--directory', str(args.directory))
-    Popen(command, stdout=DEVNULL, stderr=DEVNULL)
-    status_code = 200
-    message = 'Synchronization triggered.'
-    return ({'message': message}, status_code)
-
-
 def server(args):
     """Runs the HTTP server."""
 
@@ -340,19 +328,27 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         """Returns POSTed JSON data."""
         return loads(self.bytes)
 
-    @property
-    def command(self):
-        """Returns the sent JSON command."""
-        return self.json.get('command')
-
     def do_POST(self):  # pylint: disable=C0103
         """Handles POST requests."""
-        if self.command == 'sync':
-            json, status_code = trigger_sync(self.args)
+        if self.json.get('command') == 'sync':
+            try:
+                with LockFile(LOCKFILE_NAME):
+                    result = do_sync(self.args)
+            except Locked:
+                message = 'Locked.'
+                status_code = 503
+            else:
+                if result:
+                    message = 'Done.'
+                    status_code = 200
+                else:
+                    message = 'Failed.'
+                    status_code = 500
         else:
-            json = {'message': 'Invalid command.'}
+            message = 'Invalid command.'
             status_code = 400
 
+        json = {'message': message}
         body = dumps(json).encode()
         self.send_response(status_code)
         self.end_headers()
