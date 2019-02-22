@@ -155,17 +155,15 @@ def _get_config_windows():
                 continue
 
             if type_ != 1:
-                LOGGER.error(
-                    'Unexpected registry type %i for key "%s".',
-                    type_, config_option)
+                message = 'Unexpected registry type %i for key "%s".'
+                LOGGER.error(message, type_, config_option)
                 continue
 
             try:
                 value = int(value)
             except ValueError:
-                LOGGER.error(
-                    'Expected int value for key %s not "%s".',
-                    config_option, value)
+                message = 'Expected int value for key %s not "%s".'
+                LOGGER.error(message, config_option, value)
                 continue
 
             yield (config_option, value)
