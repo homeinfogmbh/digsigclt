@@ -8,11 +8,10 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from io import BytesIO
 from json import dumps, loads
 from logging import INFO, basicConfig, getLogger
-from os import fork
 from pathlib import Path
 from platform import architecture, machine, system
 from socket import gethostname
-from sys import exit    # pylint: disable=W0622
+from subprocess import DEVNULL, Popen
 from tarfile import open as tar_open
 from tempfile import TemporaryDirectory
 from urllib.parse import urlencode, ParseResult
@@ -275,12 +274,9 @@ def sync(args):
 def trigger_sync(args):
     """Triggers the synchronization."""
 
-    pid = fork()
-
-    if pid == 0:
-        sync(args)
-        exit()
-
+    script = Path(__file__).resolve()
+    command = (str(script), '--directory', str(args.directory))
+    Popen(command, stdout=DEVNULL, stderr=DEVNULL)
     status_code = 200
     message = 'Synchronization triggered.'
     return ({'message': message}, status_code)
