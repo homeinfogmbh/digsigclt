@@ -11,6 +11,7 @@ from logging import INFO, basicConfig, getLogger
 from os import fork
 from pathlib import Path
 from platform import architecture, machine, system
+from socket import gethostname
 from sys import exit    # pylint: disable=W0622
 from tarfile import open as tar_open
 from tempfile import TemporaryDirectory
@@ -126,17 +127,7 @@ def strip_tree(directory):
 def _get_config_linux():
     """Returns the configuration on a Linux system."""
 
-    try:
-        with open('/etc/hostname', 'r') as file:
-            hostname = file.read()
-    except FileNotFoundError:
-        LOGGER.error('/etc/hostname does not exist.')
-        raise MissingConfiguration()
-    except PermissionError:
-        LOGGER.error('Cannot read /etc/hostname. Insufficient permissions.')
-        raise MissingConfiguration()
-
-    hostname = hostname.strip()
+    hostname = gethostname()
 
     try:
         tid, cid = hostname.split('.')
