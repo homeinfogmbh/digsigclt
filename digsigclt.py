@@ -8,8 +8,10 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from io import BytesIO
 from json import dumps, loads
 from logging import INFO, basicConfig, getLogger
+from os import fork
 from pathlib import Path
 from platform import architecture, machine, system
+from sys import exit    # pylint: disable=W0622
 from tarfile import open as tar_open
 from tempfile import TemporaryDirectory
 from urllib.parse import urlencode, ParseResult
@@ -279,18 +281,17 @@ def sync(args):
         return False
 
 
-def trigger_sync():
+def trigger_sync(args):
     """Triggers the synchronization."""
 
-    try:
-        raise NotADirectoryError()
-    except Locked:
-        status_code = 503
-        message = 'Sync locked.'
-    else:
-        status_code = 200
-        message = 'Synchronization triggered.'
+    pid = fork()
 
+    if pid == 0:
+        sync(args)
+        exit()
+
+    status_code = 200
+    message = 'Synchronization triggered.'
     return ({'message': message}, status_code)
 
 
@@ -298,6 +299,7 @@ def server(args):
     """Runs the HTTP server."""
 
     socket = ('localhost', args.port)
+    HTTPRequestHandler.args = args  # Set current args on request handler.
     httpd = HTTPServer(socket, HTTPRequestHandler)
     LOGGER.info('Listening on %s:%i.', *socket)
 
@@ -353,7 +355,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):  # pylint: disable=C0103
         """Handles POST requests."""
         if self.command == 'sync':
-            json, status_code = trigger_sync()
+            json, status_code = trigger_sync(self.args)
         else:
             json = {'message': 'Invalid command.'}
             status_code = 400
