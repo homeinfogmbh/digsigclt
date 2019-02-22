@@ -183,8 +183,10 @@ def _get_config_windows():
         LOGGER.error('Registry key not set: %s.', REG_KEY)
         raise MissingConfiguration()
 
-    if not configuration:
-        raise MissingConfiguration()
+    if configuration:
+        return configuration
+
+    raise MissingConfiguration()
 
 
 def get_config():
