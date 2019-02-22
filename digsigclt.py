@@ -13,7 +13,7 @@ from platform import architecture, machine, system
 from socket import gethostname
 from subprocess import DEVNULL, Popen
 from tarfile import open as tar_open
-from tempfile import TemporaryDirectory
+from tempfile import gettempdir, TemporaryDirectory
 from urllib.parse import urlencode, ParseResult
 from urllib.request import urlopen
 
@@ -361,8 +361,7 @@ class LockFile:
     def __init__(self, filename):
         """Sets the filename."""
         self.filename = filename
-        self._basedir_linux = Path('/tmp')
-        self._basedir_windows = NotImplemented
+        self.basedir = Path(gettempdir())
 
     def __enter__(self):
         """Creates the lock file."""
@@ -372,19 +371,6 @@ class LockFile:
     def __exit__(self, *_):
         """Removes the lock file."""
         self.unlink()
-
-    @property
-    def basedir(self):
-        """Returns the base path."""
-        sys = system()
-
-        if sys == 'Linux':
-            return self._basedir_linux
-
-        if sys == 'Windows':
-            return self._basedir_windows
-
-        raise UnsupportedSystem(sys)
 
     @property
     def path(self):
