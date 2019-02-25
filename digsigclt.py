@@ -319,7 +319,7 @@ def sync():
     """Performs a data synchronization."""
 
     try:
-        with LockFile(LOCKFILE_NAME):
+        with LOCK_FILE:
             return do_sync()
     except Locked:
         LOGGER.error('Synchronization is locked.')
@@ -332,7 +332,7 @@ def sync_in_thread():
     try:
         do_sync()
     finally:
-        LockFile(LOCKFILE_NAME).unlink()
+        LOCK_FILE.unlink()
         HTTPRequestHandler.sync_thread = None   # Reset thread.
 
 
@@ -392,7 +392,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     def start_sync(self):
         """Starts a synchronization."""
         try:
-            LockFile(LOCKFILE_NAME).create()    # Check lock file.
+            LOCK_FILE.create()    # Check lock file.
         except Locked:
             return False
 
@@ -433,7 +433,6 @@ class LockFile:
     def __init__(self, filename):
         """Sets the filename."""
         self.filename = filename
-        self.basedir = Path(gettempdir())
 
     def __enter__(self):
         """Creates the lock file."""
@@ -443,6 +442,11 @@ class LockFile:
     def __exit__(self, *_):
         """Removes the lock file."""
         self.unlink()
+
+    @property
+    def basedir(self):
+        """Returns the base directory."""
+        return Path(gettempdir())
 
     @property
     def path(self):
@@ -466,6 +470,9 @@ class LockFile:
         """Removes the lock file."""
         with suppress(FileNotFoundError):
             self.path.unlink()
+
+
+LOCK_FILE = LockFile(LOCKFILE_NAME)
 
 
 if __name__ == '__main__':
