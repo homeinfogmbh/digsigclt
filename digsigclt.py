@@ -318,7 +318,7 @@ def retrieve(directory, retries=0):
     data = get_manifest(directory).encode()
     headers = {'Content-Type': 'application/json'}
     request = Request(url, data=data, headers=headers)
-    LOGGER.debug('Retrieving files from %s://%s%s.', *SERVER)
+    LOGGER.debug('Retrieving files from %s.', request.full_url)
 
     with urlopen(request) as response:
         try:
