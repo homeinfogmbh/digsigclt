@@ -317,7 +317,7 @@ def retrieve(directory, retries=0):
     data = get_manifest(directory).encode()
     headers = {'Content-Type': 'application/json'}
     request = Request(url, data=data, headers=headers)
-    LOGGER.info('Retrieving files from %s://%s%s.', *SERVER)
+    LOGGER.debug('Retrieving files from %s://%s%s.', *SERVER)
 
     with urlopen(request) as response:
         try:
@@ -432,7 +432,7 @@ def main():
         '--verbose', '-v', action='store_true', help='turn on verbose logging')
     args = parser.parse_args()
     basicConfig(level=DEBUG if args.verbose else INFO, format=LOG_FORMAT)
-    LOGGER.info('Target directory: %s', args.directory)
+    LOGGER.debug('Target directory: %s', args.directory)
 
     if args.server:
         server(args)
