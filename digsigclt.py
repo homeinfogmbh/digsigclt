@@ -94,7 +94,7 @@ def copydir(source_dir, dest_dir):
         dest_path = dest_dir.joinpath(relpath)
 
         if source_path.is_file():
-            LOGGER.debug('Updating: %s.', dest_path)
+            LOGGER.info('Updating: %s.', dest_path)
 
             with dest_path.open('wb') as dst, source_path.open('rb') as src:
                 dst.write(src.read())
