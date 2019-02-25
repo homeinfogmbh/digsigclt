@@ -405,7 +405,7 @@ def sync(directory):
 def server(args):
     """Runs the HTTP server."""
 
-    socket = ('localhost', args.port)
+    socket = ('0.0.0.0', args.port)
     HTTPRequestHandler.directory = args.directory
     httpd = HTTPServer(socket, HTTPRequestHandler)
     LOGGER.info('Listening on %s:%i.', *socket)
@@ -490,7 +490,11 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):  # pylint: disable=C0103
         """Handles POST requests."""
+        LOGGER.debug('Received POST request.')
+
         if self.json.get('command') == 'sync':
+            LOGGER.info('Received sync command.')
+
             if self.start_sync():
                 message = 'Synchronization started.'
                 status_code = 202
