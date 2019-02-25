@@ -388,9 +388,6 @@ def sync_in_thread(directory):
         do_sync(directory)
     finally:
         LOCK_FILE.unlink()
-        thread = HTTPRequestHandler.sync_thread
-        HTTPRequestHandler.sync_thread = None   # Reset thread.
-        thread.join()
 
 
 def sync(directory):
@@ -457,6 +454,18 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     directory = None
     sync_thread = None
 
+    @classmethod
+    def sync_pending(cls):
+        """Returns wehter a synchronization is currently pending."""
+        if cls.sync_thread is None:
+            return False
+
+        if cls.sync_thread.is_alive():
+            return True
+
+        cls.sync_thread.join()
+        return False
+
     @property
     def content_length(self):
         """Returns the content length."""
@@ -481,14 +490,14 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
         cls = type(self)
 
-        if cls.sync_thread is None:
-            cls.sync_thread = Thread(
-                target=sync_in_thread, args=(self.directory,))
-            cls.sync_thread.start()
-            return True
+        if cls.sync_pending():
+            LOCK_FILE.unlink()
+            return False
 
-        LOCK_FILE.unlink()
-        return False
+        cls.sync_thread = Thread(
+            target=sync_in_thread, args=(self.directory,))
+        cls.sync_thread.start()
+        return True
 
     def do_POST(self):  # pylint: disable=C0103
         """Handles POST requests."""
