@@ -375,7 +375,8 @@ def do_sync(directory):
             'Retrieved invalid content type: %s.',
             invalid_content_type.content_type)
     else:
-        return update(tar_xz, directory)
+        update(tar_xz, directory)
+        return True
 
     return False
 
