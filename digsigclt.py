@@ -20,11 +20,11 @@ from urllib.request import urlopen
 
 DESCRIPTION = 'HOMEINFO multi-platform digital signage client.'
 SERVER = ('http', '10.8.0.1', '/appcmd/digsig')
+REG_KEY = r'SOFTWARE\HOMEINFO\digsigclt'
+OS64BIT = {'AMD64', 'x86_64'}
 LOCKFILE_NAME = 'digsigclt.sync.lock'
 LOG_FORMAT = '[%(levelname)s] %(name)s: %(message)s'
 LOGGER = getLogger('digsigclt')
-REG_KEY = r'SOFTWARE\HOMEINFO\digsigclt'
-OS64BIT = ('AMD64', 'x86_64')
 
 
 class UnsupportedSystem(Exception):
@@ -73,20 +73,19 @@ def copydir(source_dir, dest_dir):
     """Copies all contents of source_dir
     into dest_dir, overwriting all files.
     """
-    for source_path in source_dir.iterdir():
-        relpath = source_path.relative_to(source_dir)
-        dest_path = dest_dir.joinpath(relpath)
+    for spath in source_dir.iterdir():
+        relpath = spath.relative_to(source_dir)
+        dpath = dest_dir.joinpath(relpath)
 
-        if source_path.is_file():
-            with dest_path.path.open('wb') as dst:
-                with source_path.open('rb') as src:
-                    dst.write(src.read())
-        elif source_path.is_dir():
-            if dest_path.is_file():
-                dest_path.unlink()
+        if spath.is_file():
+            with dpath.path.open('wb') as dst, spath.open('rb') as src:
+                dst.write(src.read())
+        elif spath.is_dir():
+            if dpath.is_file():
+                dpath.unlink()
 
-            dest_path.mkdir(mode=0o755, parents=True, exist_ok=True)
-            copydir(source_path, dest_path)
+            dpath.mkdir(mode=0o755, parents=True, exist_ok=True)
+            copydir(spath, dpath)
 
 
 def strip_files(directory, manifest):
@@ -132,16 +131,32 @@ def _get_config_linux():
         tid, cid = hostname.split('.')
     except ValueError:
         try:
-            return {'id': int(hostname)}    # For future global terminal IDs.
+            ident = int(hostname)   # For future global terminal IDs.
         except ValueError:
             LOGGER.error('No valid configuration found in /etc/hostname.')
             raise MissingConfiguration()
 
-    return {'tid': int(tid), 'cid': int(cid)}
+        return {'id': ident}
+
+    try:
+        tid = int(tid)
+    except ValueError:
+        LOGGER.error('TID is not an integer.')
+        raise MissingConfiguration()
+
+    try:
+        cid = int(cid)
+    except ValueError:
+        LOGGER.error('CID is not an interger.')
+        raise MissingConfiguration()
+
+    return {'tid': tid, 'cid': cid}
 
 
 def _get_config_windows():
     """Returns the configuration from the windows registry."""
+    # Import winreg in Windows-specific function
+    # since it is not available on non-Windows systems.
     from winreg import HKEY_LOCAL_MACHINE   # pylint: disable=E0401
     from winreg import KEY_READ             # pylint: disable=E0401
     from winreg import KEY_WOW64_64KEY      # pylint: disable=E0401
