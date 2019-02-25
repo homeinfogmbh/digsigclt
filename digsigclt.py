@@ -139,7 +139,7 @@ def strip_files(directory, manifest):
     for path in get_files(directory):
         relpath = path.relative_to(directory)
 
-        if relpath not in manifest:
+        if str(relpath) not in manifest:
             LOGGER.debug('Removing obsolete file: %s.', path)
             path.unlink()
 
