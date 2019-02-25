@@ -6,7 +6,7 @@ from contextlib import suppress
 from hashlib import sha256
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from io import BytesIO
-from json import dumps, loads
+from json import dumps, load, loads
 from logging import INFO, basicConfig, getLogger
 from pathlib import Path
 from platform import architecture, machine, system
@@ -27,6 +27,7 @@ SERVER = ('http', '10.8.0.1', '/appcmd/digsig')
 REG_KEY = r'SOFTWARE\HOMEINFO\digsigclt'
 OS64BIT = {'AMD64', 'x86_64'}
 LOCKFILE_NAME = 'digsigclt.sync.lock'
+MANIFEST_FILENAME = 'manifest.json'
 LOG_FORMAT = '[%(levelname)s] %(name)s: %(message)s'
 LOGGER = getLogger('digsigclt')
 
@@ -260,6 +261,7 @@ def retrieve():
     manifest = get_manifest().encode()
     parse_result = ParseResult(*SERVER, '', urlencode(params), '')
     url = parse_result.geturl()
+    LOGGER.info('Retrieving files from %s://%s%s.', *SERVER)
 
     with urlopen(url, data=manifest) as response:
         if response.status == 304:
@@ -281,13 +283,23 @@ def update(tar_xz):
     from the respective tar.xz archive.
     """
 
+    cwd = Path.cwd()
     fileobj = BytesIO(tar_xz)
 
     with TemporaryDirectory() as tmpd:
         with tar_open(mode='r:xz', fileobj=fileobj) as tar:
             tar.extractall(path=tmpd)
 
-        copydir(Path(tmpd), Path.cwd())
+        tmpd = Path(tmpd)
+        manifest = tmpd.joinpath(MANIFEST_FILENAME)
+
+        with manifest.open('r') as file:
+            manifest = load(file)
+
+        copydir(tmpd, cwd)
+
+    strip_files(cwd, manifest)
+    strip_tree(cwd)
 
 
 def do_sync():
