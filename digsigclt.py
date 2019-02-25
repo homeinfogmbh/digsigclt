@@ -26,7 +26,6 @@ Synchronizes data to the current working directory
 or listens on the specified port when in server mode
 to be triggered to do so.'''
 SERVER = ('http', '10.8.0.1', '/appcmd/digsig')
-TIMEOUT = 60
 MAX_RETRIES = 3
 REG_KEY = r'SOFTWARE\HOMEINFO\digsigclt'
 OS64BIT = {'AMD64', 'x86_64'}
@@ -321,7 +320,7 @@ def retrieve(directory, retries=0):
     request = Request(url, data=data, headers=headers)
     LOGGER.debug('Retrieving files from %s.', request.full_url)
 
-    with urlopen(request, timeout=TIMEOUT) as response:
+    with urlopen(request) as response:
         try:
             return process_response(response)
         except IncompleteRead:
