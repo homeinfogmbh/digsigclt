@@ -532,9 +532,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         body = dumps(json).encode()
         self.send_response(status_code)
         self.end_headers()
-        response = BytesIO()
-        response.write(body)
-        self.wfile.write(response.getvalue())
+        self.wfile.write(body)
 
 
 class LockFile:
