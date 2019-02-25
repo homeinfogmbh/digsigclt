@@ -12,6 +12,7 @@ from logging import DEBUG, INFO, basicConfig, getLogger
 from pathlib import Path
 from platform import architecture, machine, system
 from socket import gethostname
+from sys import exit    # pylint: disable=W0622
 from tarfile import open as tar_open
 from tempfile import gettempdir, TemporaryDirectory
 from threading import Thread
@@ -434,10 +435,17 @@ def main():
     basicConfig(level=DEBUG if args.verbose else INFO, format=LOG_FORMAT)
     LOGGER.debug('Target directory: %s', args.directory)
 
+    if not args.directory.is_dir():
+        LOGGER.critical('Target directory does not exist: %s.', args.directory)
+        exit(1)
+
     if args.server:
         server(args)
     else:
-        sync(args.directory)
+        if sync(args.directory):
+            exit(0)
+        else:
+            exit(1)
 
 
 class HTTPRequestHandler(BaseHTTPRequestHandler):
