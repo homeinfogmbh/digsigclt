@@ -485,6 +485,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             cls.sync_thread.start()
             return True
 
+        LOCK_FILE.unlink()
         return False
 
     def do_POST(self):  # pylint: disable=C0103
