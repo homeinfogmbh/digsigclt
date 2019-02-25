@@ -8,7 +8,7 @@ from http.client import IncompleteRead
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from io import BytesIO
 from json import dumps, load, loads
-from logging import INFO, basicConfig, getLogger
+from logging import DEBUG, INFO, basicConfig, getLogger
 from pathlib import Path
 from platform import architecture, machine, system
 from socket import gethostname
@@ -84,6 +84,8 @@ def copydir(source_dir, dest_dir):
         dest_path = dest_dir.joinpath(relpath)
 
         if source_path.is_file():
+            LOGGER.debug('Updating: %s.', dest_path)
+
             with dest_path.open('wb') as dst, source_path.open('rb') as src:
                 dst.write(src.read())
         elif source_path.is_dir():
@@ -107,7 +109,7 @@ def strip_files(directory, manifest):
             sha256sum = sha256(bytes_).hexdigest()
 
             if sha256sum not in manifest:
-                LOGGER.info('Removing obsolete file: %s.', inode)
+                LOGGER.debug('Removing obsolete file: %s.', inode)
                 inode.unlink()
 
 
@@ -121,11 +123,25 @@ def strip_tree(directory):
                 strip_subdir(inode)
 
         if not tuple(subdir.iterdir()):     # Directory is empty.
+            LOGGER.debug('Removing empty directory: %s.', subdir)
             subdir.rmdir()
 
     for inode in directory.iterdir():
         if inode.is_dir():
             strip_subdir(inode)
+
+
+def read_manifest(tmpd):
+    """Reads the manifest from the respective temporary directory."""
+
+    LOGGER.debug('Reading manifest.')
+    path = tmpd.joinpath(MANIFEST_FILENAME)
+
+    with path.open('r') as file:
+        manifest = load(file)
+
+    path.unlink()   # File is no longer needed.
+    return manifest
 
 
 def _get_config_linux():
@@ -214,6 +230,7 @@ def get_config():
     """Returns the respective configuration:"""
 
     sys = system()
+    LOGGER.debug('Running on %s.', sys)
 
     if sys == 'Linux':
         return _get_config_linux()
@@ -234,6 +251,7 @@ def get_files(directory=None):
         if inode.is_dir():
             yield from get_files(directory=inode)
         elif inode.is_file():
+            LOGGER.debug('Found file: %s.', inode)
             yield inode
 
 
@@ -244,12 +262,15 @@ def get_sha256sums():
         with filename.open('rb') as file:
             bytes_ = file.read()
 
-        yield sha256(bytes_).hexdigest()
+        sha256sum = sha256(bytes_).hexdigest()
+        LOGGER.debug('SHA-256 sum: %s.', sha256sum)
+        yield sha256sum
 
 
 def get_manifest():
     """Returns the manifest list."""
 
+    LOGGER.debug('Creating manifest of current files.')
     sha256sums = list(get_sha256sums())
     return dumps(sha256sums)
 
@@ -290,19 +311,7 @@ def retrieve(retry=True):
             if retry:
                 return retrieve(retry=False)
 
-            LOGGER.critical('Could not retrieve data.')
-
-
-def read_manifest(tmpd):
-    """Reads the manifest from the respective temporary directory."""
-
-    path = tmpd.joinpath(MANIFEST_FILENAME)
-
-    with path.open('r') as file:
-        manifest = load(file)
-
-    path.unlink()   # File is no longer needed.
-    return manifest
+            raise
 
 
 def update(tar_xz):
@@ -331,23 +340,23 @@ def do_sync():
     try:
         tar_xz = retrieve()
     except MissingConfiguration:
-        LOGGER.error('Cannot download data due to missing configuration.')
-        return False
+        LOGGER.critical('Cannot download data due to missing configuration.')
     except URLError as url_error:
-        LOGGER.error('Could not download data: %s.', url_error)
-        return False
+        LOGGER.critical('Could not download data: %s.', url_error)
+    except IncompleteRead:
+        LOGGER.critical('Could not retrieve data.')
     except DataUnchanged:
         return True
     except ConnectionError as connection_error:
-        LOGGER.error('Connection error: %s.', connection_error)
-        return False
+        LOGGER.critical('Connection error: %s.', connection_error)
     except InvalidContentType as invalid_content_type:
-        LOGGER.error(
+        LOGGER.critical(
             'Retrieved invalid content type: %s.',
             invalid_content_type.content_type)
-        return False
+    else:
+        return update(tar_xz)
 
-    return update(tar_xz)
+    return False
 
 
 def sync():
@@ -390,13 +399,15 @@ def server(args):
 def main():
     """Main method to run."""
 
-    basicConfig(level=INFO, format=LOG_FORMAT)
     parser = ArgumentParser(description=DESCRIPTION)
     parser.add_argument(
         '--server', '-S', action='store_true', help='run in server mode')
     parser.add_argument(
         '--port', '-p', type=int, default=5000, help='port to listen on')
+    parser.add_argument(
+        '--verbose', '-v', action='store_true', help='turn on verbose logging')
     args = parser.parse_args()
+    basicConfig(level=DEBUG if args.debug else INFO, format=LOG_FORMAT)
 
     if args.server:
         server(args)
