@@ -77,19 +77,19 @@ def copydir(source_dir, dest_dir):
     """Copies all contents of source_dir
     into dest_dir, overwriting all files.
     """
-    for spath in source_dir.iterdir():
-        relpath = spath.relative_to(source_dir)
-        dpath = dest_dir.joinpath(relpath)
+    for source_path in source_dir.iterdir():
+        relpath = source_path.relative_to(source_dir)
+        dest_path = dest_dir.joinpath(relpath)
 
-        if spath.is_file():
-            with dpath.path.open('wb') as dst, spath.open('rb') as src:
+        if source_path.is_file():
+            with dest_path.open('wb') as dst, source_path.open('rb') as src:
                 dst.write(src.read())
-        elif spath.is_dir():
-            if dpath.is_file():
-                dpath.unlink()
+        elif source_path.is_dir():
+            if dest_path.is_file():
+                dest_path.unlink()
 
-            dpath.mkdir(mode=0o755, parents=True, exist_ok=True)
-            copydir(spath, dpath)
+            dest_path.mkdir(mode=0o755, parents=True, exist_ok=True)
+            copydir(source_path, dest_path)
 
 
 def strip_files(directory, manifest):
