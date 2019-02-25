@@ -30,6 +30,8 @@ REG_KEY = r'SOFTWARE\HOMEINFO\digsigclt'
 OS64BIT = {'AMD64', 'x86_64'}
 LOCKFILE_NAME = 'digsigclt.sync.lock'
 MANIFEST_FILENAME = 'manifest.json'
+DEFAULT_DIR_LINUX = '/usr/share/digsig'
+DEFAULT_DIR_WINDOWS = 'C:\\HOMEINFOGmbH\\content'
 LOG_FORMAT = '[%(levelname)s] %(name)s: %(message)s'
 LOGGER = getLogger('digsigclt')
 
@@ -72,11 +74,8 @@ def is32on64():
     return py_arch == '32bit' and sys_arch in OS64BIT
 
 
-def get_files(directory=None):
+def get_files(directory):
     """Lists the current files."""
-
-    if directory is None:
-        directory = Path.cwd()
 
     for inode in directory.iterdir():
         if inode.is_dir():
@@ -86,13 +85,10 @@ def get_files(directory=None):
             yield inode
 
 
-def copydir(source_dir, dest_dir=None):
+def copydir(source_dir, dest_dir):
     """Copies all contents of source_dir
     into dest_dir, overwriting all files.
     """
-
-    if dest_dir is None:
-        dest_dir = Path.cwd()
 
     for source_path in source_dir.iterdir():
         relpath = source_path.relative_to(source_dir)
@@ -111,12 +107,12 @@ def copydir(source_dir, dest_dir=None):
             copydir(source_path, dest_path)
 
 
-def strip_files(manifest, directory=None):
+def strip_files(directory, manifest):
     """Removes all files from the directory tree,
     whose SHA-256 checksums are not in the manifest.
     """
 
-    for path in get_files(directory=directory):
+    for path in get_files(directory):
         with path.open('rb') as file:
             bytes_ = file.read()
 
@@ -127,11 +123,8 @@ def strip_files(manifest, directory=None):
             path.unlink()
 
 
-def strip_tree(directory=None):
+def strip_tree(directory):
     """Removes all empty directory sub-trees."""
-
-    if directory is None:
-        directory = Path.cwd()
 
     def strip_subdir(subdir):
         """Recursively removes empty directory trees."""
@@ -159,6 +152,26 @@ def read_manifest(tmpd):
 
     path.unlink()   # File is no longer needed.
     return manifest
+
+
+def get_directory(directory=None):
+    """Returns the target directory."""
+
+    if directory is None:
+        sys = system()
+
+        if sys == 'Linux':
+            return DEFAULT_DIR_LINUX
+
+        if sys == 'Windows':
+            return DEFAULT_DIR_WINDOWS
+
+        raise UnsupportedSystem(sys)
+
+    if directory == '--':
+        return Path.cwd()
+
+    return Path(directory)
 
 
 def _get_config_linux():
@@ -258,10 +271,10 @@ def get_config():
     raise UnsupportedSystem(sys)
 
 
-def get_sha256sums():
+def get_sha256sums(directory):
     """Yields the SHA-256 sums in the current working directory."""
 
-    for filename in get_files():
+    for filename in get_files(directory):
         with filename.open('rb') as file:
             bytes_ = file.read()
 
@@ -270,11 +283,11 @@ def get_sha256sums():
         yield sha256sum
 
 
-def get_manifest():
+def get_manifest(directory):
     """Returns the manifest list."""
 
     LOGGER.debug('Creating manifest of current files.')
-    sha256sums = list(get_sha256sums())
+    sha256sums = list(get_sha256sums(directory))
     return dumps(sha256sums)
 
 
@@ -292,14 +305,14 @@ def process_response(response):
     raise ConnectionError(response.status)
 
 
-def retrieve(retries=0):
+def retrieve(directory, retries=0):
     """Retrieves data from the server."""
 
     config = get_config()
     params = {key: str(value) for key, value in config.items()}
     parse_result = ParseResult(*SERVER, '', urlencode(params), '')
     url = parse_result.geturl()
-    data = get_manifest().encode()
+    data = get_manifest(directory).encode()
     headers = {'Content-Type': 'application/json'}
     request = Request(url, data=data, headers=headers)
     LOGGER.info('Retrieving files from %s://%s%s.', *SERVER)
@@ -311,12 +324,12 @@ def retrieve(retries=0):
             LOGGER.error('Could not read response from webserver.')
 
             if retries <= MAX_RETRIES:
-                return retrieve(retries=retries+1)
+                return retrieve(directory, retries=retries+1)
 
             raise
 
 
-def update(tar_xz):
+def update(tar_xz, directory):
     """Updates the digital signage data
     from the respective tar.xz archive.
     """
@@ -329,17 +342,17 @@ def update(tar_xz):
 
         tmpd = Path(tmpd)
         manifest = read_manifest(tmpd)
-        copydir(tmpd)
+        copydir(tmpd, directory)
 
-    strip_files(manifest)
-    strip_tree()
+    strip_files(directory, manifest)
+    strip_tree(directory)
 
 
-def do_sync():
+def do_sync(directory):
     """Synchronizes the data."""
 
     try:
-        tar_xz = retrieve()
+        tar_xz = retrieve(directory)
     except MissingConfiguration:
         LOGGER.critical('Cannot download data due to missing configuration.')
     except HTTPError as http_error:
@@ -358,27 +371,27 @@ def do_sync():
             'Retrieved invalid content type: %s.',
             invalid_content_type.content_type)
     else:
-        return update(tar_xz)
+        return update(tar_xz, directory)
 
     return False
 
 
-def sync():
+def sync(directory):
     """Performs a data synchronization."""
 
     try:
         with LOCK_FILE:
-            return do_sync()
+            return do_sync(directory)
     except Locked:
         LOGGER.error('Synchronization is locked.')
         return False
 
 
-def sync_in_thread():
+def sync_in_thread(directory):
     """Starts the synchronization within a thread."""
 
     try:
-        do_sync()
+        do_sync(directory)
     finally:
         LOCK_FILE.unlink()
         HTTPRequestHandler.sync_thread = None   # Reset thread.
@@ -388,6 +401,7 @@ def server(args):
     """Runs the HTTP server."""
 
     socket = ('localhost', args.port)
+    HTTPRequestHandler.directory = args.directory
     httpd = HTTPServer(socket, HTTPRequestHandler)
     LOGGER.info('Listening on %s:%i.', *socket)
 
@@ -409,6 +423,9 @@ def main():
     parser.add_argument(
         '--port', '-p', type=int, default=5000, help='port to listen on')
     parser.add_argument(
+        '--directory', '-d', type=get_directory, default=None,
+        help='sets the target directory')
+    parser.add_argument(
         '--verbose', '-v', action='store_true', help='turn on verbose logging')
     args = parser.parse_args()
     basicConfig(level=DEBUG if args.verbose else INFO, format=LOG_FORMAT)
@@ -416,7 +433,7 @@ def main():
     if args.server:
         server(args)
     else:
-        sync()
+        sync(args.directory)
 
 
 class HTTPRequestHandler(BaseHTTPRequestHandler):
