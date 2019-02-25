@@ -19,7 +19,10 @@ from urllib.parse import urlencode, ParseResult
 from urllib.request import urlopen
 
 
-DESCRIPTION = 'HOMEINFO multi-platform digital signage client.'
+DESCRIPTION = '''HOMEINFO multi-platform digital signage client.
+Synchronizes data to the current working directory
+or listens on the specified port when in server mode
+to be triggered to do so.'''
 SERVER = ('http', '10.8.0.1', '/appcmd/digsig')
 REG_KEY = r'SOFTWARE\HOMEINFO\digsigclt'
 OS64BIT = {'AMD64', 'x86_64'}
@@ -358,9 +361,6 @@ def main():
         '--server', '-S', action='store_true', help='run in server mode')
     parser.add_argument(
         '--port', '-p', type=int, default=5000, help='port to listen on')
-    parser.add_argument(
-        '--directory', '-d', type=Path, default=Path.cwd(),
-        help='base directory')
     args = parser.parse_args()
 
     if args.server:
