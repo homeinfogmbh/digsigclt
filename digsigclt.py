@@ -17,7 +17,7 @@ from tempfile import gettempdir, TemporaryDirectory
 from threading import Thread
 from urllib.error import URLError
 from urllib.parse import urlencode, ParseResult
-from urllib.request import urlopen
+from urllib.request import urlopen, Request
 
 
 DESCRIPTION = '''HOMEINFO multi-platform digital signage client.
@@ -303,12 +303,14 @@ def retrieve(retry=True):
 
     config = get_config()
     params = {key: str(value) for key, value in config.items()}
-    manifest = get_manifest().encode()
     parse_result = ParseResult(*SERVER, '', urlencode(params), '')
     url = parse_result.geturl()
+    data = get_manifest().encode()
+    headers = {'Content-Type': 'application/json'}
+    request = Request(url, data=data, headers=headers)
     LOGGER.info('Retrieving files from %s://%s%s.', *SERVER)
 
-    with urlopen(url, data=manifest) as response:
+    with urlopen(request) as response:
         try:
             return process_response(response)
         except IncompleteRead:
