@@ -1,4 +1,28 @@
 #! /usr/bin/env python3
+#
+#  digsigclt - Digital Signage data synchronization client.
+#
+#  digsigclt is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  digsigclt is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with digsigclt.  If not, see <http://www.gnu.org/licenses/>.
+#
+#  This unit provides a service to automatically login
+#  the digital signage user to a certain terminal.
+#
+#  (C) 2019: HOMEINFO - Digitale Informationssysteme GmbH
+#
+#  Maintainer: Richard Neumann <r dot neumann at homeinfo period de>
+#
+####################################################################
 """Digital signage cross-platform client."""
 
 from argparse import ArgumentParser
@@ -463,8 +487,24 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         if cls.sync_thread.is_alive():
             return True
 
-        cls.sync_thread.join()
+        cls.sync_thread.join()  # Just to be on the safe side.
         return False
+
+    @classmethod
+    def start_sync(cls):
+        """Starts a synchronization."""
+        try:
+            LOCK_FILE.create()  # Acquire lock.
+        except Locked:
+            return False
+
+        if cls.sync_pending():
+            LOCK_FILE.unlink()
+            return False
+
+        cls.sync_thread = Thread(target=sync_in_thread, args=(cls.directory,))
+        cls.sync_thread.start()
+        return True
 
     @property
     def content_length(self):
@@ -481,24 +521,6 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         """Returns POSTed JSON data."""
         return loads(self.bytes)
 
-    def start_sync(self):
-        """Starts a synchronization."""
-        try:
-            LOCK_FILE.create()    # Check lock file.
-        except Locked:
-            return False
-
-        cls = type(self)
-
-        if cls.sync_pending():
-            LOCK_FILE.unlink()
-            return False
-
-        cls.sync_thread = Thread(
-            target=sync_in_thread, args=(self.directory,))
-        cls.sync_thread.start()
-        return True
-
     def do_POST(self):  # pylint: disable=C0103
         """Handles POST requests."""
         LOGGER.debug('Received POST request.')
@@ -506,7 +528,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         if self.json.get('command') == 'sync':
             LOGGER.debug('Received sync command.')
 
-            if self.start_sync():
+            if type(self).start_sync():
                 message = 'Synchronization started.'
                 status_code = 202
             else:
