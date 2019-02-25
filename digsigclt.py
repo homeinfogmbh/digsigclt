@@ -75,10 +75,28 @@ def is32on64():
     return py_arch == '32bit' and sys_arch in OS64BIT
 
 
-def copydir(source_dir, dest_dir):
+def get_files(directory=None):
+    """Lists the current files."""
+
+    if directory is None:
+        directory = Path.cwd()
+
+    for inode in directory.iterdir():
+        if inode.is_dir():
+            yield from get_files(directory=inode)
+        elif inode.is_file():
+            LOGGER.debug('Found file: %s.', inode)
+            yield inode
+
+
+def copydir(source_dir, dest_dir=None):
     """Copies all contents of source_dir
     into dest_dir, overwriting all files.
     """
+
+    if dest_dir is None:
+        dest_dir = Path.cwd()
+
     for source_path in source_dir.iterdir():
         relpath = source_path.relative_to(source_dir)
         dest_path = dest_dir.joinpath(relpath)
@@ -96,25 +114,27 @@ def copydir(source_dir, dest_dir):
             copydir(source_path, dest_path)
 
 
-def strip_files(directory, manifest):
+def strip_files(manifest, directory=None):
     """Removes all files from the directory tree,
     whose SHA-256 checksums are not in the manifest.
     """
 
-    for inode in directory.iterdir():
-        if inode.is_file():
-            with inode.open('rb') as file:
-                bytes_ = file.read()
+    for path in get_files(directory=directory):
+        with path.open('rb') as file:
+            bytes_ = file.read()
 
-            sha256sum = sha256(bytes_).hexdigest()
+        sha256sum = sha256(bytes_).hexdigest()
 
-            if sha256sum not in manifest:
-                LOGGER.debug('Removing obsolete file: %s.', inode)
-                inode.unlink()
+        if sha256sum not in manifest:
+            LOGGER.debug('Removing obsolete file: %s.', path)
+            path.unlink()
 
 
-def strip_tree(directory):
+def strip_tree(directory=None):
     """Removes all empty directory sub-trees."""
+
+    if directory is None:
+        directory = Path.cwd()
 
     def strip_subdir(subdir):
         """Recursively removes empty directory trees."""
@@ -241,20 +261,6 @@ def get_config():
     raise UnsupportedSystem(sys)
 
 
-def get_files(directory=None):
-    """Lists the current files."""
-
-    if directory is None:
-        directory = Path.cwd()
-
-    for inode in directory.iterdir():
-        if inode.is_dir():
-            yield from get_files(directory=inode)
-        elif inode.is_file():
-            LOGGER.debug('Found file: %s.', inode)
-            yield inode
-
-
 def get_sha256sums():
     """Yields the SHA-256 sums in the current working directory."""
 
@@ -319,7 +325,6 @@ def update(tar_xz):
     from the respective tar.xz archive.
     """
 
-    cwd = Path.cwd()
     fileobj = BytesIO(tar_xz)
 
     with TemporaryDirectory() as tmpd:
@@ -328,10 +333,10 @@ def update(tar_xz):
 
         tmpd = Path(tmpd)
         manifest = read_manifest(tmpd)
-        copydir(tmpd, cwd)
+        copydir(tmpd)
 
-    strip_files(cwd, manifest)
-    strip_tree(cwd)
+    strip_files(manifest)
+    strip_tree()
 
 
 def do_sync():
