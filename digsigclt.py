@@ -81,7 +81,6 @@ def get_files(directory):
         if inode.is_dir():
             yield from get_files(directory=inode)
         elif inode.is_file():
-            LOGGER.debug('Found file: %s.', inode)
             yield inode
 
 
@@ -282,7 +281,7 @@ def get_sha256sums(directory):
             bytes_ = file.read()
 
         sha256sum = sha256(bytes_).hexdigest()
-        LOGGER.debug('SHA-256 sum: %s.', sha256sum)
+        LOGGER.debug('Found file: %s (%s).', filename, sha256sum)
         yield sha256sum
 
 
@@ -360,6 +359,7 @@ def do_sync(directory):
         LOGGER.critical('Cannot download data due to missing configuration.')
     except HTTPError as http_error:
         if http_error.code == 304:  # Data unchanged.
+            LOGGER.info('Data unchanged.')
             return True
 
         LOGGER.critical('Could not download data: %s.', http_error)
