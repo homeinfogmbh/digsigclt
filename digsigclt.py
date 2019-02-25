@@ -379,6 +379,16 @@ def do_sync(directory):
     return False
 
 
+def sync_in_thread(directory):
+    """Starts the synchronization within a thread."""
+
+    try:
+        do_sync(directory)
+    finally:
+        LOCK_FILE.unlink()
+        HTTPRequestHandler.sync_thread = None   # Reset thread.
+
+
 def sync(directory):
     """Performs a data synchronization."""
 
@@ -388,16 +398,6 @@ def sync(directory):
     except Locked:
         LOGGER.error('Synchronization is locked.')
         return False
-
-
-def sync_in_thread(directory):
-    """Starts the synchronization within a thread."""
-
-    try:
-        do_sync(directory)
-    finally:
-        LOCK_FILE.unlink()
-        HTTPRequestHandler.sync_thread = None   # Reset thread.
 
 
 def server(args):
