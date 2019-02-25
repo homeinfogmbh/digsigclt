@@ -15,7 +15,7 @@ from socket import gethostname
 from tarfile import open as tar_open
 from tempfile import gettempdir, TemporaryDirectory
 from threading import Thread
-from urllib.error import URLError
+from urllib.error import URLError, HTTPError
 from urllib.parse import urlencode, ParseResult
 from urllib.request import urlopen, Request
 
@@ -46,10 +46,6 @@ class UnsupportedSystem(Exception):
 
 class MissingConfiguration(Exception):
     """Indicates that the configuration is missing."""
-
-
-class DataUnchanged(Exception):
-    """Indicates that there is no change to the digital signage data."""
 
 
 class InvalidContentType(Exception):
@@ -284,9 +280,6 @@ def get_manifest():
 def process_response(response):
     """Processes the response from the webserver."""
 
-    if response.status == 304:
-        raise DataUnchanged()
-
     if response.status == 200:
         content_type = response.headers.get('Content-Type')
 
@@ -348,12 +341,15 @@ def do_sync():
         tar_xz = retrieve()
     except MissingConfiguration:
         LOGGER.critical('Cannot download data due to missing configuration.')
+    except HTTPError as http_error:
+        if http_error.code == 304:  # Data unchanged.
+            return True
+
+        LOGGER.critical('Could not download data: %s.', http_error)
     except URLError as url_error:
         LOGGER.critical('Could not download data: %s.', url_error)
     except IncompleteRead:
         LOGGER.critical('Could not retrieve data.')
-    except DataUnchanged:
-        return True
     except ConnectionError as connection_error:
         LOGGER.critical('Connection error: %s.', connection_error)
     except InvalidContentType as invalid_content_type:
