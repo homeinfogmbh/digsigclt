@@ -40,7 +40,7 @@ from sys import exit    # pylint: disable=W0622
 from tarfile import open as tar_open
 from tempfile import gettempdir, TemporaryDirectory
 from threading import Thread
-from urllib.error import URLError, HTTPError
+from urllib.error import URLError
 from urllib.parse import urlencode, ParseResult
 from urllib.request import urlopen, Request
 
@@ -83,6 +83,9 @@ class InvalidContentType(Exception):
         """Sets the content type."""
         super().__init__()
         self.content_type = content_type
+
+    def __str__(self):
+        return str(self.content_type)
 
 
 class Locked(Exception):
@@ -315,21 +318,21 @@ def get_sha256list(directory):
     return dumps(sha256sums)
 
 
-def process_response(response):
-    """Processes the response from the webserver."""
+def read_retry(response, *, retries=0):
+    """Reads the respective response."""
 
-    if response.status == 200:
-        content_type = response.headers.get('Content-Type')
+    try:
+        return response.read()
+    except IncompleteRead:
+        LOGGER.error('Could not read response from webserver.')
 
-        if content_type == 'application/x-xz':
-            return response.read()
+        if retries <= MAX_RETRIES:
+            return read_retry(response, retries=retries+1)
 
-        raise InvalidContentType(content_type)
-
-    raise ConnectionError(response.status)
+        raise
 
 
-def retrieve(directory, retries=0):
+def retrieve(directory):
     """Retrieves data from the server."""
 
     config = get_config()
@@ -342,15 +345,12 @@ def retrieve(directory, retries=0):
     LOGGER.debug('Retrieving files from %s.', request.full_url)
 
     with urlopen(request) as response:
-        try:
-            return process_response(response)
-        except IncompleteRead:
-            LOGGER.error('Could not read response from webserver.')
+        content_type = response.headers.get('Content-Type')
 
-            if retries <= MAX_RETRIES:
-                return retrieve(directory, retries=retries+1)
+        if content_type == 'application/x-xz':
+            return read_retry(response)
 
-            raise
+        raise InvalidContentType(content_type)
 
 
 def update(tar_xz, directory):
@@ -379,22 +379,15 @@ def do_sync(directory):
         tar_xz = retrieve(directory)
     except MissingConfiguration:
         LOGGER.critical('Cannot download data due to missing configuration.')
-    except HTTPError as http_error:
-        if http_error.code == 304:  # Data unchanged.
-            LOGGER.info('Data unchanged.')
-            return True
-
-        LOGGER.critical('Could not download data: %s.', http_error)
     except URLError as url_error:
         LOGGER.critical('Could not download data: %s.', url_error)
-    except IncompleteRead:
-        LOGGER.critical('Could not retrieve data.')
+    except IncompleteRead as incomplete_read:
+        LOGGER.critical('Could not read data: %s.', incomplete_read)
     except ConnectionError as connection_error:
         LOGGER.critical('Connection error: %s.', connection_error)
     except InvalidContentType as invalid_content_type:
         LOGGER.critical(
-            'Retrieved invalid content type: %s.',
-            invalid_content_type.content_type)
+            'Received invalid content type: %s.', invalid_content_type)
     else:
         update(tar_xz, directory)
         return True
