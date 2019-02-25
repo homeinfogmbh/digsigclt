@@ -218,15 +218,46 @@ def get_config():
     raise UnsupportedSystem(sys)
 
 
+def get_files(directory=None):
+    """Lists the current files."""
+
+    if directory is None:
+        directory = Path.cwd()
+
+    for inode in directory.iterdir():
+        if inode.is_dir():
+            yield from get_files(directory=inode)
+        elif inode.is_file():
+            yield inode
+
+
+def get_sha256sums():
+    """Yields the SHA-256 sums in the current working directory."""
+
+    for filename in get_files():
+        with filename.open('rb') as file:
+            bytes_ = file.read()
+
+        yield sha256(bytes_).hexdigest()
+
+
+def get_manifest():
+    """Returns the manifest list."""
+
+    sha256sums = list(get_sha256sums())
+    return dumps(sha256sums)
+
+
 def retrieve():
     """Retrieves data from the server."""
 
     config = get_config()
     params = {key: str(value) for key, value in config.items()}
+    manifest = get_manifest().encode()
     parse_result = ParseResult(*SERVER, '', urlencode(params), '')
     url = parse_result.geturl()
 
-    with urlopen(url) as response:
+    with urlopen(url, data=manifest) as response:
         if response.status == 304:
             raise DataUnchanged()
 
@@ -241,7 +272,7 @@ def retrieve():
         raise ConnectionError(response.status)
 
 
-def update(tar_xz, directory):
+def update(tar_xz):
     """Updates the digital signage data
     from the respective tar.xz archive.
     """
@@ -252,10 +283,10 @@ def update(tar_xz, directory):
         with tar_open(mode='r:xz', fileobj=fileobj) as tar:
             tar.extractall(path=tmpd)
 
-        copydir(Path(tmpd), directory)
+        copydir(Path(tmpd), Path.cwd())
 
 
-def do_sync(args):
+def do_sync():
     """Synchronizes the data."""
 
     try:
@@ -277,15 +308,15 @@ def do_sync(args):
             invalid_content_type.content_type)
         return False
 
-    return update(tar_xz, args.directory)
+    return update(tar_xz)
 
 
-def sync(args):
+def sync():
     """Performs a data synchronization."""
 
     try:
         with LockFile(LOCKFILE_NAME):
-            return do_sync(args)
+            return do_sync()
     except Locked:
         LOGGER.error('Synchronization is locked.')
         return False
@@ -295,7 +326,6 @@ def server(args):
     """Runs the HTTP server."""
 
     socket = ('localhost', args.port)
-    HTTPRequestHandler.args = args  # Set current args on request handler.
     httpd = HTTPServer(socket, HTTPRequestHandler)
     LOGGER.info('Listening on %s:%i.', *socket)
 
@@ -308,6 +338,7 @@ def server(args):
 def main():
     """Main method to run."""
 
+    basicConfig(level=INFO, format=LOG_FORMAT)
     parser = ArgumentParser(description=DESCRIPTION)
     parser.add_argument(
         '--server', '-S', action='store_true', help='run in server mode')
@@ -317,12 +348,11 @@ def main():
         '--directory', '-d', type=Path, default=Path.cwd(),
         help='base directory')
     args = parser.parse_args()
-    basicConfig(level=INFO, format=LOG_FORMAT)
 
     if args.server:
         server(args)
     else:
-        sync(args)
+        sync()
 
 
 class HTTPRequestHandler(BaseHTTPRequestHandler):
@@ -348,7 +378,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         if self.json.get('command') == 'sync':
             try:
                 with LockFile(LOCKFILE_NAME):
-                    result = do_sync(self.args)
+                    result = do_sync()
             except Locked:
                 message = 'Locked.'
                 status_code = 503
