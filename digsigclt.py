@@ -4,6 +4,7 @@
 from argparse import ArgumentParser
 from contextlib import suppress
 from hashlib import sha256
+from http.client import IncompleteRead
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from io import BytesIO
 from json import dumps, load, loads
@@ -253,7 +254,24 @@ def get_manifest():
     return dumps(sha256sums)
 
 
-def retrieve():
+def process_response(response):
+    """Processes the response from the webserver."""
+
+    if response.status == 304:
+        raise DataUnchanged()
+
+    if response.status == 200:
+        content_type = response.headers.get('Content-Type')
+
+        if content_type == 'application/x-xz':
+            return response.read()
+
+        raise InvalidContentType(content_type)
+
+    raise ConnectionError(response.status)
+
+
+def retrieve(retry=True):
     """Retrieves data from the server."""
 
     config = get_config()
@@ -264,18 +282,27 @@ def retrieve():
     LOGGER.info('Retrieving files from %s://%s%s.', *SERVER)
 
     with urlopen(url, data=manifest) as response:
-        if response.status == 304:
-            raise DataUnchanged()
+        try:
+            return process_response(response)
+        except IncompleteRead:
+            LOGGER.error('Could not read response from webserver.')
 
-        if response.status == 200:
-            content_type = response.headers.get('Content-Type')
+            if retry:
+                return retrieve(retry=False)
 
-            if content_type == 'application/x-xz':
-                return response.read()
+            LOGGER.critical('Could not retrieve data.')
 
-            raise InvalidContentType(content_type)
 
-        raise ConnectionError(response.status)
+def read_manifest(tmpd):
+    """Reads the manifest from the respective temporary directory."""
+
+    path = tmpd.joinpath(MANIFEST_FILENAME)
+
+    with path.open('r') as file:
+        manifest = load(file)
+
+    path.unlink()   # File is no longer needed.
+    return manifest
 
 
 def update(tar_xz):
@@ -291,11 +318,7 @@ def update(tar_xz):
             tar.extractall(path=tmpd)
 
         tmpd = Path(tmpd)
-        manifest = tmpd.joinpath(MANIFEST_FILENAME)
-
-        with manifest.open('r') as file:
-            manifest = load(file)
-
+        manifest = read_manifest(tmpd)
         copydir(tmpd, cwd)
 
     strip_files(cwd, manifest)
