@@ -461,7 +461,7 @@ def main():
 
     if not args.directory.is_dir():
         LOGGER.critical('Target directory does not exist: %s.', args.directory)
-        exit(1)
+        exit(2)
 
     if args.server:
         server(args)
