@@ -388,8 +388,9 @@ def sync_in_thread(directory):
         do_sync(directory)
     finally:
         LOCK_FILE.unlink()
-        HTTPRequestHandler.sync_thread.join()
+        thread = HTTPRequestHandler.sync_thread
         HTTPRequestHandler.sync_thread = None   # Reset thread.
+        thread.join()
 
 
 def sync(directory):
