@@ -137,12 +137,9 @@ def strip_files(directory, manifest):
     """
 
     for path in get_files(directory):
-        with path.open('rb') as file:
-            bytes_ = file.read()
+        relpath = path.relative_to(directory)
 
-        sha256sum = sha256(bytes_).hexdigest()
-
-        if sha256sum not in manifest:
+        if relpath not in manifest:
             LOGGER.debug('Removing obsolete file: %s.', path)
             path.unlink()
 
@@ -165,7 +162,7 @@ def strip_tree(directory):
             strip_subdir(inode)
 
 
-def read_manifest(tmpd):
+def get_manifest(tmpd):
     """Reads the manifest from the respective temporary directory."""
 
     LOGGER.debug('Reading manifest.')
@@ -175,7 +172,7 @@ def read_manifest(tmpd):
         manifest = load(file)
 
     path.unlink()   # File is no longer needed.
-    return manifest
+    return frozenset(manifest)
 
 
 def get_directory(directory):
@@ -310,10 +307,10 @@ def get_sha256sums(directory):
         yield sha256sum
 
 
-def get_manifest(directory):
+def get_sha256list(directory):
     """Returns the manifest list."""
 
-    LOGGER.debug('Creating manifest of current files.')
+    LOGGER.debug('Creating SHA-256 sums of current files.')
     sha256sums = list(get_sha256sums(directory))
     return dumps(sha256sums)
 
@@ -339,7 +336,7 @@ def retrieve(directory, retries=0):
     params = {key: str(value) for key, value in config.items()}
     parse_result = ParseResult(*SERVER, '', urlencode(params), '')
     url = parse_result.geturl()
-    data = get_manifest(directory).encode()
+    data = get_sha256list(directory).encode()
     headers = {'Content-Type': 'application/json'}
     request = Request(url, data=data, headers=headers)
     LOGGER.debug('Retrieving files from %s.', request.full_url)
@@ -368,7 +365,7 @@ def update(tar_xz, directory):
             tar.extractall(path=tmpd)
 
         tmpd = Path(tmpd)
-        manifest = read_manifest(tmpd)
+        manifest = get_manifest(tmpd)
         copydir(tmpd, directory)
 
     strip_files(directory, manifest)
