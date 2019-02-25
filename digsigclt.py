@@ -493,7 +493,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         LOGGER.debug('Received POST request.')
 
         if self.json.get('command') == 'sync':
-            LOGGER.info('Received sync command.')
+            LOGGER.debug('Received sync command.')
 
             if self.start_sync():
                 message = 'Synchronization started.'
