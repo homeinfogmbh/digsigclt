@@ -154,24 +154,27 @@ def read_manifest(tmpd):
     return manifest
 
 
-def get_directory(directory=None):
+def get_directory(directory):
     """Returns the target directory."""
-
-    if directory is None:
-        sys = system()
-
-        if sys == 'Linux':
-            return DEFAULT_DIR_LINUX
-
-        if sys == 'Windows':
-            return DEFAULT_DIR_WINDOWS
-
-        raise UnsupportedSystem(sys)
 
     if directory == '--':
         return Path.cwd()
 
     return Path(directory)
+
+
+def get_default_directory():
+    """Returns the target directory."""
+
+    sys = system()
+
+    if sys == 'Linux':
+        return DEFAULT_DIR_LINUX
+
+    if sys == 'Windows':
+        return DEFAULT_DIR_WINDOWS
+
+    raise UnsupportedSystem(sys)
 
 
 def _get_config_linux():
@@ -423,8 +426,8 @@ def main():
     parser.add_argument(
         '--port', '-p', type=int, default=5000, help='port to listen on')
     parser.add_argument(
-        '--directory', '-d', type=get_directory, default=None,
-        help='sets the target directory')
+        '--directory', '-d', type=get_directory,
+        default=get_default_directory(), help='sets the target directory')
     parser.add_argument(
         '--verbose', '-v', action='store_true', help='turn on verbose logging')
     args = parser.parse_args()
