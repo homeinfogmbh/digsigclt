@@ -13,6 +13,7 @@ from platform import architecture, machine, system
 from socket import gethostname
 from tarfile import open as tar_open
 from tempfile import gettempdir, TemporaryDirectory
+from threading import Thread
 from urllib.error import URLError
 from urllib.parse import urlencode, ParseResult
 from urllib.request import urlopen
@@ -322,6 +323,16 @@ def sync():
         return False
 
 
+def sync_in_thread():
+    """Starts the synchronization within a thread."""
+
+    try:
+        do_sync()
+    finally:
+        LockFile(LOCKFILE_NAME).unlink()
+        HTTPRequestHandler.sync_thread = None   # Reset thread.
+
+
 def server(args):
     """Runs the HTTP server."""
 
@@ -332,6 +343,9 @@ def server(args):
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
+        if HTTPRequestHandler.sync_thread is not None:
+            HTTPRequestHandler.sync_thread.join()
+
         return
 
 
@@ -358,6 +372,8 @@ def main():
 class HTTPRequestHandler(BaseHTTPRequestHandler):
     """Handles HTTP requests."""
 
+    sync_thread = None
+
     @property
     def content_length(self):
         """Returns the content length."""
@@ -373,22 +389,31 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         """Returns POSTed JSON data."""
         return loads(self.bytes)
 
+    def start_sync(self):
+        """Starts a synchronization."""
+        try:
+            LockFile(LOCKFILE_NAME).create()    # Check lock file.
+        except Locked:
+            return False
+
+        cls = type(self)
+
+        if cls.sync_thread is None:
+            cls.sync_thread = Thread(target=sync_in_thread)
+            cls.sync_thread.start()
+            return True
+
+        return False
+
     def do_POST(self):  # pylint: disable=C0103
         """Handles POST requests."""
         if self.json.get('command') == 'sync':
-            try:
-                with LockFile(LOCKFILE_NAME):
-                    result = do_sync()
-            except Locked:
-                message = 'Locked.'
-                status_code = 503
+            if self.start_sync():
+                message = 'Synchronization started.'
+                status_code = 202
             else:
-                if result:
-                    message = 'Done.'
-                    status_code = 200
-                else:
-                    message = 'Failed.'
-                    status_code = 500
+                message = 'Synchronization already in progress.'
+                status_code = 503
         else:
             message = 'Invalid command.'
             status_code = 400
