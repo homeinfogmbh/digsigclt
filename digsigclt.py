@@ -432,6 +432,7 @@ def main():
         '--verbose', '-v', action='store_true', help='turn on verbose logging')
     args = parser.parse_args()
     basicConfig(level=DEBUG if args.verbose else INFO, format=LOG_FORMAT)
+    LOGGER.info('Target directory: %s', args.directory)
 
     if args.server:
         server(args)
@@ -442,6 +443,7 @@ def main():
 class HTTPRequestHandler(BaseHTTPRequestHandler):
     """Handles HTTP requests."""
 
+    directory = None
     sync_thread = None
 
     @property
@@ -469,7 +471,8 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         cls = type(self)
 
         if cls.sync_thread is None:
-            cls.sync_thread = Thread(target=sync_in_thread)
+            cls.sync_thread = Thread(
+                target=sync_in_thread, args=(self.directory,))
             cls.sync_thread.start()
             return True
 
