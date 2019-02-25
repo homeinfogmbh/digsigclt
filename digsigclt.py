@@ -25,6 +25,7 @@ Synchronizes data to the current working directory
 or listens on the specified port when in server mode
 to be triggered to do so.'''
 SERVER = ('http', '10.8.0.1', '/appcmd/digsig')
+MAX_RETRIES = 3
 REG_KEY = r'SOFTWARE\HOMEINFO\digsigclt'
 OS64BIT = {'AMD64', 'x86_64'}
 LOCKFILE_NAME = 'digsigclt.sync.lock'
@@ -291,7 +292,7 @@ def process_response(response):
     raise ConnectionError(response.status)
 
 
-def retrieve(retry=True):
+def retrieve(retries=0):
     """Retrieves data from the server."""
 
     config = get_config()
@@ -309,8 +310,8 @@ def retrieve(retry=True):
         except IncompleteRead:
             LOGGER.error('Could not read response from webserver.')
 
-            if retry:
-                return retrieve(retry=False)
+            if retries <= MAX_RETRIES:
+                return retrieve(retries=retries+1)
 
             raise
 
