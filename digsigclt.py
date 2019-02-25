@@ -407,7 +407,7 @@ def main():
     parser.add_argument(
         '--verbose', '-v', action='store_true', help='turn on verbose logging')
     args = parser.parse_args()
-    basicConfig(level=DEBUG if args.debug else INFO, format=LOG_FORMAT)
+    basicConfig(level=DEBUG if args.verbose else INFO, format=LOG_FORMAT)
 
     if args.server:
         server(args)
