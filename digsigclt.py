@@ -322,7 +322,7 @@ def get_sha256sums(directory, chunk_size=4096):
         sha256sum = sha256sum.hexdigest()
         LOGGER.debug('SHA-256 sum of "%s" is %s.', filename, sha256sum)
         relpath = filename.relative_to(directory)
-        yield (relpath, sha256sum)
+        yield (str(relpath), sha256sum)
 
 
 def get_sha256_json(directory, *, chunk_size=4096):
