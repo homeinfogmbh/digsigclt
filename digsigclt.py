@@ -41,7 +41,7 @@ from tarfile import open as tar_open
 from tempfile import gettempdir, TemporaryDirectory
 from threading import Thread
 from urllib.error import URLError
-from urllib.parse import urlencode, ParseResult
+from urllib.parse import urlencode, urlparse, ParseResult
 from urllib.request import urlopen, Request
 
 
@@ -49,8 +49,6 @@ DESCRIPTION = '''HOMEINFO multi-platform digital signage client.
 Synchronizes data to the current working directory
 or listens on the specified port when in server mode
 to be triggered to do so.'''
-SERVER = ('http', '10.8.0.1', '/appcmd/digsig')
-MAX_RETRIES = 3
 REG_KEY = r'SOFTWARE\HOMEINFO\digsigclt'
 OS64BIT = {'AMD64', 'x86_64'}
 LOCKFILE_NAME = 'digsigclt.sync.lock'
@@ -321,7 +319,7 @@ def get_sha256list(directory):
     return dumps(sha256sums)
 
 
-def read_retry(response, *, retries=0):
+def read_retry(response, max_retries, *, retries=0):
     """Reads the respective response."""
 
     try:
@@ -329,19 +327,20 @@ def read_retry(response, *, retries=0):
     except IncompleteRead:
         LOGGER.error('Could not read response from webserver.')
 
-        if retries <= MAX_RETRIES:
-            return read_retry(response, retries=retries+1)
+        if retries <= max_retries:
+            return read_retry(response, max_retries, retries=retries+1)
 
         raise
 
 
-def retrieve(config, sha256sums):
+def retrieve(config, args):
     """Retrieves data from the server."""
 
-    params = {key: str(value) for key, value in config.items()}
-    parse_result = ParseResult(*SERVER, '', urlencode(params), '')
-    url = parse_result.geturl()
+    scheme, netloc, path, params, _, fragment = args.url
+    query = urlencode({key: str(value) for key, value in config.items()})
+    url = ParseResult(scheme, netloc, path, params, query, fragment).geturl()
     headers = {'Content-Type': 'application/json'}
+    sha256sums = get_sha256list(args.directory)
     request = Request(url, data=sha256sums.encode(), headers=headers)
     LOGGER.debug('Retrieving files from %s.', request.full_url)
 
@@ -349,7 +348,7 @@ def retrieve(config, sha256sums):
         content_type = response.headers.get('Content-Type')
 
         if content_type == 'application/x-xz':
-            return read_retry(response)
+            return read_retry(response, args.max_retries)
 
         raise InvalidContentType(content_type)
 
@@ -373,13 +372,11 @@ def update(tar_xz, directory):
     strip_tree(directory)
 
 
-def do_sync(config, directory):
+def do_sync(config, args):
     """Synchronizes the data."""
 
-    sha256sums = get_sha256list(directory)
-
     try:
-        tar_xz = retrieve(sha256sums, config)
+        tar_xz = retrieve(config, args)
     except MissingConfiguration:
         LOGGER.critical('Cannot download data due to missing configuration.')
     except URLError as url_error:
@@ -392,37 +389,37 @@ def do_sync(config, directory):
         LOGGER.critical(
             'Received invalid content type: %s.', invalid_content_type)
     else:
-        update(tar_xz, directory)
+        update(tar_xz, args)
         return True
 
     return False
 
 
-def sync_in_thread(config, directory):
+def sync_in_thread(config, args):
     """Starts the synchronization within a thread."""
 
     try:
-        do_sync(config, directory)
+        do_sync(config, args)
     finally:
         LOCK_FILE.unlink()  # Release lock acquired outside of thread.
 
 
-def sync(config, directory):
+def sync(config, args):
     """Performs a data synchronization."""
 
     try:
         with LOCK_FILE:
-            return do_sync(config, directory)
+            return do_sync(config, args)
     except Locked:
         LOGGER.error('Synchronization is locked.')
         return False
 
 
-def server(config, directory, port):
+def server(config, args):
     """Runs the HTTP server."""
 
-    socket = ('0.0.0.0', port)
-    HTTPRequestHandler.args = (config, directory)
+    socket = ('0.0.0.0', args.port)
+    HTTPRequestHandler.args = (config, args)
     httpd = HTTPServer(socket, HTTPRequestHandler)
     LOGGER.info('Listening on %s:%i.', *socket)
 
@@ -442,10 +439,16 @@ def main():
     parser.add_argument(
         '--server', '-S', action='store_true', help='run in server mode')
     parser.add_argument(
+        '--url', '-u', type=urlparse, default='http://10.8.0.1/appcmd/digsig',
+        help='the URL to the remote server')
+    parser.add_argument(
         '--port', '-p', type=int, default=5000, help='port to listen on')
     parser.add_argument(
         '--directory', '-d', type=get_directory,
         default=get_default_directory(), help='sets the target directory')
+    parser.add_argument(
+        '--max-retries', '-r', type=int, default=3,
+        help='maximum amount to retry HTTP connections')
     parser.add_argument(
         '--verbose', '-v', action='store_true', help='turn on verbose logging')
     args = parser.parse_args()
@@ -466,9 +469,9 @@ def main():
         exit(3)
 
     if args.server:
-        server(config, args.directory, args.port)
+        server(config, args)
     else:
-        if sync(config, args.directory):
+        if sync(config, args):
             exit(0)
         else:
             exit(1)
