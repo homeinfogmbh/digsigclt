@@ -125,6 +125,16 @@ def _get_config_linux():
     return {'tid': tid, 'cid': cid}
 
 
+def is32on64():
+    """Determines whether we run 32 bit
+    python on a 64 bit operating system.
+    """
+
+    py_arch, _ = architecture()
+    sys_arch = machine()
+    return py_arch == '32bit' and sys_arch in OS64BIT
+
+
 def _get_config_windows():
     """Returns the configuration on a Windows system."""
     # Import winreg in Windows-specific function
@@ -181,15 +191,6 @@ CONFIG_FUNCS = {
     'Windows': _get_config_windows}
 
 
-def get_config():
-    """Returns the respective configuration:"""
-
-    try:
-        return CONFIG_FUNCS[get_os()]()
-    except KeyError:
-        raise UnsupportedSystem(get_os())
-
-
 @lru_cache(maxsize=1)
 def get_os():
     """Returns the operating system."""
@@ -199,14 +200,13 @@ def get_os():
     return os_
 
 
-def is32on64():
-    """Determines whether we run 32 bit
-    python on a 64 bit operating system.
-    """
+def get_config():
+    """Returns the respective configuration:"""
 
-    py_arch, _ = architecture()
-    sys_arch = machine()
-    return py_arch == '32bit' and sys_arch in OS64BIT
+    try:
+        return CONFIG_FUNCS[get_os()]()
+    except KeyError:
+        raise UnsupportedSystem(get_os())
 
 
 def get_files(directory):
