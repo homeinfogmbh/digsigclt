@@ -214,7 +214,7 @@ def get_files(directory):
 
     for inode in directory.iterdir():
         if inode.is_dir():
-            yield from get_files(directory=inode)
+            yield from get_files(inode)
         elif inode.is_file():
             yield inode
 
@@ -321,14 +321,15 @@ def get_sha256sums(directory, chunk_size=4096):
 
         sha256sum = sha256sum.hexdigest()
         LOGGER.debug('SHA-256 sum of "%s" is %s.', filename, sha256sum)
-        yield sha256sum
+        relpath = filename.relative_to(directory)
+        yield (relpath, sha256sum)
 
 
-def get_sha256list(directory, *, chunk_size=4096):
+def get_sha256_json(directory, *, chunk_size=4096):
     """Returns the manifest list."""
 
     LOGGER.debug('Creating SHA-256 sums of current files.')
-    sha256sums = list(get_sha256sums(directory, chunk_size=chunk_size))
+    sha256sums = dict(get_sha256sums(directory, chunk_size=chunk_size))
     return dumps(sha256sums)
 
 
@@ -361,7 +362,7 @@ def retrieve(config, args):
     query = urlencode({key: str(value) for key, value in config.items()})
     url = ParseResult(scheme, netloc, path, params, query, fragment).geturl()
     headers = {'Content-Type': 'application/json'}
-    sha256sums = get_sha256list(args.directory, chunk_size=args.chunk_size)
+    sha256sums = get_sha256_json(args.directory, chunk_size=args.chunk_size)
     request = Request(url, data=sha256sums.encode(), headers=headers)
     LOGGER.debug('Retrieving files from %s.', request.full_url)
 
