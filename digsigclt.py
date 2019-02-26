@@ -38,7 +38,7 @@ from platform import architecture, machine, system
 from socket import gethostname
 from sys import exit    # pylint: disable=W0622
 from tarfile import open as tar_open
-from tempfile import gettempdir, NamedTemporaryFile, TemporaryDirectory
+from tempfile import gettempdir, TemporaryDirectory, TemporaryFile
 from threading import Thread
 from urllib.error import URLError
 from urllib.parse import urlencode, urlparse, ParseResult
@@ -374,13 +374,13 @@ def retrieve(config, args):
         yield from stream(response, args.chunk_size, args.max_retries)
 
 
-def update(filename, directory, *, chunk_size=4096):
+def update(file, directory, *, chunk_size=4096):
     """Updates the digital signage data
     from the respective tar.xz archive.
     """
 
     with TemporaryDirectory() as tmpd:
-        with tar_open(name=filename, mode='r:xz') as tar:
+        with tar_open(mode='r:xz', fileobj=file, bufsize=chunk_size) as tar:
             tar.extractall(path=tmpd)
 
         tmpd = Path(tmpd)
@@ -398,14 +398,17 @@ def update(filename, directory, *, chunk_size=4096):
 
 
 def do_sync(config, args):
-    """Synchronizes the data."""
+    """Updates local digital signage data with
+    data downloaded from the remote server.
+    """
 
-    with NamedTemporaryFile(mode='w+b', suffix='.tar.xz') as tmp:
+    with TemporaryFile(mode='w+b') as tmp:
         for chunk in retrieve(config, args):
             tmp.write(chunk)
 
         tmp.flush()
-        return update(tmp.name, args.directory, chunk_size=args.chunk_size)
+        tmp.seek(0)
+        return update(tmp, args.directory, chunk_size=args.chunk_size)
 
     return False
 
