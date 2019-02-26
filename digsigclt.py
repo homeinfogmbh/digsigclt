@@ -22,7 +22,7 @@
 #
 #  Maintainer: Richard Neumann <r dot neumann at homeinfo period de>
 #
-####################################################################
+#######################################################################
 """Digital signage cross-platform client."""
 
 from argparse import ArgumentParser
