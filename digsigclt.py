@@ -371,10 +371,16 @@ def update(tar_xz, directory):
 
         tmpd = Path(tmpd)
         manifest = get_manifest(tmpd)
-        copydir(tmpd, directory)
+
+        try:
+            copydir(tmpd, directory)
+        except PermissionError as permission_error:
+            LOGGER.critical(permission_error)
+            return False
 
     strip_files(directory, manifest)
     strip_tree(directory)
+    return True
 
 
 def do_sync(config, args):
@@ -394,8 +400,7 @@ def do_sync(config, args):
         LOGGER.critical(
             'Received invalid content type: %s.', invalid_content_type)
     else:
-        update(tar_xz, args.directory)
-        return True
+        return update(tar_xz, args.directory)
 
     return False
 
