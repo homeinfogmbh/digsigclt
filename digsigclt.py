@@ -470,8 +470,8 @@ def server(config, args):
         return
 
 
-def main():
-    """Main method to run."""
+def get_args():
+    """Returns the command line arguments."""
 
     parser = ArgumentParser(description=DESCRIPTION)
     parser.add_argument(
@@ -495,7 +495,13 @@ def main():
         help='chunk size to use during file operations')
     parser.add_argument(
         '--verbose', '-v', action='store_true', help='turn on verbose logging')
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+def main():
+    """Main method to run."""
+
+    args = get_args()
     basicConfig(level=DEBUG if args.verbose else INFO, format=LOG_FORMAT)
     LOGGER.debug('Target directory: %s', args.directory)
 
@@ -503,14 +509,14 @@ def main():
         LOGGER.critical('Target directory does not exist: %s.', args.directory)
         exit(2)
 
-    if not args.config:
+    if args.config:
+        config = args.config
+    else:
         try:
             config = get_config()
         except MissingConfiguration:
             LOGGER.critical('No configuration found.')
             exit(3)
-    else:
-        config = args.config
 
     if args.server:
         server(config, args)
