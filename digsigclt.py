@@ -27,6 +27,7 @@
 
 from argparse import ArgumentParser
 from contextlib import suppress
+from functools import lru_cache
 from hashlib import sha256
 from http.client import IncompleteRead
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -53,8 +54,9 @@ REG_KEY = r'SOFTWARE\HOMEINFO\digsigclt'
 OS64BIT = {'AMD64', 'x86_64'}
 LOCKFILE_NAME = 'digsigclt.sync.lock'
 MANIFEST_FILENAME = 'manifest.json'
-DEFAULT_DIR_LINUX = '/usr/share/digsig'
-DEFAULT_DIR_WINDOWS = 'C:\\HOMEINFOGmbH\\content'
+DEFAULT_DIRS = {
+    'Linux': '/usr/share/digsig',
+    'Windows': 'C:\\HOMEINFOGmbH\\content'}
 LOG_FORMAT = '[%(levelname)s] %(name)s: %(message)s'
 LOGGER = getLogger('digsigclt')
 
@@ -91,6 +93,15 @@ class InvalidContentType(Exception):
 
 class Locked(Exception):
     """Indicates that the synchronization is currently locked."""
+
+
+@lru_cache(maxsize=1)
+def get_os():
+    """Returns the operating system."""
+
+    os_ = system()
+    LOGGER.debug('Running on %s.', os_)
+    return os_
 
 
 def is32on64():
@@ -191,15 +202,10 @@ def get_directory(directory):
 def get_default_directory():
     """Returns the target directory."""
 
-    sys = system()
-
-    if sys == 'Linux':
-        return DEFAULT_DIR_LINUX
-
-    if sys == 'Windows':
-        return DEFAULT_DIR_WINDOWS
-
-    raise UnsupportedSystem(sys)
+    try:
+        return DEFAULT_DIRS[get_os()]
+    except KeyError:
+        raise UnsupportedSystem(get_os())
 
 
 def _get_config_linux():
@@ -284,19 +290,18 @@ def _get_config_windows():
     raise MissingConfiguration()
 
 
+CONFIG_FUNCS = {
+    'Linux': _get_config_linux,
+    'Windows': _get_config_windows}
+
+
 def get_config():
     """Returns the respective configuration:"""
 
-    sys = system()
-    LOGGER.debug('Running on %s.', sys)
-
-    if sys == 'Linux':
-        return _get_config_linux()
-
-    if sys == 'Windows':
-        return _get_config_windows()
-
-    raise UnsupportedSystem(sys)
+    try:
+        return CONFIG_FUNCS[get_os()]()
+    except KeyError:
+        raise UnsupportedSystem(get_os())
 
 
 def get_sha256sums(directory):
@@ -465,9 +470,6 @@ def main():
     if not args.config:
         try:
             config = get_config()
-        except UnsupportedSystem as unsupported_system:
-            LOGGER.critical('Cannot run on %s.', unsupported_system)
-            exit(2)
         except MissingConfiguration:
             LOGGER.critical('No configuration found.')
             exit(3)
@@ -605,4 +607,8 @@ LOCK_FILE = LockFile(LOCKFILE_NAME)
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except UnsupportedSystem as unsupported_system:
+        LOGGER.critical('Cannot run on %s.', unsupported_system)
+        exit(2)
