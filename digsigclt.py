@@ -193,7 +193,7 @@ def get_manifest(tmpd):
 def get_directory(directory):
     """Returns the target directory."""
 
-    if directory == '--':
+    if directory == '.':
         return Path.cwd()
 
     return Path(directory)
