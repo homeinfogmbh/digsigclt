@@ -450,6 +450,9 @@ def main():
         '--max-retries', '-r', type=int, default=3,
         help='maximum amount to retry HTTP connections')
     parser.add_argument(
+        '--config', '-c', type=loads, default=None,
+        help='use the specified config')
+    parser.add_argument(
         '--verbose', '-v', action='store_true', help='turn on verbose logging')
     args = parser.parse_args()
     basicConfig(level=DEBUG if args.verbose else INFO, format=LOG_FORMAT)
@@ -459,14 +462,17 @@ def main():
         LOGGER.critical('Target directory does not exist: %s.', args.directory)
         exit(2)
 
-    try:
-        config = get_config()
-    except UnsupportedSystem as unsupported_system:
-        LOGGER.critical('Cannot run on %s.', unsupported_system)
-        exit(2)
-    except MissingConfiguration:
-        LOGGER.critical('No configuration found.')
-        exit(3)
+    if args.config is None:
+        try:
+            config = get_config()
+        except UnsupportedSystem as unsupported_system:
+            LOGGER.critical('Cannot run on %s.', unsupported_system)
+            exit(2)
+        except MissingConfiguration:
+            LOGGER.critical('No configuration found.')
+            exit(3)
+    else:
+        config = args.config
 
     if args.server:
         server(config, args)
