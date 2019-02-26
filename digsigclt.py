@@ -71,6 +71,9 @@ class UnsupportedSystem(Exception):
         super().__init__()
         self.system = system
 
+    def __str__(self):
+        return self.system
+
 
 class MissingConfiguration(Exception):
     """Indicates that the configuration is missing."""
@@ -332,16 +335,14 @@ def read_retry(response, *, retries=0):
         raise
 
 
-def retrieve(directory):
+def retrieve(config, sha256sums):
     """Retrieves data from the server."""
 
-    config = get_config()
     params = {key: str(value) for key, value in config.items()}
     parse_result = ParseResult(*SERVER, '', urlencode(params), '')
     url = parse_result.geturl()
-    data = get_sha256list(directory).encode()
     headers = {'Content-Type': 'application/json'}
-    request = Request(url, data=data, headers=headers)
+    request = Request(url, data=sha256sums.encode(), headers=headers)
     LOGGER.debug('Retrieving files from %s.', request.full_url)
 
     with urlopen(request) as response:
@@ -372,11 +373,13 @@ def update(tar_xz, directory):
     strip_tree(directory)
 
 
-def do_sync(directory):
+def do_sync(config, directory):
     """Synchronizes the data."""
 
+    sha256sums = get_sha256list(directory)
+
     try:
-        tar_xz = retrieve(directory)
+        tar_xz = retrieve(sha256sums, config)
     except MissingConfiguration:
         LOGGER.critical('Cannot download data due to missing configuration.')
     except URLError as url_error:
@@ -395,31 +398,31 @@ def do_sync(directory):
     return False
 
 
-def sync_in_thread(directory):
+def sync_in_thread(config, directory):
     """Starts the synchronization within a thread."""
 
     try:
-        do_sync(directory)
+        do_sync(config, directory)
     finally:
-        LOCK_FILE.unlink()
+        LOCK_FILE.unlink()  # Release lock acquired outside of thread.
 
 
-def sync(directory):
+def sync(config, directory):
     """Performs a data synchronization."""
 
     try:
         with LOCK_FILE:
-            return do_sync(directory)
+            return do_sync(config, directory)
     except Locked:
         LOGGER.error('Synchronization is locked.')
         return False
 
 
-def server(args):
+def server(config, directory, port):
     """Runs the HTTP server."""
 
-    socket = ('0.0.0.0', args.port)
-    HTTPRequestHandler.directory = args.directory
+    socket = ('0.0.0.0', port)
+    HTTPRequestHandler.args = (config, directory)
     httpd = HTTPServer(socket, HTTPRequestHandler)
     LOGGER.info('Listening on %s:%i.', *socket)
 
@@ -453,10 +456,19 @@ def main():
         LOGGER.critical('Target directory does not exist: %s.', args.directory)
         exit(2)
 
+    try:
+        config = get_config()
+    except UnsupportedSystem as unsupported_system:
+        LOGGER.critical('Cannot run on %s.', unsupported_system)
+        exit(2)
+    except MissingConfiguration:
+        LOGGER.critical('No configuration found.')
+        exit(3)
+
     if args.server:
-        server(args)
+        server(config, args.directory, args.port)
     else:
-        if sync(args.directory):
+        if sync(config, args.directory):
             exit(0)
         else:
             exit(1)
@@ -465,7 +477,7 @@ def main():
 class HTTPRequestHandler(BaseHTTPRequestHandler):
     """Handles HTTP requests."""
 
-    directory = None
+    args = ()
     sync_thread = None
 
     @classmethod
@@ -492,7 +504,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             LOCK_FILE.unlink()
             return False
 
-        cls.sync_thread = Thread(target=sync_in_thread, args=(cls.directory,))
+        cls.sync_thread = Thread(target=sync_in_thread, args=cls.args)
         cls.sync_thread.start()
         return True
 
