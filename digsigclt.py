@@ -611,4 +611,4 @@ if __name__ == '__main__':
         main()
     except UnsupportedSystem as unsupported_system:
         LOGGER.critical('Cannot run on %s.', unsupported_system)
-        exit(2)
+        exit(4)
