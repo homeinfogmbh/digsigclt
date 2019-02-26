@@ -27,7 +27,7 @@
 
 from argparse import ArgumentParser
 from contextlib import suppress
-from functools import lru_cache
+from functools import lru_cache, partial
 from hashlib import sha256
 from http.client import IncompleteRead
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -93,119 +93,6 @@ class InvalidContentType(Exception):
 
 class Locked(Exception):
     """Indicates that the synchronization is currently locked."""
-
-
-@lru_cache(maxsize=1)
-def get_os():
-    """Returns the operating system."""
-
-    os_ = system()
-    LOGGER.debug('Running on %s.', os_)
-    return os_
-
-
-def is32on64():
-    """Determines whether we run 32 bit
-    python on a 64 bit operating system.
-    """
-
-    py_arch, _ = architecture()
-    sys_arch = machine()
-    return py_arch == '32bit' and sys_arch in OS64BIT
-
-
-def get_files(directory):
-    """Lists the current files."""
-
-    for inode in directory.iterdir():
-        if inode.is_dir():
-            yield from get_files(directory=inode)
-        elif inode.is_file():
-            yield inode
-
-
-def copydir(source_dir, dest_dir):
-    """Copies all contents of source_dir
-    into dest_dir, overwriting all files.
-    """
-
-    for source_path in source_dir.iterdir():
-        relpath = source_path.relative_to(source_dir)
-        dest_path = dest_dir.joinpath(relpath)
-
-        if source_path.is_file():
-            LOGGER.info('Updating: %s.', dest_path)
-
-            with dest_path.open('wb') as dst, source_path.open('rb') as src:
-                dst.write(src.read())
-        elif source_path.is_dir():
-            if dest_path.is_file():
-                dest_path.unlink()
-
-            dest_path.mkdir(mode=0o755, parents=True, exist_ok=True)
-            copydir(source_path, dest_path)
-
-
-def strip_files(directory, manifest):
-    """Removes all files from the directory tree,
-    whose SHA-256 checksums are not in the manifest.
-    """
-
-    for path in get_files(directory):
-        relpath = path.relative_to(directory)
-
-        if str(relpath) not in manifest:
-            LOGGER.debug('Removing obsolete file: %s.', path)
-            path.unlink()
-
-
-def strip_tree(directory):
-    """Removes all empty directory sub-trees."""
-
-    def strip_subdir(subdir):
-        """Recursively removes empty directory trees."""
-        for inode in subdir.iterdir():
-            if inode.is_dir():
-                strip_subdir(inode)
-
-        if not tuple(subdir.iterdir()):     # Directory is empty.
-            LOGGER.debug('Removing empty directory: %s.', subdir)
-            subdir.rmdir()
-
-    for inode in directory.iterdir():
-        if inode.is_dir():
-            strip_subdir(inode)
-
-
-def get_manifest(tmpd):
-    """Reads the manifest from the respective temporary directory."""
-
-    LOGGER.debug('Reading manifest.')
-    path = tmpd.joinpath(MANIFEST_FILENAME)
-
-    with path.open('r') as file:
-        manifest = load(file)
-
-    path.unlink()   # File is no longer needed.
-    return frozenset(manifest)
-
-
-def get_directory(directory):
-    """Returns the target directory."""
-
-    if directory == '.':
-        return Path.cwd()
-
-    return Path(directory)
-
-
-def get_default_directory():
-    """Returns the target directory."""
-
-    try:
-        return DEFAULT_DIRS[get_os()]
-    except KeyError:
-        raise UnsupportedSystem(get_os())
 
 
 def _get_config_linux():
@@ -304,23 +191,145 @@ def get_config():
         raise UnsupportedSystem(get_os())
 
 
-def get_sha256sums(directory):
+@lru_cache(maxsize=1)
+def get_os():
+    """Returns the operating system."""
+
+    os_ = system()
+    LOGGER.debug('Running on %s.', os_)
+    return os_
+
+
+def is32on64():
+    """Determines whether we run 32 bit
+    python on a 64 bit operating system.
+    """
+
+    py_arch, _ = architecture()
+    sys_arch = machine()
+    return py_arch == '32bit' and sys_arch in OS64BIT
+
+
+def get_files(directory):
+    """Lists the current files."""
+
+    for inode in directory.iterdir():
+        if inode.is_dir():
+            yield from get_files(directory=inode)
+        elif inode.is_file():
+            yield inode
+
+
+def copy_file(src_file, dst_file, *, chunk_size=4096):
+    """Copies a file from src to dst."""
+
+    with src_file.open('wb') as dst, dst_file.open('rb') as src:
+        for chunk in iter(partial(src.read, chunk_size), b''):
+            dst.write(chunk)
+
+
+def copydir(source_dir, dest_dir, *, chunk_size=4096):
+    """Copies all contents of source_dir
+    into dest_dir, overwriting all files.
+    """
+
+    for source_path in source_dir.iterdir():
+        relpath = source_path.relative_to(source_dir)
+        dest_path = dest_dir.joinpath(relpath)
+
+        if source_path.is_file():
+            LOGGER.info('Updating: %s.', dest_path)
+            copy_file(dest_path, source_path, chunk_size=chunk_size)
+        elif source_path.is_dir():
+            if dest_path.is_file():
+                dest_path.unlink()
+
+            dest_path.mkdir(mode=0o755, parents=True, exist_ok=True)
+            copydir(source_path, dest_path, chunk_size=chunk_size)
+
+
+def strip_files(directory, manifest):
+    """Removes all files from the directory tree,
+    whose SHA-256 checksums are not in the manifest.
+    """
+
+    for path in get_files(directory):
+        relpath = path.relative_to(directory)
+
+        if str(relpath) not in manifest:
+            LOGGER.debug('Removing obsolete file: %s.', path)
+            path.unlink()
+
+
+def strip_tree(directory):
+    """Removes all empty directory sub-trees."""
+
+    def strip_subdir(subdir):
+        """Recursively removes empty directory trees."""
+        for inode in subdir.iterdir():
+            if inode.is_dir():
+                strip_subdir(inode)
+
+        if not tuple(subdir.iterdir()):     # Directory is empty.
+            LOGGER.debug('Removing empty directory: %s.', subdir)
+            subdir.rmdir()
+
+    for inode in directory.iterdir():
+        if inode.is_dir():
+            strip_subdir(inode)
+
+
+def get_manifest(tmpd):
+    """Reads the manifest from the respective temporary directory."""
+
+    LOGGER.debug('Reading manifest.')
+    path = tmpd.joinpath(MANIFEST_FILENAME)
+
+    with path.open('r') as file:
+        manifest = load(file)
+
+    path.unlink()   # File is no longer needed.
+    return frozenset(manifest)
+
+
+def get_directory(directory):
+    """Returns the target directory."""
+
+    if directory == '.':
+        return Path.cwd()
+
+    return Path(directory)
+
+
+def get_default_directory():
+    """Returns the target directory."""
+
+    try:
+        return DEFAULT_DIRS[get_os()]
+    except KeyError:
+        raise UnsupportedSystem(get_os())
+
+
+def get_sha256sums(directory, chunk_size=4096):
     """Yields the SHA-256 sums in the current working directory."""
 
     for filename in get_files(directory):
-        with filename.open('rb') as file:
-            bytes_ = file.read()
+        sha256sum = sha256()
 
-        sha256sum = sha256(bytes_).hexdigest()
-        LOGGER.debug('Found file: %s (%s).', filename, sha256sum)
+        with filename.open('rb') as file:
+            for chunk in iter(partial(file.read, chunk_size), b''):
+                sha256sum.update(chunk)
+
+        sha256sum = sha256sum.hexdigest()
+        LOGGER.debug('SHA-256 sum of "%s" is %s.', filename, sha256sum)
         yield sha256sum
 
 
-def get_sha256list(directory):
+def get_sha256list(directory, *, chunk_size=4096):
     """Returns the manifest list."""
 
     LOGGER.debug('Creating SHA-256 sums of current files.')
-    sha256sums = list(get_sha256sums(directory))
+    sha256sums = list(get_sha256sums(directory, chunk_size=chunk_size))
     return dumps(sha256sums)
 
 
@@ -345,7 +354,7 @@ def retrieve(config, args):
     query = urlencode({key: str(value) for key, value in config.items()})
     url = ParseResult(scheme, netloc, path, params, query, fragment).geturl()
     headers = {'Content-Type': 'application/json'}
-    sha256sums = get_sha256list(args.directory)
+    sha256sums = get_sha256list(args.directory, chunk_size=args.chunk_size)
     request = Request(url, data=sha256sums.encode(), headers=headers)
     LOGGER.debug('Retrieving files from %s.', request.full_url)
 
@@ -358,7 +367,7 @@ def retrieve(config, args):
         raise InvalidContentType(content_type)
 
 
-def update(tar_xz, directory):
+def update(tar_xz, directory, *, chunk_size=4096):
     """Updates the digital signage data
     from the respective tar.xz archive.
     """
@@ -373,7 +382,7 @@ def update(tar_xz, directory):
         manifest = get_manifest(tmpd)
 
         try:
-            copydir(tmpd, directory)
+            copydir(tmpd, directory, chunk_size=chunk_size)
         except PermissionError as permission_error:
             LOGGER.critical(permission_error)
             return False
@@ -400,7 +409,7 @@ def do_sync(config, args):
         LOGGER.critical(
             'Received invalid content type: %s.', invalid_content_type)
     else:
-        return update(tar_xz, args.directory)
+        return update(tar_xz, args.directory, chunk_size=args.chunk_size)
 
     return False
 
@@ -462,6 +471,9 @@ def main():
     parser.add_argument(
         '--config', '-c', type=loads, default=None,
         help='use the specified config')
+    parser.add_argument(
+        '--chunk-size', type=int, default=4096,
+        help='chunk size to use during file operations')
     parser.add_argument(
         '--verbose', '-v', action='store_true', help='turn on verbose logging')
     args = parser.parse_args()
