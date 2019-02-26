@@ -240,7 +240,7 @@ def _get_config_linux():
 
 
 def _get_config_windows():
-    """Returns the configuration from the windows registry."""
+    """Returns the configuration on a Windows system."""
     # Import winreg in Windows-specific function
     # since it is not available on non-Windows systems.
     from winreg import HKEY_LOCAL_MACHINE   # pylint: disable=E0401
