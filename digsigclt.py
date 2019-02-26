@@ -94,7 +94,7 @@ class Locked(Exception):
 
 def is32on64():
     """Determines whether we run 32 bit
-    python on a 64 bit oeprating system.
+    python on a 64 bit operating system.
     """
 
     py_arch, _ = architecture()
