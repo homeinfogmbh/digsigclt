@@ -462,7 +462,7 @@ def main():
         LOGGER.critical('Target directory does not exist: %s.', args.directory)
         exit(2)
 
-    if args.config is None:
+    if not args.config:
         try:
             config = get_config()
         except UnsupportedSystem as unsupported_system:
