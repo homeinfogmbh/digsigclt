@@ -389,7 +389,7 @@ def do_sync(config, args):
         LOGGER.critical(
             'Received invalid content type: %s.', invalid_content_type)
     else:
-        update(tar_xz, args)
+        update(tar_xz, args.directory)
         return True
 
     return False
