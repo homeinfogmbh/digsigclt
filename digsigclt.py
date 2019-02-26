@@ -31,7 +31,6 @@ from functools import lru_cache, partial
 from hashlib import sha256
 from http.client import IncompleteRead
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from io import BytesIO
 from json import dumps, load, loads
 from logging import DEBUG, INFO, basicConfig, getLogger
 from pathlib import Path
@@ -39,7 +38,7 @@ from platform import architecture, machine, system
 from socket import gethostname
 from sys import exit    # pylint: disable=W0622
 from tarfile import open as tar_open
-from tempfile import gettempdir, TemporaryDirectory
+from tempfile import gettempdir, NamedTemporaryFile, TemporaryDirectory
 from threading import Thread
 from urllib.error import URLError
 from urllib.parse import urlencode, urlparse, ParseResult
@@ -333,7 +332,7 @@ def get_sha256list(directory, *, chunk_size=4096):
     return dumps(sha256sums)
 
 
-def read_retry(response, max_retries, *, retries=0):
+def read_retry(response, chunk_size, max_retries, *, retries=0):
     """Reads the respective response."""
 
     try:
@@ -342,9 +341,17 @@ def read_retry(response, max_retries, *, retries=0):
         LOGGER.error('Could not read response from webserver.')
 
         if retries <= max_retries:
-            return read_retry(response, max_retries, retries=retries+1)
+            return read_retry(
+                response, chunk_size, max_retries, retries=retries+1)
 
         raise
+
+
+def stream(response, chunk_size, max_retries):
+    """Streams the response."""
+
+    read = partial(read_retry, response, chunk_size, max_retries)
+    return iter(read, b'')
 
 
 def retrieve(config, args):
@@ -361,21 +368,19 @@ def retrieve(config, args):
     with urlopen(request) as response:
         content_type = response.headers.get('Content-Type')
 
-        if content_type == 'application/x-xz':
-            return read_retry(response, args.max_retries)
+        if content_type != 'application/x-xz':
+            raise InvalidContentType(content_type)
 
-        raise InvalidContentType(content_type)
+        yield from stream(response, args.chunk_size, args.max_retries)
 
 
-def update(tar_xz, directory, *, chunk_size=4096):
+def update(filename, directory, *, chunk_size=4096):
     """Updates the digital signage data
     from the respective tar.xz archive.
     """
 
-    fileobj = BytesIO(tar_xz)
-
     with TemporaryDirectory() as tmpd:
-        with tar_open(mode='r:xz', fileobj=fileobj) as tar:
+        with tar_open(name=filename, mode='r:xz') as tar:
             tar.extractall(path=tmpd)
 
         tmpd = Path(tmpd)
@@ -395,8 +400,21 @@ def update(tar_xz, directory, *, chunk_size=4096):
 def do_sync(config, args):
     """Synchronizes the data."""
 
+    with NamedTemporaryFile(mode='w+b', suffix='.tar.xz') as tmp:
+        for chunk in retrieve(config, args):
+            tmp.write(chunk)
+
+        tmp.flush()
+        return update(tmp.name, args.directory, chunk_size=args.chunk_size)
+
+    return False
+
+
+def safe_sync(config, args):
+    """Handles error during synchronization."""
+
     try:
-        tar_xz = retrieve(config, args)
+        return do_sync(config, args)
     except MissingConfiguration:
         LOGGER.critical('Cannot download data due to missing configuration.')
     except URLError as url_error:
@@ -408,30 +426,28 @@ def do_sync(config, args):
     except InvalidContentType as invalid_content_type:
         LOGGER.critical(
             'Received invalid content type: %s.', invalid_content_type)
-    else:
-        return update(tar_xz, args.directory, chunk_size=args.chunk_size)
 
     return False
 
 
-def sync_in_thread(config, args):
-    """Starts the synchronization within a thread."""
-
-    try:
-        do_sync(config, args)
-    finally:
-        LOCK_FILE.unlink()  # Release lock acquired outside of thread.
-
-
 def sync(config, args):
-    """Performs a data synchronization."""
+    """Performs a data synchronization with lock."""
 
     try:
         with LOCK_FILE:
-            return do_sync(config, args)
+            return safe_sync(config, args)
     except Locked:
         LOGGER.error('Synchronization is locked.')
         return False
+
+
+def sync_in_thread(config, args):
+    """Performs a synchronization within a thread."""
+
+    try:
+        safe_sync(config, args)
+    finally:
+        LOCK_FILE.unlink()  # Release lock acquired outside of thread.
 
 
 def server(config, args):
