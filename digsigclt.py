@@ -40,11 +40,10 @@ from sys import exit    # pylint: disable=W0622
 from tarfile import open as tar_open
 from tempfile import gettempdir, TemporaryDirectory, TemporaryFile
 from threading import Thread
-from typing import Iterable
+from typing import BinaryIO, Iterable
 from urllib.error import URLError
 from urllib.parse import urlencode, urlparse, ParseResult
 from urllib.request import urlopen, Request
-from _io import BufferedRandom
 
 
 DESCRIPTION = '''HOMEINFO multi-platform digital signage client.
@@ -379,8 +378,7 @@ def retrieve(config: dict, args: Namespace) -> Iterable[bytes]:
         yield from stream(response, args.chunk_size, args.max_retries)
 
 
-def update(file: BufferedRandom, directory: Path, *,
-           chunk_size: int = 4096) -> bool:
+def update(file: BinaryIO, directory: Path, *, chunk_size: int = 4096) -> bool:
     """Updates the digital signage data
     from the respective tar.xz archive.
     """
