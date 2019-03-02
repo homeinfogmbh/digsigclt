@@ -25,11 +25,11 @@
 #######################################################################
 """Digital signage cross-platform client."""
 
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from contextlib import suppress
 from functools import lru_cache, partial
 from hashlib import sha256
-from http.client import IncompleteRead
+from http.client import IncompleteRead, HTTPResponse
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from json import dumps, load, loads
 from logging import DEBUG, INFO, basicConfig, getLogger
@@ -40,9 +40,11 @@ from sys import exit    # pylint: disable=W0622
 from tarfile import open as tar_open
 from tempfile import gettempdir, TemporaryDirectory, TemporaryFile
 from threading import Thread
+from typing import Iterable
 from urllib.error import URLError
 from urllib.parse import urlencode, urlparse, ParseResult
 from urllib.request import urlopen, Request
+from _io import BufferedRandom
 
 
 DESCRIPTION = '''HOMEINFO multi-platform digital signage client.
@@ -94,7 +96,7 @@ class Locked(Exception):
     """Indicates that the synchronization is currently locked."""
 
 
-def _get_config_linux():
+def _get_config_linux() -> dict:
     """Returns the configuration on a Linux system."""
 
     hostname = gethostname()
@@ -125,7 +127,7 @@ def _get_config_linux():
     return {'tid': tid, 'cid': cid}
 
 
-def is32on64():
+def is32on64() -> bool:
     """Determines whether we run 32 bit
     python on a 64 bit operating system.
     """
@@ -135,7 +137,7 @@ def is32on64():
     return py_arch == '32bit' and sys_arch in OS64BIT
 
 
-def _get_config_windows():
+def _get_config_windows() -> dict:
     """Returns the configuration on a Windows system."""
     # Import winreg in Windows-specific function
     # since it is not available on non-Windows systems.
@@ -192,7 +194,7 @@ CONFIG_FUNCS = {
 
 
 @lru_cache(maxsize=1)
-def get_os():
+def get_os() -> str:
     """Returns the operating system."""
 
     os_ = system()
@@ -200,7 +202,7 @@ def get_os():
     return os_
 
 
-def get_config():
+def get_config() -> dict:
     """Returns the respective configuration:"""
 
     try:
@@ -209,7 +211,7 @@ def get_config():
         raise UnsupportedSystem(get_os())
 
 
-def get_files(directory):
+def get_files(directory: dict) -> Iterable[Path]:
     """Lists the current files."""
 
     for inode in directory.iterdir():
@@ -219,7 +221,7 @@ def get_files(directory):
             yield inode
 
 
-def copy_file(src_file, dst_file, *, chunk_size=4096):
+def copy_file(src_file: Path, dst_file: Path, *, chunk_size: int = 4096):
     """Copies a file from src to dst."""
 
     with src_file.open('wb') as dst, dst_file.open('rb') as src:
@@ -227,7 +229,7 @@ def copy_file(src_file, dst_file, *, chunk_size=4096):
             dst.write(chunk)
 
 
-def copydir(source_dir, dest_dir, *, chunk_size=4096):
+def copydir(source_dir: Path, dest_dir: Path, *, chunk_size: int = 4096):
     """Copies all contents of source_dir
     into dest_dir, overwriting all files.
     """
@@ -247,7 +249,7 @@ def copydir(source_dir, dest_dir, *, chunk_size=4096):
             copydir(source_path, dest_path, chunk_size=chunk_size)
 
 
-def strip_files(directory, manifest):
+def strip_files(directory: Path, manifest: frozenset):
     """Removes all files from the directory tree,
     whose SHA-256 checksums are not in the manifest.
     """
@@ -260,10 +262,10 @@ def strip_files(directory, manifest):
             path.unlink()
 
 
-def strip_tree(directory):
+def strip_tree(directory: Path):
     """Removes all empty directory sub-trees."""
 
-    def strip_subdir(subdir):
+    def strip_subdir(subdir: Path):
         """Recursively removes empty directory trees."""
         for inode in subdir.iterdir():
             if inode.is_dir():
@@ -278,7 +280,7 @@ def strip_tree(directory):
             strip_subdir(inode)
 
 
-def get_manifest(tmpd):
+def get_manifest(tmpd: Path) -> frozenset:
     """Reads the manifest from the respective temporary directory."""
 
     LOGGER.debug('Reading manifest.')
@@ -291,7 +293,7 @@ def get_manifest(tmpd):
     return frozenset(manifest)
 
 
-def get_directory(directory):
+def get_directory(directory: str) -> Path:
     """Returns the target directory."""
 
     if directory == '.':
@@ -300,7 +302,7 @@ def get_directory(directory):
     return Path(directory)
 
 
-def get_default_directory():
+def get_default_directory() -> Path:
     """Returns the target directory."""
 
     try:
@@ -309,7 +311,7 @@ def get_default_directory():
         raise UnsupportedSystem(get_os())
 
 
-def get_sha256sums(directory, chunk_size=4096):
+def get_sha256sums(directory: Path, chunk_size: int = 4096) -> Iterable[tuple]:
     """Yields the SHA-256 sums in the current working directory."""
 
     for filename in get_files(directory):
@@ -325,7 +327,7 @@ def get_sha256sums(directory, chunk_size=4096):
         yield (str(relpath), sha256sum)
 
 
-def get_sha256_json(directory, *, chunk_size=4096):
+def get_sha256_json(directory: Path, *, chunk_size: int = 4096) -> str:
     """Returns the manifest list."""
 
     LOGGER.debug('Creating SHA-256 sums of current files.')
@@ -333,11 +335,12 @@ def get_sha256_json(directory, *, chunk_size=4096):
     return dumps(sha256sums)
 
 
-def read_retry(response, chunk_size, max_retries, *, retries=0):
+def read_retry(response: HTTPResponse, chunk_size: int, max_retries: int, *,
+               retries: int = 0) -> bytes:
     """Reads the respective response."""
 
     try:
-        return response.read()
+        return response.read(chunk_size)
     except IncompleteRead:
         LOGGER.error('Could not read response from webserver.')
 
@@ -348,14 +351,15 @@ def read_retry(response, chunk_size, max_retries, *, retries=0):
         raise
 
 
-def stream(response, chunk_size, max_retries):
+def stream(response: HTTPResponse, chunk_size: int,
+           max_retries: int) -> Iterable[bytes]:
     """Streams the response."""
 
     read = partial(read_retry, response, chunk_size, max_retries)
     return iter(read, b'')
 
 
-def retrieve(config, args):
+def retrieve(config: dict, args: Namespace) -> Iterable[bytes]:
     """Retrieves data from the server."""
 
     scheme, netloc, path, params, _, fragment = args.url
@@ -375,7 +379,8 @@ def retrieve(config, args):
         yield from stream(response, args.chunk_size, args.max_retries)
 
 
-def update(file, directory, *, chunk_size=4096):
+def update(file: BufferedRandom, directory: Path, *,
+           chunk_size: int = 4096) -> bool:
     """Updates the digital signage data
     from the respective tar.xz archive.
     """
@@ -398,7 +403,7 @@ def update(file, directory, *, chunk_size=4096):
     return True
 
 
-def do_sync(config, args):
+def do_sync(config: dict, args: Namespace) -> bool:
     """Updates local digital signage data with
     data downloaded from the remote server.
     """
@@ -414,7 +419,7 @@ def do_sync(config, args):
     return False
 
 
-def safe_sync(config, args):
+def safe_sync(config: dict, args: Namespace) -> bool:
     """Handles error during synchronization."""
 
     try:
@@ -434,7 +439,7 @@ def safe_sync(config, args):
     return False
 
 
-def sync(config, args):
+def sync(config: dict, args: Namespace) -> bool:
     """Performs a data synchronization with lock."""
 
     try:
@@ -445,7 +450,7 @@ def sync(config, args):
         return False
 
 
-def sync_in_thread(config, args):
+def sync_in_thread(config: dict, args: Namespace):
     """Performs a synchronization within a thread."""
 
     try:
@@ -454,7 +459,7 @@ def sync_in_thread(config, args):
         LOCK_FILE.unlink()  # Release lock acquired outside of thread.
 
 
-def server(config, args):
+def server(config: dict, args: Namespace):
     """Runs the HTTP server."""
 
     socket = ('0.0.0.0', args.port)
@@ -471,35 +476,37 @@ def server(config, args):
         return
 
 
-def get_args():
+def get_args() -> Namespace:
     """Returns the command line arguments."""
 
     parser = ArgumentParser(description=DESCRIPTION)
     parser.add_argument(
-        '--server', '-S', action='store_true', help='run in server mode')
+        '-S', '--server', action='store_true', help='run in server mode')
     parser.add_argument(
-        '--url', '-u', type=urlparse, default='http://10.8.0.1/appcmd/digsig',
+        '-u', '--url', type=urlparse, metavar='url',
+        default='http://10.8.0.1/appcmd/digsig',
         help='the URL to the remote server')
     parser.add_argument(
-        '--port', '-p', type=int, default=5000, help='port to listen on')
+        '-p', '--port', type=int, default=5000, metavar='port',
+        help='port to listen on')
     parser.add_argument(
-        '--directory', '-d', type=get_directory,
+        '-d', '--directory', type=get_directory, metavar='dir',
         default=get_default_directory(), help='sets the target directory')
     parser.add_argument(
-        '--max-retries', '-r', type=int, default=3,
+        '-r', '--max-retries', type=int, default=3, metavar='n',
         help='maximum amount to retry HTTP connections')
     parser.add_argument(
-        '--config', '-c', type=loads, default=None,
+        '-c', '--config', type=loads, default=None, metavar='json',
         help='use the specified config')
     parser.add_argument(
-        '--chunk-size', type=int, default=4096,
+        '-s', '--chunk-size', type=int, default=4096, metavar='size',
         help='chunk size to use during file operations')
     parser.add_argument(
-        '--verbose', '-v', action='store_true', help='turn on verbose logging')
+        '-v', '--verbose', action='store_true', help='turn on verbose logging')
     return parser.parse_args()
 
 
-def main():
+def main() -> int:
     """Main method to run."""
 
     args = get_args()
@@ -508,7 +515,7 @@ def main():
 
     if not args.directory.is_dir():
         LOGGER.critical('Target directory does not exist: %s.', args.directory)
-        exit(2)
+        return 2
 
     if args.config:
         config = args.config
@@ -517,15 +524,16 @@ def main():
             config = get_config()
         except MissingConfiguration:
             LOGGER.critical('No configuration found.')
-            exit(3)
+            return 3
 
     if args.server:
         server(config, args)
-    else:
-        if sync(config, args):
-            exit(0)
-        else:
-            exit(1)
+        return 0
+
+    if sync(config, args):
+        return 0
+
+    return 1
 
 
 class HTTPRequestHandler(BaseHTTPRequestHandler):
@@ -535,7 +543,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     sync_thread = None
 
     @classmethod
-    def sync_pending(cls):
+    def sync_pending(cls) -> bool:
         """Returns wehter a synchronization is currently pending."""
         if cls.sync_thread is None:
             return False
@@ -547,7 +555,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         return False
 
     @classmethod
-    def start_sync(cls):
+    def start_sync(cls) -> bool:
         """Starts a synchronization."""
         try:
             LOCK_FILE.create()  # Acquire lock.
@@ -563,17 +571,17 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         return True
 
     @property
-    def content_length(self):
+    def content_length(self) -> int:
         """Returns the content length."""
         return int(self.headers['Content-Length'])
 
     @property
-    def bytes(self):
+    def bytes(self) -> bytes:
         """Returns the POSTed bytes."""
         return self.rfile.read(self.content_length)
 
     @property
-    def json(self):
+    def json(self) -> dict:
         """Returns POSTed JSON data."""
         return loads(self.bytes)
 
@@ -618,17 +626,17 @@ class LockFile:
         self.unlink()
 
     @property
-    def basedir(self):
+    def basedir(self) -> Path:
         """Returns the base directory."""
         return Path(gettempdir())
 
     @property
-    def path(self):
+    def path(self) -> Path:
         """Returns the file path."""
         return self.basedir.joinpath(self.filename)
 
     @property
-    def exists(self):
+    def exists(self) -> bool:
         """Tests whether the lock file exists."""
         return self.path.is_file()
 
@@ -651,7 +659,7 @@ LOCK_FILE = LockFile(LOCKFILE_NAME)
 
 if __name__ == '__main__':
     try:
-        main()
+        exit(main())
     except UnsupportedSystem as unsupported_system:
         LOGGER.critical('Cannot run on %s.', unsupported_system)
         exit(4)
