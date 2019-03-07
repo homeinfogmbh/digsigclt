@@ -257,20 +257,20 @@ def main() -> int:
 class HTTPRequestHandler(BaseHTTPRequestHandler):
     """Handles HTTP requests."""
 
-    def update(self):
-        """Performs update."""
-        file = BytesIO(self.rfile.read())
-        return RUNTIME['update'](file)
-
-    @staticmethod
-    def gen_manifest():
-        """Returns the current manifest."""
-        return dict(RUNTIME['gen_manifest']())
-
     @property
     def content_length(self) -> int:
         """Returns the content length."""
         return int(self.headers['Content-Length'])
+
+    @property
+    def bytes(self):
+        """Returns the POST-ed bytes."""
+        return self.rfile.read(self.content_length)
+
+    @property
+    def file(self):
+        """Returns a seekable file."""
+        return BytesIO(self.bytes)
 
     def send_data(self, value, status_code):
         """Sends the respective data."""
@@ -295,7 +295,8 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         except Locked:
             return self.send_data('Synchronization already in progress.', 503)
         else:
-            return self.send_data(dict(self.gen_manifest()), 200)
+            manifest = dict(RUNTIME['gen_manifest']())
+            return self.send_data(manifest, 200)
         finally:
             release_lock()
 
@@ -306,8 +307,10 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         except Locked:
             return self.send_data('Synchronization already in progress.', 503)
         else:
-            status_code = 200 if self.update() else 500
-            return self.send_data(dict(self.gen_manifest()), status_code)
+            success = RUNTIME['update'](self.file)
+            status_code = 200 if success else 500
+            manifest = dict(RUNTIME['gen_manifest']())
+            return self.send_data(manifest, status_code)
         finally:
             release_lock()
 
