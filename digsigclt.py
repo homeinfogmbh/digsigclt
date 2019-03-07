@@ -30,6 +30,7 @@ from contextlib import suppress
 from functools import partial
 from hashlib import sha256
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from io import BytesIO
 from json import dumps, load
 from logging import DEBUG, INFO, basicConfig, getLogger
 from pathlib import Path
@@ -238,9 +239,9 @@ def main() -> int:
 class HTTPRequestHandler(BaseHTTPRequestHandler):
     """Handles HTTP requests."""
 
-    @staticmethod
-    def update(file):
+    def update(self):
         """Performs update."""
+        file = BytesIO(self.rfile.read())
         return RUNTIME['update'](file)
 
     @staticmethod
@@ -277,7 +278,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         """Retrieves and updates digital signage data."""
         try:
             with LOCK_FILE:
-                success = self.update(self.rfile)
+                success = self.update()
         except Locked:
             self.send_data('Synchronization already in progress.', 503)
         else:
