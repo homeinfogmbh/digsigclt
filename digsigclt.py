@@ -138,17 +138,10 @@ def load_manifest(tmpd: Path) -> frozenset:
     return frozenset(manifest)
 
 
-def get_directory(directory: str) -> Path:
-    """Returns the target directory."""
-
-    if directory == '.':
-        return Path.cwd()
-
-    return Path(directory)
-
-
 def gen_manifest(directory: Path, chunk_size: int = 4096) -> Iterable[tuple]:
-    """Yields the SHA-256 sums in the current working directory."""
+    """Yields tuples of all file's names and their
+    respective SHA-256 sums in the given directory.
+    """
 
     for filename in get_files(directory):
         sha256sum = sha256()
