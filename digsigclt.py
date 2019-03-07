@@ -43,13 +43,8 @@ DESCRIPTION = '''HOMEINFO multi-platform digital signage client.
 Synchronizes data to the current working directory
 or listens on the specified port when in server mode
 to be triggered to do so.'''
-REG_KEY = r'SOFTWARE\HOMEINFO\digsigclt'
-OS64BIT = {'AMD64', 'x86_64'}
 LOCKFILE_NAME = 'digsigclt.sync.lock'
 MANIFEST_FILENAME = 'manifest.json'
-DEFAULT_DIRS = {
-    'Linux': '/usr/share/digsig',
-    'Windows': 'C:\\HOMEINFOGmbH\\content'}
 LOG_FORMAT = '[%(levelname)s] %(name)s: %(message)s'
 LOGGER = getLogger('digsigclt')
 RUNTIME = {}
