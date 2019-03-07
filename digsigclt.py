@@ -212,6 +212,9 @@ def get_args() -> Namespace:
         '-d', '--directory', type=Path, metavar='dir',
         default=Path.cwd(), help='sets the target directory')
     parser.add_argument(
+        '-c', '--chunk-size', type=int, default=4096, metavar='bytes',
+        help='chunk size to use on file operations')
+    parser.add_argument(
         '-v', '--verbose', action='store_true', help='turn on verbose logging')
     return parser.parse_args()
 
