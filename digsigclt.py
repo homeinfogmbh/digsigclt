@@ -281,7 +281,8 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         except Locked:
             self.send_data('Synchronization already in progress.', 503)
         else:
-            self.send_data(dict(self.gen_manifest()), 200 if success else 500)
+            status_code = 200 if success else 500
+            self.send_data(dict(self.gen_manifest()), status_code)
 
 
 class LockFile:
