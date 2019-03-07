@@ -49,7 +49,6 @@ LOCKFILE = Path(gettempdir()).joinpath(LOCKFILE_NAME)
 MANIFEST_FILENAME = 'manifest.json'
 LOG_FORMAT = '[%(levelname)s] %(name)s: %(message)s'
 LOGGER = getLogger('digsigclt')
-RUNTIME = {}
 
 
 class Locked(Exception):
@@ -179,7 +178,7 @@ def gen_manifest(directory: Path, chunk_size: int = 4096) -> Iterable[tuple]:
         yield (str(relpath), sha256sum)
 
 
-def update(directory: Path, file: BinaryIO, *, chunk_size: int = 4096) -> bool:
+def update(file: BinaryIO, directory: Path, *, chunk_size: int = 4096) -> bool:
     """Updates the digital signage data
     from the respective tar.xz archive.
     """
@@ -204,10 +203,10 @@ def update(directory: Path, file: BinaryIO, *, chunk_size: int = 4096) -> bool:
     return True
 
 
-def server(socket: tuple):
+def server(request_handler: BaseHTTPRequestHandler, socket: tuple) -> int:
     """Runs the HTTP server."""
 
-    httpd = HTTPServer(socket, HTTPRequestHandler)
+    httpd = HTTPServer(socket, request_handler)
     LOGGER.info('Listening on "%s:%i".', *socket)
 
     try:
@@ -239,6 +238,80 @@ def get_args() -> Namespace:
     return parser.parse_args()
 
 
+def get_request_handler(directory, chunk_size):
+    """Returns a HTTP request handler for the given arguments."""
+
+    def _gen_manifest():
+        """Returns the manifest as dict."""
+        return dict(gen_manifest(directory, chunk_size=chunk_size))
+
+    def _update(file):
+        """Updates the digital signage data."""
+        return update(file, directory, chunk_size=chunk_size)
+
+    class HTTPRequestHandler(BaseHTTPRequestHandler):
+        """Handles HTTP requests."""
+
+        @property
+        def content_length(self) -> int:
+            """Returns the content length."""
+            return int(self.headers['Content-Length'])
+
+        @property
+        def bytes(self):
+            """Returns the POST-ed bytes."""
+            return self.rfile.read(self.content_length)
+
+        @property
+        def file(self):
+            """Returns a seekable file."""
+            return BytesIO(self.bytes)
+
+        def send_data(self, value, status_code):
+            """Sends the respective data."""
+            if isinstance(value, (dict, list)):
+                value = dumps(value)
+                content_type = 'application/json'
+            elif isinstance(value, str):
+                content_type = 'text/plain'
+
+            with suppress(AttributeError):
+                body = value.encode()
+
+            self.send_response(status_code)
+            self.send_header('Content-Type', content_type)
+            self.end_headers()
+            self.wfile.write(body)
+
+        def do_GET(self):   # pylint: disable=C0103
+            """Returns the manifest."""
+            try:
+                acquire_lock()
+            except Locked:
+                self.send_data('Synchronization already in progress.', 503)
+            else:
+                manifest = _gen_manifest()
+                self.send_data(manifest, 200)
+            finally:
+                release_lock()
+
+        def do_POST(self):  # pylint: disable=C0103
+            """Retrieves and updates digital signage data."""
+            try:
+                acquire_lock()
+            except Locked:
+                self.send_data('Synchronization already in progress.', 503)
+            else:
+                success = _update(self.file)
+                status_code = 200 if success else 500
+                manifest = _gen_manifest()
+                self.send_data(manifest, status_code)
+            finally:
+                release_lock()
+
+    return HTTPRequestHandler
+
+
 def main() -> int:
     """Main method to run."""
 
@@ -250,73 +323,9 @@ def main() -> int:
         LOGGER.critical('Target directory "%s" does not exist.', args.directory)
         return 2
 
+    request_handler = get_request_handler(args.directory, args.chunk_size)
     socket = (args.address, args.port)
-    RUNTIME.update({
-        'update': partial(update, args.directory, chunk_size=args.chunk_size),
-        'gen_manifest': partial(
-            gen_manifest, args.directory, chunk_size=args.chunk_size)})
-    return server(socket)
-
-
-class HTTPRequestHandler(BaseHTTPRequestHandler):
-    """Handles HTTP requests."""
-
-    @property
-    def content_length(self) -> int:
-        """Returns the content length."""
-        return int(self.headers['Content-Length'])
-
-    @property
-    def bytes(self):
-        """Returns the POST-ed bytes."""
-        return self.rfile.read(self.content_length)
-
-    @property
-    def file(self):
-        """Returns a seekable file."""
-        return BytesIO(self.bytes)
-
-    def send_data(self, value, status_code):
-        """Sends the respective data."""
-        if isinstance(value, (dict, list)):
-            value = dumps(value)
-            content_type = 'application/json'
-        elif isinstance(value, str):
-            content_type = 'text/plain'
-
-        with suppress(AttributeError):
-            body = value.encode()
-
-        self.send_response(status_code)
-        self.send_header('Content-Type', content_type)
-        self.end_headers()
-        self.wfile.write(body)
-
-    def do_GET(self):   # pylint: disable=C0103
-        """Returns the manifest."""
-        try:
-            acquire_lock()
-        except Locked:
-            self.send_data('Synchronization already in progress.', 503)
-        else:
-            manifest = dict(RUNTIME['gen_manifest']())
-            self.send_data(manifest, 200)
-        finally:
-            release_lock()
-
-    def do_POST(self):  # pylint: disable=C0103
-        """Retrieves and updates digital signage data."""
-        try:
-            acquire_lock()
-        except Locked:
-            self.send_data('Synchronization already in progress.', 503)
-        else:
-            success = RUNTIME['update'](self.file)
-            status_code = 200 if success else 500
-            manifest = dict(RUNTIME['gen_manifest']())
-            self.send_data(manifest, status_code)
-        finally:
-            release_lock()
+    return server(request_handler, socket)
 
 
 if __name__ == '__main__':
