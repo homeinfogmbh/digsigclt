@@ -27,23 +27,16 @@
 
 from argparse import ArgumentParser, Namespace
 from contextlib import suppress
-from functools import lru_cache, partial
+from functools import partial
 from hashlib import sha256
-from http.client import IncompleteRead, HTTPResponse
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from json import dumps, load, loads
+from json import dumps, load
 from logging import DEBUG, INFO, basicConfig, getLogger
 from pathlib import Path
-from platform import architecture, machine, system
-from socket import gethostname
 from sys import exit    # pylint: disable=W0622
 from tarfile import open as tar_open
-from tempfile import gettempdir, TemporaryDirectory, TemporaryFile
-from threading import Thread
+from tempfile import gettempdir, TemporaryDirectory
 from typing import BinaryIO, Iterable
-from urllib.error import URLError
-from urllib.parse import urlencode, urlparse, ParseResult
-from urllib.request import urlopen, Request
 
 
 DESCRIPTION = '''HOMEINFO multi-platform digital signage client.
@@ -59,155 +52,11 @@ DEFAULT_DIRS = {
     'Windows': 'C:\\HOMEINFOGmbH\\content'}
 LOG_FORMAT = '[%(levelname)s] %(name)s: %(message)s'
 LOGGER = getLogger('digsigclt')
-
-
-class UnsupportedSystem(Exception):
-    """Indicates that this script is running
-    on an unsupported operating system.
-    """
-
-    def __init__(self, system):     # pylint: disable=W0621
-        """Sets the operating system."""
-        super().__init__()
-        self.system = system
-
-    def __str__(self):
-        return self.system
-
-
-class MissingConfiguration(Exception):
-    """Indicates that the configuration is missing."""
-
-
-class InvalidContentType(Exception):
-    """Indicates that an invalid content type was received."""
-
-    def __init__(self, content_type):
-        """Sets the content type."""
-        super().__init__()
-        self.content_type = content_type
-
-    def __str__(self):
-        return str(self.content_type)
+RUNTIME = {}
 
 
 class Locked(Exception):
     """Indicates that the synchronization is currently locked."""
-
-
-def _get_config_linux() -> dict:
-    """Returns the configuration on a Linux system."""
-
-    hostname = gethostname()
-
-    try:
-        tid, cid = hostname.split('.')
-    except ValueError:
-        try:
-            ident = int(hostname)   # For future global terminal IDs.
-        except ValueError:
-            LOGGER.error('No valid configuration found in /etc/hostname.')
-            raise MissingConfiguration()
-
-        return {'id': ident}
-
-    try:
-        tid = int(tid)
-    except ValueError:
-        LOGGER.error('TID is not an integer.')
-        raise MissingConfiguration()
-
-    try:
-        cid = int(cid)
-    except ValueError:
-        LOGGER.error('CID is not an interger.')
-        raise MissingConfiguration()
-
-    return {'tid': tid, 'cid': cid}
-
-
-def is32on64() -> bool:
-    """Determines whether we run 32 bit
-    python on a 64 bit operating system.
-    """
-
-    py_arch, _ = architecture()
-    sys_arch = machine()
-    return py_arch == '32bit' and sys_arch in OS64BIT
-
-
-def _get_config_windows() -> dict:
-    """Returns the configuration on a Windows system."""
-    # Import winreg in Windows-specific function
-    # since it is not available on non-Windows systems.
-    from winreg import HKEY_LOCAL_MACHINE   # pylint: disable=E0401
-    from winreg import KEY_READ             # pylint: disable=E0401
-    from winreg import KEY_WOW64_64KEY      # pylint: disable=E0401
-    from winreg import OpenKey              # pylint: disable=E0401
-    from winreg import QueryValueEx         # pylint: disable=E0401
-
-    def read_config(key):
-        """Reads the configuration from the respective key."""
-        for config_option in ('tid', 'cid', 'id'):
-            try:
-                value, type_ = QueryValueEx(key, config_option)
-            except FileNotFoundError:
-                LOGGER.warning('Key not found: %s.', config_option)
-                continue
-
-            if type_ != 1:
-                message = 'Unexpected registry type %i for key "%s".'
-                LOGGER.error(message, type_, config_option)
-                continue
-
-            try:
-                value = int(value)
-            except ValueError:
-                message = 'Expected int value for key %s not "%s".'
-                LOGGER.error(message, config_option, value)
-                continue
-
-            yield (config_option, value)
-
-    access = KEY_READ
-
-    if is32on64():
-        access |= KEY_WOW64_64KEY
-
-    try:
-        with OpenKey(HKEY_LOCAL_MACHINE, REG_KEY, access=access) as key:
-            configuration = dict(read_config(key))
-    except FileNotFoundError:
-        LOGGER.error('Registry key not set: %s.', REG_KEY)
-        raise MissingConfiguration()
-
-    if configuration:
-        return configuration
-
-    raise MissingConfiguration()
-
-
-CONFIG_FUNCS = {
-    'Linux': _get_config_linux,
-    'Windows': _get_config_windows}
-
-
-@lru_cache(maxsize=1)
-def get_os() -> str:
-    """Returns the operating system."""
-
-    os_ = system()
-    LOGGER.debug('Running on %s.', os_)
-    return os_
-
-
-def get_config() -> dict:
-    """Returns the respective configuration:"""
-
-    try:
-        return CONFIG_FUNCS[get_os()]()
-    except KeyError:
-        raise UnsupportedSystem(get_os())
 
 
 def get_files(directory: dict) -> Iterable[Path]:
@@ -279,7 +128,7 @@ def strip_tree(directory: Path):
             strip_subdir(inode)
 
 
-def get_manifest(tmpd: Path) -> frozenset:
+def load_manifest(tmpd: Path) -> frozenset:
     """Reads the manifest from the respective temporary directory."""
 
     LOGGER.debug('Reading manifest.')
@@ -301,16 +150,7 @@ def get_directory(directory: str) -> Path:
     return Path(directory)
 
 
-def get_default_directory() -> Path:
-    """Returns the target directory."""
-
-    try:
-        return DEFAULT_DIRS[get_os()]
-    except KeyError:
-        raise UnsupportedSystem(get_os())
-
-
-def get_sha256sums(directory: Path, chunk_size: int = 4096) -> Iterable[tuple]:
+def gen_manifest(directory: Path, chunk_size: int = 4096) -> Iterable[tuple]:
     """Yields the SHA-256 sums in the current working directory."""
 
     for filename in get_files(directory):
@@ -326,59 +166,7 @@ def get_sha256sums(directory: Path, chunk_size: int = 4096) -> Iterable[tuple]:
         yield (str(relpath), sha256sum)
 
 
-def get_sha256_json(directory: Path, *, chunk_size: int = 4096) -> str:
-    """Returns the manifest list."""
-
-    LOGGER.debug('Creating SHA-256 sums of current files.')
-    sha256sums = dict(get_sha256sums(directory, chunk_size=chunk_size))
-    return dumps(sha256sums)
-
-
-def read_retry(response: HTTPResponse, chunk_size: int, max_retries: int, *,
-               retries: int = 0) -> bytes:
-    """Reads the respective response."""
-
-    try:
-        return response.read(chunk_size)
-    except IncompleteRead:
-        LOGGER.error('Could not read response from webserver.')
-
-        if retries <= max_retries:
-            return read_retry(
-                response, chunk_size, max_retries, retries=retries+1)
-
-        raise
-
-
-def stream(response: HTTPResponse, chunk_size: int,
-           max_retries: int) -> Iterable[bytes]:
-    """Streams the response."""
-
-    read = partial(read_retry, response, chunk_size, max_retries)
-    return iter(read, b'')
-
-
-def retrieve(config: dict, args: Namespace) -> Iterable[bytes]:
-    """Retrieves data from the server."""
-
-    scheme, netloc, path, params, _, fragment = args.url
-    query = urlencode({key: str(value) for key, value in config.items()})
-    url = ParseResult(scheme, netloc, path, params, query, fragment).geturl()
-    headers = {'Content-Type': 'application/json'}
-    sha256sums = get_sha256_json(args.directory, chunk_size=args.chunk_size)
-    request = Request(url, data=sha256sums.encode(), headers=headers)
-    LOGGER.debug('Retrieving files from %s.', request.full_url)
-
-    with urlopen(request) as response:
-        content_type = response.headers.get('Content-Type')
-
-        if content_type != 'application/x-xz':
-            raise InvalidContentType(content_type)
-
-        yield from stream(response, args.chunk_size, args.max_retries)
-
-
-def update(file: BinaryIO, directory: Path, *, chunk_size: int = 4096) -> bool:
+def update(directory: Path, file: BinaryIO, *, chunk_size: int = 4096) -> bool:
     """Updates the digital signage data
     from the respective tar.xz archive.
     """
@@ -388,7 +176,7 @@ def update(file: BinaryIO, directory: Path, *, chunk_size: int = 4096) -> bool:
             tar.extractall(path=tmpd)
 
         tmpd = Path(tmpd)
-        manifest = get_manifest(tmpd)
+        manifest = load_manifest(tmpd)
 
         try:
             copydir(tmpd, directory, chunk_size=chunk_size)
@@ -401,77 +189,18 @@ def update(file: BinaryIO, directory: Path, *, chunk_size: int = 4096) -> bool:
     return True
 
 
-def do_sync(config: dict, args: Namespace) -> bool:
-    """Updates local digital signage data with
-    data downloaded from the remote server.
-    """
-
-    with TemporaryFile(mode='w+b') as tmp:
-        for chunk in retrieve(config, args):
-            tmp.write(chunk)
-
-        tmp.flush()
-        tmp.seek(0)
-        return update(tmp, args.directory, chunk_size=args.chunk_size)
-
-    return False
-
-
-def safe_sync(config: dict, args: Namespace) -> bool:
-    """Handles error during synchronization."""
-
-    try:
-        return do_sync(config, args)
-    except MissingConfiguration:
-        LOGGER.critical('Cannot download data due to missing configuration.')
-    except URLError as url_error:
-        LOGGER.critical('Could not download data: %s.', url_error)
-    except IncompleteRead as incomplete_read:
-        LOGGER.critical('Could not read data: %s.', incomplete_read)
-    except ConnectionError as connection_error:
-        LOGGER.critical('Connection error: %s.', connection_error)
-    except InvalidContentType as invalid_content_type:
-        LOGGER.critical(
-            'Received invalid content type: %s.', invalid_content_type)
-
-    return False
-
-
-def sync(config: dict, args: Namespace) -> bool:
-    """Performs a data synchronization with lock."""
-
-    try:
-        with LOCK_FILE:
-            return safe_sync(config, args)
-    except Locked:
-        LOGGER.error('Synchronization is locked.')
-        return False
-
-
-def sync_in_thread(config: dict, args: Namespace):
-    """Performs a synchronization within a thread."""
-
-    try:
-        safe_sync(config, args)
-    finally:
-        LOCK_FILE.unlink()  # Release lock acquired outside of thread.
-
-
-def server(config: dict, args: Namespace):
+def server(socket: tuple):
     """Runs the HTTP server."""
 
-    socket = ('0.0.0.0', args.port)
-    HTTPRequestHandler.args = (config, args)
     httpd = HTTPServer(socket, HTTPRequestHandler)
     LOGGER.info('Listening on %s:%i.', *socket)
 
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
-        if HTTPRequestHandler.sync_thread is not None:
-            HTTPRequestHandler.sync_thread.join()
+        return 1
 
-        return
+    return 0
 
 
 def get_args() -> Namespace:
@@ -479,26 +208,14 @@ def get_args() -> Namespace:
 
     parser = ArgumentParser(description=DESCRIPTION)
     parser.add_argument(
-        '-S', '--server', action='store_true', help='run in server mode')
-    parser.add_argument(
-        '-u', '--url', type=urlparse, metavar='url',
-        default='http://10.8.0.1/appcmd/digsig',
-        help='the URL to the remote server')
+        '-a', '--address', default='0.0.0.0', metavar='address',
+        help='IPv4 address to listen on')
     parser.add_argument(
         '-p', '--port', type=int, default=5000, metavar='port',
         help='port to listen on')
     parser.add_argument(
-        '-d', '--directory', type=get_directory, metavar='dir',
-        default=get_default_directory(), help='sets the target directory')
-    parser.add_argument(
-        '-r', '--max-retries', type=int, default=3, metavar='n',
-        help='maximum amount to retry HTTP connections')
-    parser.add_argument(
-        '-c', '--config', type=loads, default=None, metavar='json',
-        help='use the specified config')
-    parser.add_argument(
-        '-s', '--chunk-size', type=int, default=4096, metavar='size',
-        help='chunk size to use during file operations')
+        '-d', '--directory', type=Path, metavar='dir',
+        default=Path.cwd(), help='sets the target directory')
     parser.add_argument(
         '-v', '--verbose', action='store_true', help='turn on verbose logging')
     return parser.parse_args()
@@ -509,102 +226,67 @@ def main() -> int:
 
     args = get_args()
     basicConfig(level=DEBUG if args.verbose else INFO, format=LOG_FORMAT)
-    LOGGER.debug('Target directory: %s', args.directory)
+    LOGGER.debug('Target directory set to: %s', args.directory)
 
     if not args.directory.is_dir():
         LOGGER.critical('Target directory does not exist: %s.', args.directory)
         return 2
 
-    if args.config:
-        config = args.config
-    else:
-        try:
-            config = get_config()
-        except MissingConfiguration:
-            LOGGER.critical('No configuration found.')
-            return 3
-
-    if args.server:
-        server(config, args)
-        return 0
-
-    if sync(config, args):
-        return 0
-
-    return 1
+    socket = (args.address, args.port)
+    RUNTIME.update({
+        'update': partial(update, args.direcory, chunk_size=args.chunk_size),
+        'gen_manifest': partial(
+            gen_manifest, args.direcory, chunk_size=args.chunk_size)})
+    return server(socket)
 
 
 class HTTPRequestHandler(BaseHTTPRequestHandler):
     """Handles HTTP requests."""
 
-    args = ()
-    sync_thread = None
+    @staticmethod
+    def update(file):
+        """Performs update."""
+        return RUNTIME['update'](file)
 
-    @classmethod
-    def sync_pending(cls) -> bool:
-        """Returns wehter a synchronization is currently pending."""
-        if cls.sync_thread is None:
-            return False
-
-        if cls.sync_thread.is_alive():
-            return True
-
-        cls.sync_thread.join()  # Just to be on the safe side.
-        return False
-
-    @classmethod
-    def start_sync(cls) -> bool:
-        """Starts a synchronization."""
-        try:
-            LOCK_FILE.create()  # Acquire lock.
-        except Locked:
-            return False
-
-        if cls.sync_pending():
-            LOCK_FILE.unlink()
-            return False
-
-        cls.sync_thread = Thread(target=sync_in_thread, args=cls.args)
-        cls.sync_thread.start()
-        return True
+    @staticmethod
+    def gen_manifest():
+        """Returns the current manifest."""
+        return dict(RUNTIME['gen_manifest']())
 
     @property
     def content_length(self) -> int:
         """Returns the content length."""
         return int(self.headers['Content-Length'])
 
-    @property
-    def bytes(self) -> bytes:
-        """Returns the POSTed bytes."""
-        return self.rfile.read(self.content_length)
+    def send_data(self, value, status_code):
+        """Sends the respective data."""
+        if isinstance(value, (dict, list)):
+            value = dumps(value)
+            content_type = 'application/json'
+        elif isinstance(value, str):
+            content_type = 'text/plain'
 
-    @property
-    def json(self) -> dict:
-        """Returns POSTed JSON data."""
-        return loads(self.bytes)
+        with suppress(AttributeError):
+            body = value.encode()
 
-    def do_POST(self):  # pylint: disable=C0103
-        """Handles POST requests."""
-        LOGGER.debug('Received POST request.')
-
-        if self.json.get('command') == 'sync':
-            LOGGER.debug('Received sync command.')
-
-            if type(self).start_sync():
-                message = 'Synchronization started.'
-                status_code = 202
-            else:
-                message = 'Synchronization already in progress.'
-                status_code = 503
-        else:
-            message = 'Invalid command.'
-            status_code = 400
-
-        json = {'message': message}
-        body = dumps(json).encode()
         self.send_response(status_code)
+        self.send_header('Content-Type', content_type)
         self.end_headers()
         self.wfile.write(body)
+
+    def do_GET(self):   # pylint: disable=C0103
+        """Returns the manifest."""
+        self.send_data(dict(self.gen_manifest()), 200)
+
+    def do_POST(self):  # pylint: disable=C0103
+        """Retrieves and updates digital signage data."""
+        try:
+            with LOCK_FILE:
+                success = self.update(self.rfile)
+        except Locked:
+            self.send_data('Synchronization already in progress.', 503)
+        else:
+            self.send_data(dict(self.gen_manifest()), 200 if success else 500)
 
 
 class LockFile:
@@ -656,8 +338,4 @@ LOCK_FILE = LockFile(LOCKFILE_NAME)
 
 
 if __name__ == '__main__':
-    try:
-        exit(main())
-    except UnsupportedSystem as unsupported_system:
-        LOGGER.critical('Cannot run on %s.', unsupported_system)
-        exit(4)
+    exit(main())
