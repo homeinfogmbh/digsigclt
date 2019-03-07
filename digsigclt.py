@@ -59,6 +59,8 @@ class Locked(Exception):
 def acquire_lock():
     """Creates the lock file."""
 
+    LOGGER.debug('Creating lock file "%s".', LOCKFILE)
+
     if LOCKFILE.is_file():
         raise Locked()
 
@@ -68,6 +70,8 @@ def acquire_lock():
 
 def release_lock():
     """Removes the lock file."""
+
+    LOGGER.debug('Removing lock file "%s".', LOCKFILE)
 
     with suppress(FileNotFoundError):
         LOCKFILE.unlink()
@@ -96,14 +100,14 @@ def copydir(source_dir: Path, dest_dir: Path, *, chunk_size: int = 4096):
     into dest_dir, overwriting all files.
     """
 
-    LOGGER.debug('Copying %s to %s.', source_dir, dest_dir)
+    LOGGER.debug('Copying "%s" to "%s".', source_dir, dest_dir)
 
     for source_path in source_dir.iterdir():
         relpath = source_path.relative_to(source_dir)
         dest_path = dest_dir.joinpath(relpath)
 
         if source_path.is_file():
-            LOGGER.info('Updating: %s.', dest_path)
+            LOGGER.info('Updating file "%s".', dest_path)
             copy_file(dest_path, source_path, chunk_size=chunk_size)
         elif source_path.is_dir():
             if dest_path.is_file():
@@ -122,7 +126,7 @@ def strip_files(directory: Path, manifest: frozenset):
         relpath = path.relative_to(directory)
 
         if str(relpath) not in manifest:
-            LOGGER.debug('Removing obsolete file: %s.', path)
+            LOGGER.debug('Removing obsolete file "%s".', path)
             path.unlink()
 
 
@@ -136,7 +140,7 @@ def strip_tree(directory: Path):
                 strip_subdir(inode)
 
         if not tuple(subdir.iterdir()):     # Directory is empty.
-            LOGGER.debug('Removing empty directory: %s.', subdir)
+            LOGGER.debug('Removing empty directory "%s".', subdir)
             subdir.rmdir()
 
     for inode in directory.iterdir():
@@ -148,7 +152,7 @@ def load_manifest(tmpd: Path) -> frozenset:
     """Reads the manifest from the respective temporary directory."""
 
     path = tmpd.joinpath(MANIFEST_FILENAME)
-    LOGGER.debug('Reading manifest from: %s.', path)
+    LOGGER.debug('Reading manifest from "%s".', path)
 
     with path.open('r') as file:
         manifest = load(file)
@@ -170,7 +174,7 @@ def gen_manifest(directory: Path, chunk_size: int = 4096) -> Iterable[tuple]:
                 sha256sum.update(chunk)
 
         sha256sum = sha256sum.hexdigest()
-        LOGGER.debug('SHA-256 sum of "%s" is %s.', filename, sha256sum)
+        LOGGER.debug('SHA-256 sum of "%s" is "%s".', filename, sha256sum)
         relpath = filename.relative_to(directory)
         yield (str(relpath), sha256sum)
 
@@ -181,7 +185,7 @@ def update(directory: Path, file: BinaryIO, *, chunk_size: int = 4096) -> bool:
     """
 
     with TemporaryDirectory() as tmpd:
-        LOGGER.debug('Extracting archive to: %s.', tmpd)
+        LOGGER.debug('Extracting archive to "%s".', tmpd)
 
         with tar_open(mode='r:xz', fileobj=file, bufsize=chunk_size) as tar:
             tar.extractall(path=tmpd)
@@ -204,7 +208,7 @@ def server(socket: tuple):
     """Runs the HTTP server."""
 
     httpd = HTTPServer(socket, HTTPRequestHandler)
-    LOGGER.info('Listening on %s:%i.', *socket)
+    LOGGER.info('Listening on "%s:%i".', *socket)
 
     try:
         httpd.serve_forever()
@@ -240,10 +244,10 @@ def main() -> int:
 
     args = get_args()
     basicConfig(level=DEBUG if args.verbose else INFO, format=LOG_FORMAT)
-    LOGGER.debug('Target directory set to: %s', args.directory)
+    LOGGER.debug('Target directory set to "%s".', args.directory)
 
     if not args.directory.is_dir():
-        LOGGER.critical('Target directory does not exist: %s.', args.directory)
+        LOGGER.critical('Target directory "%s" does not exist.', args.directory)
         return 2
 
     socket = (args.address, args.port)
@@ -286,17 +290,17 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         self.send_response(status_code)
         self.send_header('Content-Type', content_type)
         self.end_headers()
-        return self.wfile.write(body)
+        self.wfile.write(body)
 
     def do_GET(self):   # pylint: disable=C0103
         """Returns the manifest."""
         try:
             acquire_lock()
         except Locked:
-            return self.send_data('Synchronization already in progress.', 503)
+            self.send_data('Synchronization already in progress.', 503)
         else:
             manifest = dict(RUNTIME['gen_manifest']())
-            return self.send_data(manifest, 200)
+            self.send_data(manifest, 200)
         finally:
             release_lock()
 
@@ -305,12 +309,12 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         try:
             acquire_lock()
         except Locked:
-            return self.send_data('Synchronization already in progress.', 503)
+            self.send_data('Synchronization already in progress.', 503)
         else:
             success = RUNTIME['update'](self.file)
             status_code = 200 if success else 500
             manifest = dict(RUNTIME['gen_manifest']())
-            return self.send_data(manifest, status_code)
+            self.send_data(manifest, status_code)
         finally:
             release_lock()
 
