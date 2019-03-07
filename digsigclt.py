@@ -320,7 +320,8 @@ def main() -> int:
     LOGGER.debug('Target directory set to "%s".', args.directory)
 
     if not args.directory.is_dir():
-        LOGGER.critical('Target directory "%s" does not exist.', args.directory)
+        LOGGER.critical(
+            'Target directory "%s" does not exist.', args.directory)
         return 2
 
     request_handler = get_request_handler(args.directory, args.chunk_size)
