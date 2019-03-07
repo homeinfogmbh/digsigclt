@@ -45,6 +45,7 @@ Synchronizes data to the current working directory
 or listens on the specified port when in server mode
 to be triggered to do so.'''
 LOCKFILE_NAME = 'digsigclt.sync.lock'
+LOCKFILE = Path(gettempdir()).joinpath(LOCKFILE_NAME)
 MANIFEST_FILENAME = 'manifest.json'
 LOG_FORMAT = '[%(levelname)s] %(name)s: %(message)s'
 LOGGER = getLogger('digsigclt')
@@ -53,6 +54,23 @@ RUNTIME = {}
 
 class Locked(Exception):
     """Indicates that the synchronization is currently locked."""
+
+
+def acquire_lock():
+    """Creates the lock file."""
+
+    if LOCKFILE.is_file():
+        raise Locked()
+
+    with LOCKFILE.open('wb') as file:
+        file.write(b'Locked.\n')
+
+
+def release_lock():
+    """Removes the lock file."""
+
+    with suppress(FileNotFoundError):
+        LOCKFILE.unlink()
 
 
 def get_files(directory: dict) -> Iterable[Path]:
@@ -268,70 +286,30 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         self.send_response(status_code)
         self.send_header('Content-Type', content_type)
         self.end_headers()
-        self.wfile.write(body)
+        return self.wfile.write(body)
 
     def do_GET(self):   # pylint: disable=C0103
         """Returns the manifest."""
-        self.send_data(dict(self.gen_manifest()), 200)
+        try:
+            acquire_lock()
+        except Locked:
+            return self.send_data('Synchronization already in progress.', 503)
+        else:
+            return self.send_data(dict(self.gen_manifest()), 200)
+        finally:
+            release_lock()
 
     def do_POST(self):  # pylint: disable=C0103
         """Retrieves and updates digital signage data."""
         try:
-            with LOCK_FILE:
-                success = self.update()
+            acquire_lock()
         except Locked:
-            self.send_data('Synchronization already in progress.', 503)
+            return self.send_data('Synchronization already in progress.', 503)
         else:
-            status_code = 200 if success else 500
-            self.send_data(dict(self.gen_manifest()), status_code)
-
-
-class LockFile:
-    """Represents a lock file to lock synchronization."""
-
-    def __init__(self, filename):
-        """Sets the filename."""
-        self.filename = filename
-
-    def __enter__(self):
-        """Creates the lock file."""
-        self.create()
-        return self
-
-    def __exit__(self, *_):
-        """Removes the lock file."""
-        self.unlink()
-
-    @property
-    def basedir(self) -> Path:
-        """Returns the base directory."""
-        return Path(gettempdir())
-
-    @property
-    def path(self) -> Path:
-        """Returns the file path."""
-        return self.basedir.joinpath(self.filename)
-
-    @property
-    def exists(self) -> bool:
-        """Tests whether the lock file exists."""
-        return self.path.is_file()
-
-    def create(self, content=b''):
-        """Creates the lock file."""
-        if self.exists:
-            raise Locked()
-
-        with self.path.open('wb') as file:
-            file.write(content)
-
-    def unlink(self):
-        """Removes the lock file."""
-        with suppress(FileNotFoundError):
-            self.path.unlink()
-
-
-LOCK_FILE = LockFile(LOCKFILE_NAME)
+            status_code = 200 if self.update() else 500
+            return self.send_data(dict(self.gen_manifest()), status_code)
+        finally:
+            release_lock()
 
 
 if __name__ == '__main__':
