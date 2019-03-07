@@ -77,6 +77,8 @@ def copydir(source_dir: Path, dest_dir: Path, *, chunk_size: int = 4096):
     into dest_dir, overwriting all files.
     """
 
+    LOGGER.debug('Copying %s to %s.', source_dir, dest_dir)
+
     for source_path in source_dir.iterdir():
         relpath = source_path.relative_to(source_dir)
         dest_path = dest_dir.joinpath(relpath)
@@ -126,8 +128,8 @@ def strip_tree(directory: Path):
 def load_manifest(tmpd: Path) -> frozenset:
     """Reads the manifest from the respective temporary directory."""
 
-    LOGGER.debug('Reading manifest.')
     path = tmpd.joinpath(MANIFEST_FILENAME)
+    LOGGER.debug('Reading manifest from: %s.', path)
 
     with path.open('r') as file:
         manifest = load(file)
@@ -167,6 +169,8 @@ def update(directory: Path, file: BinaryIO, *, chunk_size: int = 4096) -> bool:
     """
 
     with TemporaryDirectory() as tmpd:
+        LOGGER.debug('Extracting archive to: %s.', tmpd)
+
         with tar_open(mode='r:xz', fileobj=file, bufsize=chunk_size) as tar:
             tar.extractall(path=tmpd)
 
@@ -232,9 +236,9 @@ def main() -> int:
 
     socket = (args.address, args.port)
     RUNTIME.update({
-        'update': partial(update, args.direcory, chunk_size=args.chunk_size),
+        'update': partial(update, args.directory, chunk_size=args.chunk_size),
         'gen_manifest': partial(
-            gen_manifest, args.direcory, chunk_size=args.chunk_size)})
+            gen_manifest, args.directory, chunk_size=args.chunk_size)})
     return server(socket)
 
 
