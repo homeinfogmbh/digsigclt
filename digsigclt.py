@@ -303,6 +303,17 @@ def get_request_handler(directory, chunk_size):
             finally:
                 release_lock()
 
+        def update_digsig_data(self):
+            """Updates the digital signage data."""
+            if _update(self.file):
+                status_code = 200
+                type(self).last_sync = datetime.now()
+            else:
+                status_code = 500
+
+            manifest = _gen_manifest()
+            self.send_data(manifest, status_code)
+
         def do_GET(self):   # pylint: disable=C0103
             """Returns when the system has
             been updated the last time.
@@ -328,14 +339,7 @@ def get_request_handler(directory, chunk_size):
             except Locked:
                 self.send_data('Synchronization already in progress.', 503)
             else:
-                if _update(self.file):
-                    status_code = 200
-                    type(self).last_sync = datetime.now()
-                else:
-                    status_code = 500
-
-                manifest = _gen_manifest()
-                self.send_data(manifest, status_code)
+                self.update_digsig_data()
             finally:
                 release_lock()
 
