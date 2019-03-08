@@ -253,7 +253,7 @@ def get_request_handler(directory, chunk_size):
     class HTTPRequestHandler(BaseHTTPRequestHandler):
         """Handles HTTP requests."""
 
-        last_sync = datetime.now()
+        last_sync = None
 
         @property
         def content_length(self) -> int:
@@ -291,14 +291,8 @@ def get_request_handler(directory, chunk_size):
             self.end_headers()
             self.wfile.write(body)
 
-        def do_GET(self):   # pylint: disable=C0103
-            """Returns when the system has
-            been updated the last time.
-            """
-            self.send_data(type(self).last_sync.isoformat(), 200)
-
-        def do_POST(self):  # pylint: disable=C0103
-            """Handles JSON inquries."""
+        def send_manifest(self):
+            """Sends the manifest."""
             try:
                 acquire_lock()
             except Locked:
@@ -308,6 +302,24 @@ def get_request_handler(directory, chunk_size):
                 self.send_data(manifest, 200)
             finally:
                 release_lock()
+
+        def do_GET(self):   # pylint: disable=C0103
+            """Returns when the system has
+            been updated the last time.
+            """
+            if type(self).last_sync is None:
+                self.send_data('Never.', 200)
+            else:
+                self.send_data(type(self).last_sync.isoformat(), 200)
+
+        def do_POST(self):  # pylint: disable=C0103
+            """Handles JSON inquries."""
+            command = self.json.get('command')
+
+            if command == 'manifest':
+                self.send_manifest()
+            else:
+                self.send_data('Unknown command.', 400)
 
         def do_PUT(self):  # pylint: disable=C0103
             """Retrieves and updates digital signage data."""
