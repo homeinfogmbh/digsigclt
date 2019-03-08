@@ -203,7 +203,7 @@ def update(file: BinaryIO, directory: Path, *, chunk_size: int = 4096) -> bool:
     return True
 
 
-def server(request_handler: BaseHTTPRequestHandler, socket: tuple) -> int:
+def server(socket: tuple, request_handler: BaseHTTPRequestHandler) -> int:
     """Runs the HTTP server."""
 
     httpd = HTTPServer(socket, request_handler)
@@ -324,9 +324,9 @@ def main() -> int:
             'Target directory "%s" does not exist.', args.directory)
         return 2
 
-    request_handler = get_request_handler(args.directory, args.chunk_size)
     socket = (args.address, args.port)
-    return server(request_handler, socket)
+    request_handler = get_request_handler(args.directory, args.chunk_size)
+    return server(socket, request_handler)
 
 
 if __name__ == '__main__':
