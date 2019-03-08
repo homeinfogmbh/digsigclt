@@ -27,11 +27,12 @@
 
 from argparse import ArgumentParser, Namespace
 from contextlib import suppress
+from datetime import datetime
 from functools import partial
 from hashlib import sha256
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from io import BytesIO
-from json import dumps, load
+from json import dumps, load, loads
 from logging import DEBUG, INFO, basicConfig, getLogger
 from pathlib import Path
 from sys import exit    # pylint: disable=W0622
@@ -252,6 +253,8 @@ def get_request_handler(directory, chunk_size):
     class HTTPRequestHandler(BaseHTTPRequestHandler):
         """Handles HTTP requests."""
 
+        last_sync = datetime.now()
+
         @property
         def content_length(self) -> int:
             """Returns the content length."""
@@ -266,6 +269,11 @@ def get_request_handler(directory, chunk_size):
         def file(self):
             """Returns a seekable file."""
             return BytesIO(self.bytes)
+
+        @property
+        def json(self):
+            """Returns received JSON data."""
+            return loads(self.bytes)
 
         def send_data(self, value, status_code):
             """Sends the respective data."""
@@ -284,7 +292,13 @@ def get_request_handler(directory, chunk_size):
             self.wfile.write(body)
 
         def do_GET(self):   # pylint: disable=C0103
-            """Returns the manifest."""
+            """Returns when the system has
+            been updated the last time.
+            """
+            self.send_data(type(self).last_sync.isoformat(), 200)
+
+        def do_POST(self):  # pylint: disable=C0103
+            """Handles JSON inquries."""
             try:
                 acquire_lock()
             except Locked:
@@ -295,15 +309,19 @@ def get_request_handler(directory, chunk_size):
             finally:
                 release_lock()
 
-        def do_POST(self):  # pylint: disable=C0103
+        def do_PUT(self):  # pylint: disable=C0103
             """Retrieves and updates digital signage data."""
             try:
                 acquire_lock()
             except Locked:
                 self.send_data('Synchronization already in progress.', 503)
             else:
-                success = _update(self.file)
-                status_code = 200 if success else 500
+                if _update(self.file):
+                    status_code = 200
+                    type(self).last_sync = datetime.now()
+                else:
+                    status_code = 500
+
                 manifest = _gen_manifest()
                 self.send_data(manifest, status_code)
             finally:
