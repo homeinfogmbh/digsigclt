@@ -38,7 +38,7 @@ from pathlib import Path
 from sys import exit    # pylint: disable=W0622
 from tarfile import open as tar_open
 from tempfile import gettempdir, TemporaryDirectory
-from typing import BinaryIO, Iterable
+from typing import Iterable
 
 
 DESCRIPTION = '''HOMEINFO multi-platform digital signage client.
@@ -179,7 +179,7 @@ def gen_manifest(directory: Path, chunk_size: int = 4096) -> Iterable[tuple]:
         yield (str(relpath), sha256sum)
 
 
-def update(file: BinaryIO, directory: Path, *, chunk_size: int = 4096) -> bool:
+def update(file: BytesIO, directory: Path, *, chunk_size: int = 4096) -> bool:
     """Updates the digital signage data
     from the respective tar.xz archive.
     """
