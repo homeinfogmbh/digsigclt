@@ -42,9 +42,7 @@ from typing import Iterable
 
 
 DESCRIPTION = '''HOMEINFO multi-platform digital signage client.
-Synchronizes data to the current working directory
-or listens on the specified port when in server mode
-to be triggered to do so.'''
+Synchronizes data to the current working directory when triggered.'''
 LOCKFILE_NAME = 'digsigclt.sync.lock'
 LOCKFILE = Path(gettempdir()).joinpath(LOCKFILE_NAME)
 MANIFEST_FILENAME = 'manifest.json'
