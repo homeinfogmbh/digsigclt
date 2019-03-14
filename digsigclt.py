@@ -239,14 +239,14 @@ def get_args() -> Namespace:
     return parser.parse_args()
 
 
-def get_request_handler(directory, chunk_size):
+def get_request_handler(directory: Path, chunk_size: int):
     """Returns a HTTP request handler for the given arguments."""
 
     def _gen_manifest():
         """Returns the manifest as dict."""
         return dict(gen_manifest(directory, chunk_size=chunk_size))
 
-    def _update(file):
+    def _update(file: BytesIO):
         """Updates the digital signage data."""
         return update(file, directory, chunk_size=chunk_size)
 
@@ -275,7 +275,7 @@ def get_request_handler(directory, chunk_size):
             """Returns received JSON data."""
             return loads(self.bytes)
 
-        def send_data(self, value, status_code):
+        def send_data(self, value, status_code: int):
             """Sends the respective data."""
             if isinstance(value, (dict, list)):
                 value = dumps(value)
