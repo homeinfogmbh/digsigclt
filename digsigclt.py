@@ -291,7 +291,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     @property
     def json(self):
         """Returns received JSON data."""
-        return loads(b''.join(self.bytes))
+        return loads(self.bytes)
 
     @property
     def manifest(self):
