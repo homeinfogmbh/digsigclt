@@ -345,22 +345,29 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         self.send_data(body, status_code)
 
     def do_GET(self):   # pylint: disable=C0103
-        """Returns when the system has
-        been updated the last time.
-        """
-        if self.LAST_SYNC is None:
-            self.send_data('Never.', 200)
-        else:
-            self.send_data(self.LAST_SYNC.isoformat(), 200)
+        """Returns current status information."""
+        status = {'manifest': self.manifest}
+
+        if self.LAST_SYNC is not None:
+            status['last_sync'] = self.LAST_SYNC.isoformat()
+
+        self.send_data(status, 200)
 
     def do_POST(self):  # pylint: disable=C0103
         """Handles JSON inquries."""
         command = self.json.get('command')
+        args = self.json.get('args', [])
+
+        if not command:
+            return self.send_data('No command specified.', 400)
+
+        if not isinstance(args, list):
+            return self.send_data('Arguments must be a list.', 400)
 
         if command == 'manifest':
-            self.send_manifest()
-        else:
-            self.send_data('Unknown command.', 400)
+            return self.send_manifest()
+
+        return self.send_data('Unknown command.', 400)
 
     def do_PUT(self):  # pylint: disable=C0103
         """Retrieves and updates digital signage data."""
