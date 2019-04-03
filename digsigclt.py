@@ -322,13 +322,13 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             return dict(gen_manifest(
                 self.directory, chunk_size=self.chunk_size))
 
-    def send_data(self, value, status_code: int):
+    def send_data(self, value, status_code: int, content_type: str = None):
         """Sends the respective data."""
         if isinstance(value, (dict, list)):
             value = dumps(value)
-            content_type = 'application/json'
+            content_type = content_type or 'application/json'
         elif isinstance(value, str):
-            content_type = 'text/plain'
+            content_type = content_type or 'text/plain'
 
         with suppress(AttributeError):
             body = value.encode()
