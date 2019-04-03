@@ -220,6 +220,19 @@ def server(socket: tuple, request_handler: BaseHTTPRequestHandler) -> int:
     return 0
 
 
+def requesthandler(directory: Path, chunk_size: int) -> BaseHTTPRequestHandler:
+    """Returns a HTTP request handler for the given arguments."""
+
+    class RequestHandler(HTTPRequestHandler):   # pylint: disable=E0601
+        """A configured version of the request
+        handler with DIRECTORY and CHUNK_SIZE set.
+        """
+        DIRECTORY = directory
+        CHUNK_SIZE = chunk_size
+
+    return RequestHandler
+
+
 def get_args() -> Namespace:
     """Returns the command line arguments."""
 
@@ -254,8 +267,7 @@ def main() -> int:
         return 2
 
     socket = (args.address, args.port)
-    request_handler = HTTPRequestHandler.configure(
-        args.directory, args.chunk_size)
+    request_handler = requesthandler(args.directory, args.chunk_size)
     return server(socket, request_handler)
 
 
@@ -265,18 +277,6 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     LAST_SYNC = None
     DIRECTORY = NotImplemented
     CHUNK_SIZE = NotImplemented
-
-    @classmethod
-    def configure(cls, directory: Path, chunk_size: int) -> HTTPRequestHandler:
-        """Returns a HTTP request handler for the given arguments."""
-        class ConfiguredHTTPRequestHandler(cls):
-            """A configured version of the request
-            handler with DIRECTORY and CHUNK_SIZE set.
-            """
-            DIRECTORY = directory
-            CHUNK_SIZE = chunk_size
-
-        return ConfiguredHTTPRequestHandler
 
     @property
     def content_length(self) -> int:
