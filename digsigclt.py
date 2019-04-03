@@ -62,8 +62,8 @@ def acquire_lock():
     if LOCKFILE.is_file():
         raise Locked()
 
-    with LOCKFILE.open('wb') as file:
-        file.write(b'Locked.\n')
+    with LOCKFILE.open('w') as file:
+        file.write('Locked.\n')
 
 
 def release_lock():
