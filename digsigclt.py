@@ -326,16 +326,20 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             LOGGER.critical('Received file is too large.')
             status_code = 507   # Insufficient Storage.
             body = 'File cannot be processed due to insufficient memory.'
+            return self.send_data(body, status_code)
+
+        if update(file, self.DIRECTORY, chunk_size=self.CHUNK_SIZE):
+            status_code = 200
+            type(self).LAST_SYNC = datetime.now()
         else:
-            if update(file, self.DIRECTORY, chunk_size=self.CHUNK_SIZE):
-                status_code = 200
-                type(self).LAST_SYNC = datetime.now()
-            else:
-                status_code = 500
+            status_code = 500
 
-            body = self.manifest
+        try:
+            manifest = self.manifest
+        except Locked:
+            return self.send_data('System is currently locked.', 503)
 
-        self.send_data(body, status_code)
+        return self.send_data(manifest, status_code)
 
     def do_GET(self):   # pylint: disable=C0103
         """Returns current status information."""
