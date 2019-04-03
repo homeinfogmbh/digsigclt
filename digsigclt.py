@@ -37,7 +37,7 @@ from logging import DEBUG, INFO, basicConfig, getLogger
 from pathlib import Path
 from sys import exit    # pylint: disable=W0622
 from tarfile import open as tar_open
-from tempfile import gettempdir, TemporaryDirectory
+from tempfile import gettempdir, TemporaryDirectory, TemporaryFile
 from typing import Iterable
 
 
@@ -241,113 +241,6 @@ def get_args() -> Namespace:
     return parser.parse_args()
 
 
-def get_request_handler(directory: Path, chunk_size: int):
-    """Returns a HTTP request handler for the given arguments."""
-
-    def _gen_manifest():
-        """Returns the manifest as dict."""
-        return dict(gen_manifest(directory, chunk_size=chunk_size))
-
-    def _update(file: BytesIO):
-        """Updates the digital signage data."""
-        return update(file, directory, chunk_size=chunk_size)
-
-    class HTTPRequestHandler(BaseHTTPRequestHandler):
-        """Handles HTTP requests."""
-
-        last_sync = None
-
-        @property
-        def content_length(self) -> int:
-            """Returns the content length."""
-            return int(self.headers['Content-Length'])
-
-        @property
-        def bytes(self):
-            """Returns the POST-ed bytes."""
-            return self.rfile.read(self.content_length)
-
-        @property
-        def file(self):
-            """Returns a seekable file."""
-            return BytesIO(self.bytes)
-
-        @property
-        def json(self):
-            """Returns received JSON data."""
-            return loads(self.bytes)
-
-        def send_data(self, value, status_code: int):
-            """Sends the respective data."""
-            if isinstance(value, (dict, list)):
-                value = dumps(value)
-                content_type = 'application/json'
-            elif isinstance(value, str):
-                content_type = 'text/plain'
-
-            with suppress(AttributeError):
-                body = value.encode()
-
-            self.send_response(status_code)
-            self.send_header('Content-Type', content_type)
-            self.end_headers()
-            self.wfile.write(body)
-
-        def send_manifest(self):
-            """Sends the manifest."""
-            try:
-                acquire_lock()
-            except Locked:
-                self.send_data('Synchronization already in progress.', 503)
-            else:
-                manifest = _gen_manifest()
-                self.send_data(manifest, 200)
-            finally:
-                release_lock()
-
-        def update_digsig_data(self):
-            """Updates the digital signage data."""
-            if _update(self.file):
-                status_code = 200
-                type(self).last_sync = datetime.now()
-            else:
-                status_code = 500
-
-            manifest = _gen_manifest()
-            self.send_data(manifest, status_code)
-
-        def do_GET(self):   # pylint: disable=C0103
-            """Returns when the system has
-            been updated the last time.
-            """
-            if type(self).last_sync is None:
-                self.send_data('Never.', 200)
-            else:
-                self.send_data(type(self).last_sync.isoformat(), 200)
-
-        def do_POST(self):  # pylint: disable=C0103
-            """Handles JSON inquries."""
-            command = self.json.get('command')
-
-            if command == 'manifest':
-                self.send_manifest()
-            else:
-                self.send_data('Unknown command.', 400)
-
-        def do_PUT(self):  # pylint: disable=C0103
-            """Retrieves and updates digital signage data."""
-            try:
-                acquire_lock()
-            except Locked:
-                self.send_data('Synchronization already in progress.', 503)
-            else:
-                self.update_digsig_data()
-            finally:
-                release_lock()
-
-    return HTTPRequestHandler
-
-
 def main() -> int:
     """Main method to run."""
 
@@ -361,8 +254,122 @@ def main() -> int:
         return 2
 
     socket = (args.address, args.port)
-    request_handler = get_request_handler(args.directory, args.chunk_size)
+    request_handler = HTTPRequestHandler.configure(
+        args.directory, args.chunk_size)
     return server(socket, request_handler)
+
+
+class HTTPRequestHandler(BaseHTTPRequestHandler):
+    """Handles HTTP requests."""
+
+    LAST_SYNC = None
+    DIRECTORY = NotImplemented
+    CHUNK_SIZE = NotImplemented
+
+    @classmethod
+    def configure(cls, directory: Path, chunk_size: int):
+        """Returns a HTTP request handler for the given arguments."""
+        class ConfiguredHTTPRequestHandler(cls):
+            """A configured version of the request
+            handler with DIRECTORY and CHUNK_SIZE set.
+            """
+            DIRECTORY = directory
+            CHUNK_SIZE = chunk_size
+
+        return ConfiguredHTTPRequestHandler
+
+    @property
+    def content_length(self) -> int:
+        """Returns the content length."""
+        return int(self.headers['Content-Length'])
+
+    @property
+    def bytes(self):
+        """Returns the POST-ed bytes."""
+        return iter(partial(self.rfile.read, self.CHUNK_SIZE), b'')
+
+    @property
+    def json(self):
+        """Returns received JSON data."""
+        return loads(b''.join(self.bytes))
+
+    @property
+    def manifest(self):
+        """Returns the manifest."""
+        return dict(gen_manifest(self.DIRECTORY, chunk_size=self.CHUNK_SIZE))
+
+    def send_data(self, value, status_code: int):
+        """Sends the respective data."""
+        if isinstance(value, (dict, list)):
+            value = dumps(value)
+            content_type = 'application/json'
+        elif isinstance(value, str):
+            content_type = 'text/plain'
+
+        with suppress(AttributeError):
+            body = value.encode()
+
+        self.send_response(status_code)
+        self.send_header('Content-Type', content_type)
+        self.end_headers()
+        self.wfile.write(body)
+
+    def send_manifest(self):
+        """Sends the manifest."""
+        try:
+            acquire_lock()
+        except Locked:
+            self.send_data('Synchronization already in progress.', 503)
+        else:
+            self.send_data(self.manifest, 200)
+        finally:
+            release_lock()
+
+    def update_digsig_data(self):
+        """Updates the digital signage data."""
+        with TemporaryFile(mode='w+b') as file:
+            for chunk in self.bytes:
+                file.write(chunk)
+
+            file.flush()
+            file.seek(0)
+
+            if update(file, self.DIRECTORY, chunk_size=self.CHUNK_SIZE):
+                status_code = 200
+                type(self).LAST_SYNC = datetime.now()
+            else:
+                status_code = 500
+
+        self.send_data(self.manifest, status_code)
+
+    def do_GET(self):   # pylint: disable=C0103
+        """Returns when the system has
+        been updated the last time.
+        """
+        if self.LAST_SYNC is None:
+            self.send_data('Never.', 200)
+        else:
+            self.send_data(self.LAST_SYNC.isoformat(), 200)
+
+    def do_POST(self):  # pylint: disable=C0103
+        """Handles JSON inquries."""
+        command = self.json.get('command')
+
+        if command == 'manifest':
+            self.send_manifest()
+        else:
+            self.send_data('Unknown command.', 400)
+
+    def do_PUT(self):  # pylint: disable=C0103
+        """Retrieves and updates digital signage data."""
+        try:
+            acquire_lock()
+        except Locked:
+            self.send_data('Synchronization already in progress.', 503)
+        else:
+            self.update_digsig_data()
+        finally:
+            release_lock()
 
 
 if __name__ == '__main__':
