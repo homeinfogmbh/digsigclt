@@ -54,27 +54,6 @@ class Locked(Exception):
     """Indicates that the synchronization is currently locked."""
 
 
-def acquire_lock():
-    """Creates the lock file."""
-
-    LOGGER.debug('Creating lock file "%s".', LOCKFILE)
-
-    if LOCKFILE.is_file():
-        raise Locked()
-
-    with LOCKFILE.open('w') as file:
-        file.write('Locked.\n')
-
-
-def release_lock():
-    """Removes the lock file."""
-
-    LOGGER.debug('Removing lock file "%s".', LOCKFILE)
-
-    with suppress(FileNotFoundError):
-        LOCKFILE.unlink()
-
-
 def get_files(directory: dict) -> Iterable[Path]:
     """Lists the current files."""
 
@@ -271,12 +250,55 @@ def main() -> int:
     return server(socket, request_handler)
 
 
+class Lock:
+    """Ensures unlock in context."""
+
+    def __enter__(self):
+        """Acquires a lock."""
+        LOGGER.debug('Creating lock file "%s".', LOCKFILE)
+
+        if LOCKFILE.is_file():
+            raise Locked()
+
+        with LOCKFILE.open('w') as file:
+            file.write('Locked.\n')
+
+        return LOCKFILE
+
+    def __exit__(self, *_):
+        """Releases the lock."""
+        LOGGER.debug('Removing lock file "%s".', LOCKFILE)
+
+        with suppress(FileNotFoundError):
+            LOCKFILE.unlink()
+
+
 class HTTPRequestHandler(BaseHTTPRequestHandler):
     """Handles HTTP requests."""
 
     LAST_SYNC = None
     DIRECTORY = NotImplemented
     CHUNK_SIZE = NotImplemented
+
+    @property
+    def last_sync(self) -> datetime:
+        """Returns the datetime of the last sync."""
+        return type(self).LAST_SYNC
+
+    @last_sync.setter
+    def last_sync(self, last_sync: datetime):
+        """Sets the datetime of the last sync."""
+        type(self).LAST_SYNC = last_sync
+
+    @property
+    def directory(self) -> Path:
+        """Returns the working directory."""
+        return type(self).DIRECTORY
+
+    @property
+    def chunk_size(self) -> Path:
+        """Returns the chunk size for file operations."""
+        return type(self).CHUNK_SIZE
 
     @property
     def content_length(self) -> int:
@@ -296,11 +318,9 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     @property
     def manifest(self):
         """Returns the manifest."""
-        acquire_lock()
-        manifest = gen_manifest(self.DIRECTORY, chunk_size=self.CHUNK_SIZE)
-        manifest = dict(manifest)
-        release_lock()
-        return manifest
+        with Lock():
+            return dict(gen_manifest(
+                self.directory, chunk_size=self.chunk_size))
 
     def send_data(self, value, status_code: int):
         """Sends the respective data."""
@@ -328,27 +348,30 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             body = 'File cannot be processed due to insufficient memory.'
             return self.send_data(body, status_code)
 
-        if update(file, self.DIRECTORY, chunk_size=self.CHUNK_SIZE):
+        if update(file, self.directory, chunk_size=self.chunk_size):
+            text = 'System synchronized.'
             status_code = 200
-            type(self).LAST_SYNC = datetime.now()
+            self.last_sync = datetime.now()
         else:
+            text = 'Synchronization failed.'
             status_code = 500
 
-        try:
-            manifest = self.manifest
-        except Locked:
-            return self.send_data('System is currently locked.', 503)
-
-        return self.send_data(manifest, status_code)
+        return self.send_data(text, status_code)
 
     def do_GET(self):   # pylint: disable=C0103
         """Returns current status information."""
-        status = {'manifest': self.manifest}
+        json = {}
+        status = 200
 
-        if self.LAST_SYNC is not None:
-            status['last_sync'] = self.LAST_SYNC.isoformat()
+        try:
+            json['manifest'] = self.manifest
+        except Locked:
+            status = 403
 
-        self.send_data(status, 200)
+        if self.last_sync is not None:
+            json['last_sync'] = self.last_sync.isoformat()
+
+        self.send_data(json, status)
 
     def do_POST(self):  # pylint: disable=C0103
         """Handles JSON inquries."""
@@ -370,10 +393,10 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             return self.send_data(manifest, 200)
 
         if command == 'last_sync':
-            if self.LAST_SYNC is None:
+            if self.last_sync is None:
                 text = 'Never.'
             else:
-                text = self.LAST_SYNC.isoformat()
+                text = self.last_sync.isoformat()
 
             return self.send_data(text, 200)
 
@@ -382,12 +405,10 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     def do_PUT(self):  # pylint: disable=C0103
         """Retrieves and updates digital signage data."""
         try:
-            acquire_lock()
+            with Lock():
+                self.update_digsig_data()
         except Locked:
             self.send_data('Synchronization already in progress.', 503)
-        else:
-            self.update_digsig_data()
-            release_lock()
 
 
 if __name__ == '__main__':
