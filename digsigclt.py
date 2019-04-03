@@ -284,12 +284,12 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         return int(self.headers['Content-Length'])
 
     @property
-    def bytes(self):
+    def bytes(self) -> bytes:
         """Returns the POST-ed bytes."""
         return self.rfile.read(self.content_length)
 
     @property
-    def json(self):
+    def json(self) -> dict:
         """Returns received JSON data."""
         return loads(self.bytes)
 
