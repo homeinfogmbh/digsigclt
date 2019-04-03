@@ -115,7 +115,7 @@ def copydir(source_dir: Path, dest_dir: Path, *, chunk_size: int = 4096):
             copydir(source_path, dest_path, chunk_size=chunk_size)
         else:
             LOGGER.warning(
-                'Skipping file "%s" which is neither a file nor a directory.',
+                'Skipping "%s" which is neither a file nor a directory.',
                 source_path)
 
 
