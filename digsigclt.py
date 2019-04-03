@@ -296,7 +296,11 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     @property
     def manifest(self):
         """Returns the manifest."""
-        return dict(gen_manifest(self.DIRECTORY, chunk_size=self.CHUNK_SIZE))
+        acquire_lock()
+        manifest = gen_manifest(self.DIRECTORY, chunk_size=self.CHUNK_SIZE)
+        manifest = dict(manifest)
+        release_lock()
+        return manifest
 
     def send_data(self, value, status_code: int):
         """Sends the respective data."""
@@ -313,17 +317,6 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', content_type)
         self.end_headers()
         self.wfile.write(body)
-
-    def send_manifest(self):
-        """Sends the manifest."""
-        try:
-            acquire_lock()
-        except Locked:
-            self.send_data('Synchronization already in progress.', 503)
-        else:
-            self.send_data(self.manifest, 200)
-        finally:
-            release_lock()
 
     def update_digsig_data(self):
         """Updates the digital signage data."""
@@ -365,7 +358,20 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             return self.send_data('Arguments must be a list.', 400)
 
         if command == 'manifest':
-            return self.send_manifest()
+            try:
+                manifest = self.manifest
+            except Locked:
+                return self.send_data('System is currently locked.', 503)
+
+            return self.send_data(manifest, 200)
+
+        if command == 'last_sync':
+            if self.LAST_SYNC is None:
+                text = 'Never.'
+            else:
+                text = self.LAST_SYNC.isoformat()
+
+            return self.send_data(text, 200)
 
         return self.send_data('Unknown command.', 400)
 
@@ -377,7 +383,6 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             self.send_data('Synchronization already in progress.', 503)
         else:
             self.update_digsig_data()
-        finally:
             release_lock()
 
 
