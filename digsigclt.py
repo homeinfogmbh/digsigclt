@@ -37,7 +37,7 @@ from logging import DEBUG, INFO, basicConfig, getLogger
 from pathlib import Path
 from sys import exit    # pylint: disable=W0622
 from tarfile import open as tar_open
-from tempfile import gettempdir, TemporaryDirectory, TemporaryFile
+from tempfile import gettempdir, TemporaryDirectory
 from typing import Iterable
 
 
@@ -286,7 +286,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     @property
     def bytes(self):
         """Returns the POST-ed bytes."""
-        return iter(partial(self.rfile.read, self.CHUNK_SIZE), b'')
+        return self.rfile.read(self.content_length)
 
     @property
     def json(self):
@@ -327,20 +327,22 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
     def update_digsig_data(self):
         """Updates the digital signage data."""
-        with TemporaryFile(mode='w+b') as file:
-            for chunk in self.bytes:
-                file.write(chunk)
-
-            file.flush()
-            file.seek(0)
-
+        try:
+            file = BytesIO(self.bytes)
+        except MemoryError:
+            LOGGER.critical('Received file is too large.')
+            status_code = 507   # Insufficient Storage.
+            body = 'File cannot be processed due to insufficient memory.'
+        else:
             if update(file, self.DIRECTORY, chunk_size=self.CHUNK_SIZE):
                 status_code = 200
                 type(self).LAST_SYNC = datetime.now()
             else:
                 status_code = 500
 
-        self.send_data(self.manifest, status_code)
+            body = self.manifest
+
+        self.send_data(body, status_code)
 
     def do_GET(self):   # pylint: disable=C0103
         """Returns when the system has
