@@ -267,7 +267,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     CHUNK_SIZE = NotImplemented
 
     @classmethod
-    def configure(cls, directory: Path, chunk_size: int):
+    def configure(cls, directory: Path, chunk_size: int) -> HTTPRequestHandler:
         """Returns a HTTP request handler for the given arguments."""
         class ConfiguredHTTPRequestHandler(cls):
             """A configured version of the request
