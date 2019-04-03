@@ -113,6 +113,10 @@ def copydir(source_dir: Path, dest_dir: Path, *, chunk_size: int = 4096):
 
             dest_path.mkdir(mode=0o755, parents=True, exist_ok=True)
             copydir(source_path, dest_path, chunk_size=chunk_size)
+        else:
+            LOGGER.warning(
+                'Skipping file "%s" which is neither a file nor a directory.',
+                source_path)
 
 
 def strip_files(directory: Path, manifest: frozenset):
