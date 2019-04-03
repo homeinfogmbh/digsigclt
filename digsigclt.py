@@ -88,7 +88,7 @@ def get_files(directory: dict) -> Iterable[Path]:
 def copy_file(src_file: Path, dst_file: Path, *, chunk_size: int = 4096):
     """Copies a file from src to dst."""
 
-    with src_file.open('wb') as src, dst_file.open('rb') as dst:
+    with src_file.open('rb') as src, dst_file.open('wb') as dst:
         for chunk in iter(partial(src.read, chunk_size), b''):
             dst.write(chunk)
 
