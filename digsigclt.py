@@ -38,6 +38,7 @@ from pathlib import Path
 from sys import exit    # pylint: disable=W0622
 from tarfile import open as tar_open
 from tempfile import gettempdir, TemporaryDirectory
+from threading import Lock
 from typing import Iterable
 
 
@@ -48,10 +49,7 @@ LOCKFILE = Path(gettempdir()).joinpath(LOCKFILE_NAME)
 MANIFEST_FILENAME = 'manifest.json'
 LOG_FORMAT = '[%(levelname)s] %(name)s: %(message)s'
 LOGGER = getLogger('digsigclt')
-
-
-class Locked(Exception):
-    """Indicates that the synchronization is currently locked."""
+LOCK = Lock()
 
 
 def get_files(directory: dict) -> Iterable[Path]:
@@ -250,29 +248,6 @@ def main() -> int:
     return server(socket, request_handler)
 
 
-class Lock:
-    """Ensures unlock in context."""
-
-    def __enter__(self):
-        """Acquires a lock."""
-        LOGGER.debug('Creating lock file "%s".', LOCKFILE)
-
-        if LOCKFILE.is_file():
-            raise Locked()
-
-        with LOCKFILE.open('w') as file:
-            file.write('Locked.\n')
-
-        return LOCKFILE
-
-    def __exit__(self, *_):
-        """Releases the lock."""
-        LOGGER.debug('Removing lock file "%s".', LOCKFILE)
-
-        with suppress(FileNotFoundError):
-            LOCKFILE.unlink()
-
-
 class HTTPRequestHandler(BaseHTTPRequestHandler):
     """Handles HTTP requests."""
 
@@ -318,9 +293,13 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     @property
     def manifest(self):
         """Returns the manifest."""
-        with Lock():
-            return dict(gen_manifest(
+        if LOCK.acquire():
+            manifest = dict(gen_manifest(
                 self.directory, chunk_size=self.chunk_size))
+            LOCK.release()
+            return manifest
+
+        return None
 
     def send_data(self, value, status_code: int, content_type: str = None):
         """Sends the respective data."""
@@ -360,18 +339,12 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):   # pylint: disable=C0103
         """Returns current status information."""
-        json = {}
-        status = 200
-
-        try:
-            json['manifest'] = self.manifest
-        except Locked:
-            status = 403
+        json = {'manifest': self.manifest}
 
         if self.last_sync is not None:
             json['last_sync'] = self.last_sync.isoformat()
 
-        self.send_data(json, status)
+        self.send_data(json, 200)
 
     def do_POST(self):  # pylint: disable=C0103
         """Handles JSON inquries."""
@@ -385,9 +358,9 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             return self.send_data('Arguments must be a list.', 400)
 
         if command == 'manifest':
-            try:
-                manifest = self.manifest
-            except Locked:
+            manifest = self.manifest
+
+            if manifest is None:
                 return self.send_data('System is currently locked.', 503)
 
             return self.send_data(manifest, 200)
@@ -404,10 +377,10 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
     def do_PUT(self):  # pylint: disable=C0103
         """Retrieves and updates digital signage data."""
-        try:
-            with Lock():
-                self.update_digsig_data()
-        except Locked:
+        if LOCK.acquire():
+            self.update_digsig_data()
+            LOCK.release()
+        else:
             self.send_data('Synchronization already in progress.', 503)
 
 
