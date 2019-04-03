@@ -88,7 +88,7 @@ def get_files(directory: dict) -> Iterable[Path]:
 def copy_file(src_file: Path, dst_file: Path, *, chunk_size: int = 4096):
     """Copies a file from src to dst."""
 
-    with src_file.open('wb') as dst, dst_file.open('rb') as src:
+    with src_file.open('wb') as src, dst_file.open('rb') as dst:
         for chunk in iter(partial(src.read, chunk_size), b''):
             dst.write(chunk)
 
@@ -106,7 +106,7 @@ def copydir(source_dir: Path, dest_dir: Path, *, chunk_size: int = 4096):
 
         if source_path.is_file():
             LOGGER.info('Updating file "%s".', dest_path)
-            copy_file(dest_path, source_path, chunk_size=chunk_size)
+            copy_file(source_path, dest_path, chunk_size=chunk_size)
         elif source_path.is_dir():
             if dest_path.is_file():
                 dest_path.unlink()
