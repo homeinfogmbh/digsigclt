@@ -349,13 +349,9 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):  # pylint: disable=C0103
         """Handles JSON inquries."""
         command = self.json.get('command')
-        args = self.json.get('args', [])
 
         if not command:
             return self.send_data('No command specified.', 400)
-
-        if not isinstance(args, list):
-            return self.send_data('Arguments must be a list.', 400)
 
         if command == 'manifest':
             manifest = self.manifest
