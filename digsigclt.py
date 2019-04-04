@@ -37,16 +37,13 @@ from logging import DEBUG, INFO, basicConfig, getLogger
 from pathlib import Path
 from sys import exit    # pylint: disable=W0622
 from tarfile import open as tar_open
-from tempfile import gettempdir, TemporaryDirectory
+from tempfile import TemporaryDirectory
 from threading import Lock
 from typing import Iterable
 
 
 DESCRIPTION = '''HOMEINFO multi-platform digital signage client.
 Synchronizes data to the current working directory when triggered.'''
-LOCKFILE_NAME = 'digsigclt.sync.lock'
-LOCKFILE = Path(gettempdir()).joinpath(LOCKFILE_NAME)
-MANIFEST_FILENAME = 'manifest.json'
 LOG_FORMAT = '[%(levelname)s] %(name)s: %(message)s'
 LOGGER = getLogger('digsigclt')
 LOCK = Lock()
@@ -130,13 +127,15 @@ def strip_tree(directory: Path):
 def load_manifest(tmpd: Path) -> frozenset:
     """Reads the manifest from the respective temporary directory."""
 
-    path = tmpd.joinpath(MANIFEST_FILENAME)
+    path = tmpd.joinpath('manifest.json')
     LOGGER.debug('Reading manifest from "%s".', path)
 
     with path.open('r') as file:
         manifest = load(file)
 
-    path.unlink()   # File is no longer needed.
+    # Remove file to prevent it from being
+    # copied to digital signage data directory.
+    path.unlink()
     return frozenset(manifest)
 
 
@@ -339,39 +338,19 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):   # pylint: disable=C0103
         """Returns current status information."""
-        json = {'manifest': self.manifest}
+        manifest = self.manifest
+
+        if manifest is None:
+            return self.send_data('System is currently locked.', 503)
+
+        json = {'manifest': manifest}
 
         if self.last_sync is not None:
             json['last_sync'] = self.last_sync.isoformat()
 
-        self.send_data(json, 200)
+        return self.send_data(json, 200)
 
     def do_POST(self):  # pylint: disable=C0103
-        """Handles JSON inquries."""
-        command = self.json.get('command')
-
-        if not command:
-            return self.send_data('No command specified.', 400)
-
-        if command == 'manifest':
-            manifest = self.manifest
-
-            if manifest is None:
-                return self.send_data('System is currently locked.', 503)
-
-            return self.send_data(manifest, 200)
-
-        if command == 'last_sync':
-            if self.last_sync is None:
-                text = 'Never.'
-            else:
-                text = self.last_sync.isoformat()
-
-            return self.send_data(text, 200)
-
-        return self.send_data('Unknown command.', 400)
-
-    def do_PUT(self):  # pylint: disable=C0103
         """Retrieves and updates digital signage data."""
         if LOCK.acquire():
             self.update_digsig_data()
