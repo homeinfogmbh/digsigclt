@@ -34,6 +34,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from io import BytesIO
 from json import dumps, load, loads
 from logging import DEBUG, INFO, basicConfig, getLogger
+from os import linesep
 from pathlib import Path
 from sys import exit    # pylint: disable=W0622
 from tarfile import open as tar_open
@@ -45,6 +46,7 @@ from typing import Iterable
 DESCRIPTION = '''HOMEINFO multi-platform digital signage client.
 Synchronizes data to the current working directory when triggered.'''
 LOG_FORMAT = '[%(levelname)s] %(name)s: %(message)s'
+LOGFILE = 'synclog.txt'
 LOGGER = getLogger('digsigclt')
 LOCK = Lock()
 
@@ -179,6 +181,11 @@ def update(file: BytesIO, directory: Path, *, chunk_size: int = 4096) -> bool:
 
     strip_files(directory, manifest)
     strip_tree(directory)
+
+    with directory.joinpath(LOGFILE).open('a') as logfile:
+        logfile.write(datetime.now().isoformat())
+        logfile.write(linesep)
+
     return True
 
 
