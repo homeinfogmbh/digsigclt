@@ -102,8 +102,12 @@ def strip_files(directory: Path, manifest: frozenset):
 
     for path in get_files(directory):
         relpath = path.relative_to(directory)
+        filename = str(relpath)
 
-        if str(relpath) not in manifest:
+        if filename == LOGFILE:     # Keep log file.
+            continue
+
+        if filename not in manifest:
             LOGGER.debug('Removing obsolete file "%s".', path)
             path.unlink()
 
