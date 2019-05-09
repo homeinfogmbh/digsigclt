@@ -38,7 +38,7 @@ from os import linesep
 from pathlib import Path
 from sys import exit    # pylint: disable=W0622
 from tarfile import open as tar_open
-from tempfile import TemporaryDirectory
+from tempfile import gettempdir, TemporaryDirectory
 from threading import Lock
 from typing import Iterable
 
@@ -102,12 +102,8 @@ def strip_files(directory: Path, manifest: frozenset):
 
     for path in get_files(directory):
         relpath = path.relative_to(directory)
-        filename = str(relpath)
 
-        if filename == LOGFILE:     # Keep log file.
-            continue
-
-        if filename not in manifest:
+        if str(relpath) not in manifest:
             LOGGER.debug('Removing obsolete file "%s".', path)
             path.unlink()
 
@@ -186,7 +182,7 @@ def update(file: BytesIO, directory: Path, *, chunk_size: int = 4096) -> bool:
     strip_files(directory, manifest)
     strip_tree(directory)
 
-    with directory.joinpath(LOGFILE).open('a') as logfile:
+    with Path(gettempdir()).joinpath(LOGFILE).open('a') as logfile:
         logfile.write(datetime.now().isoformat())
         logfile.write(linesep)
 
