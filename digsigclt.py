@@ -227,8 +227,8 @@ def get_args() -> Namespace:
         '-p', '--port', type=int, default=5000, metavar='port',
         help='port to listen on')
     parser.add_argument(
-        '-d', '--directory', type=Path, metavar='dir',
-        default=Path.cwd(), help='sets the target directory')
+        '-d', '--directory', type=Path, metavar='dir', default=Path.cwd(),
+        help='sets the target directory')
     parser.add_argument(
         '-c', '--chunk-size', type=int, default=4096, metavar='bytes',
         help='chunk size to use on file operations')
@@ -244,14 +244,13 @@ def main() -> int:
     basicConfig(level=DEBUG if args.verbose else INFO, format=LOG_FORMAT)
     LOGGER.debug('Target directory set to "%s".', args.directory)
 
-    if not args.directory.is_dir():
-        LOGGER.critical(
-            'Target directory "%s" does not exist.', args.directory)
-        return 2
+    if args.directory.is_dir():
+        socket = (args.address, args.port)
+        request_handler = requesthandler(args.directory, args.chunk_size)
+        return server(socket, request_handler)
 
-    socket = (args.address, args.port)
-    request_handler = requesthandler(args.directory, args.chunk_size)
-    return server(socket, request_handler)
+    LOGGER.critical('Target directory "%s" does not exist.', args.directory)
+    return 2
 
 
 class HTTPRequestHandler(BaseHTTPRequestHandler):
@@ -300,8 +299,8 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     def manifest(self):
         """Returns the manifest."""
         if LOCK.acquire():
-            manifest = dict(gen_manifest(
-                self.directory, chunk_size=self.chunk_size))
+            manifest = gen_manifest(self.directory, chunk_size=self.chunk_size)
+            manifest = dict(manifest)
             LOCK.release()
             return manifest
 
