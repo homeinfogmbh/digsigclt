@@ -1,0 +1,10 @@
+[Unit]
+Description=Digital signage data synchronization client
+
+[Service]
+User=digsig
+Group=digsig
+ExecStart=/usr/bin/digsigclt
+
+[Install]
+WantedBy=multi-user.target

@@ -224,7 +224,7 @@ def get_args() -> Namespace:
         '-a', '--address', default='0.0.0.0', metavar='address',
         help='IPv4 address to listen on')
     parser.add_argument(
-        '-p', '--port', type=int, default=5000, metavar='port',
+        '-p', '--port', type=int, default=8000, metavar='port',
         help='port to listen on')
     parser.add_argument(
         '-d', '--directory', type=Path, metavar='dir', default=Path.cwd(),
