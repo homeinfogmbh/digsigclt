@@ -4,6 +4,7 @@ Description=Digital signage data synchronization client
 [Service]
 User=digsig
 Group=digsig
+WorkingDirectory=/usr/share/digsig
 ExecStart=/usr/bin/digsigclt
 
 [Install]
