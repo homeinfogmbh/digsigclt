@@ -6,6 +6,8 @@ User=digsig
 Group=digsig
 WorkingDirectory=/usr/share/digsig
 ExecStart=/usr/bin/digsigclt
+Restart=on-failure
+RestartSec=10
 
 [Install]
 WantedBy=multi-user.target
