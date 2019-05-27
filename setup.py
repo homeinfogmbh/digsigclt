@@ -11,7 +11,6 @@ setup(
     author_email='<info@homeinfo.de>',
     maintainer='Richard Neumann',
     maintainer_email='<r.neumann@homeinfo.de>',
-    py_modules=['digsigclt'],
     scripts=['digsigclt'],
     description=('Digital signage data synchronization client.')
 )
