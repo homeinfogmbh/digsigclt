@@ -13,4 +13,5 @@ setup(
     maintainer_email='<r.neumann@homeinfo.de>',
     py_modules=['digsigclt'],
     scripts=['digsigclt'],
-    description=('Yet another Arch Linux mirror list optimizer.'))
+    description=('Digital signage data synchronization client.')
+)
