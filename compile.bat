@@ -1,3 +1,4 @@
+@echo off
 rem Compile digsigclt as single-file exe.
 rem Requires python >= 3.6 and pyinstaller.
 
