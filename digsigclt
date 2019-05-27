@@ -54,7 +54,7 @@ LOGGER = getLogger('digsigclt')
 LOCK = Lock()
 
 
-def get_files(directory: dict) -> Iterable[Path]:
+def get_files(directory: Path) -> Iterable[Path]:
     """Lists the current files."""
 
     for inode in directory.iterdir():
@@ -98,20 +98,16 @@ def copydir(source_dir: Path, dest_dir: Path, *, chunk_size: int = 4096):
                 source_path)
 
 
-def strip_files(directory: Path, manifest: frozenset):
+def strip_files(directory: Path, manifest: set):
     """Removes all files from the directory tree,
     whose SHA-256 checksums are not in the manifest.
     """
 
-    LOGGER.debug('Directory is "%s".', directory)
-    LOGGER.debug('Manifest is "%s".', manifest)
-
     for path in get_files(directory):
         relpath = path.relative_to(directory)
 
-        if str(relpath) not in manifest:
+        if relpath not in manifest:
             LOGGER.debug('Removing obsolete file "%s".', path)
-            LOGGER.debug('Relative path is: "%s".', relpath)
             path.unlink()
 
 
@@ -133,7 +129,7 @@ def strip_tree(directory: Path):
             strip_subdir(inode)
 
 
-def load_manifest(tmpd: Path) -> frozenset:
+def load_manifest(tmpd: Path) -> set:
     """Reads the manifest from the respective temporary directory."""
 
     path = tmpd.joinpath('manifest.json')
@@ -145,7 +141,7 @@ def load_manifest(tmpd: Path) -> frozenset:
     # Remove file to prevent it from being
     # copied to digital signage data directory.
     path.unlink()
-    return frozenset(manifest)
+    return {Path(relpath) for relpath in manifest}
 
 
 def gen_manifest(directory: Path, chunk_size: int = 4096) -> Iterable[tuple]:
