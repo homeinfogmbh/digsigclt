@@ -181,11 +181,6 @@ def update(file: BytesIO, directory: Path, *, chunk_size: int = 4096) -> bool:
 
     strip_files(directory, manifest)
     strip_tree(directory)
-
-    with Path(gettempdir()).joinpath(LOGFILE).open('a') as logfile:
-        logfile.write(datetime.now().isoformat())
-        logfile.write(linesep)
-
     return True
 
 
@@ -203,15 +198,16 @@ def server(socket: tuple, request_handler: BaseHTTPRequestHandler) -> int:
     return 0
 
 
-def requesthandler(directory: Path, chunk_size: int) -> BaseHTTPRequestHandler:
+def requesthandler(args: Namespace) -> BaseHTTPRequestHandler:
     """Returns a HTTP request handler for the given arguments."""
 
     class RequestHandler(HTTPRequestHandler):   # pylint: disable=E0601
         """A configured version of the request
         handler with DIRECTORY and CHUNK_SIZE set.
         """
-        DIRECTORY = directory
-        CHUNK_SIZE = chunk_size
+        DIRECTORY = args.directory
+        CHUNK_SIZE = args.chunk_size
+        LOG_DIR = args.log_dir
 
     return RequestHandler
 
@@ -230,6 +226,9 @@ def get_args() -> Namespace:
         '-d', '--directory', type=Path, metavar='dir', default=Path.cwd(),
         help='sets the target directory')
     parser.add_argument(
+        '-l', '--log-dir', type=Path, metavar='dir',
+        default=Path(gettempdir()), help='sets the logging directory')
+    parser.add_argument(
         '-c', '--chunk-size', type=int, default=4096, metavar='bytes',
         help='chunk size to use on file operations')
     parser.add_argument(
@@ -246,7 +245,7 @@ def main() -> int:
 
     if args.directory.is_dir():
         socket = (args.address, args.port)
-        request_handler = requesthandler(args.directory, args.chunk_size)
+        request_handler = requesthandler(args)
         return server(socket, request_handler)
 
     LOGGER.critical('Target directory "%s" does not exist.', args.directory)
@@ -259,6 +258,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     LAST_SYNC = None
     DIRECTORY = NotImplemented
     CHUNK_SIZE = NotImplemented
+    LOG_DIR = NotImplemented
 
     @property
     def last_sync(self) -> datetime:
@@ -274,6 +274,16 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     def directory(self) -> Path:
         """Returns the working directory."""
         return type(self).DIRECTORY
+
+    @property
+    def log_dir(self):
+        """Returns the logging directory."""
+        return type(self).LOG_DIR
+
+    @property
+    def logfile(self):
+        """Returns the log file."""
+        return self.log_dir.joinpath(LOGFILE)   # pylint: disable=E1101
 
     @property
     def chunk_size(self) -> Path:
@@ -322,6 +332,14 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def log_sync(self):
+        """Logs the synchronization."""
+        self.last_sync = last_sync = datetime.now()
+
+        with self.logfile.open('a') as logfile:
+            logfile.write(last_sync.isoformat())
+            logfile.write(linesep)
+
     def update_digsig_data(self):
         """Updates the digital signage data."""
         try:
@@ -335,7 +353,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         if update(file, self.directory, chunk_size=self.chunk_size):
             text = 'System synchronized.'
             status_code = 200
-            self.last_sync = datetime.now()
+            self.log_sync()
         else:
             text = 'Synchronization failed.'
             status_code = 500
