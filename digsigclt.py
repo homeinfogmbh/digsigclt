@@ -1,4 +1,3 @@
-#! /usr/bin/env python3
 #
 #  digsigclt - Digital Signage data synchronization client.
 #
@@ -36,11 +35,13 @@ from json import dumps, load, loads
 from logging import DEBUG, INFO, basicConfig, getLogger
 from os import linesep
 from pathlib import Path
-from sys import exit    # pylint: disable=W0622
 from tarfile import open as tar_open
 from tempfile import gettempdir, TemporaryDirectory
 from threading import Lock
 from typing import Iterable
+
+
+__all__ = ['main']
 
 
 DESCRIPTION = '''HOMEINFO multi-platform digital signage client.
@@ -381,7 +382,3 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             LOCK.release()
         else:
             self.send_data('Synchronization already in progress.', 503)
-
-
-if __name__ == '__main__':
-    exit(main())
