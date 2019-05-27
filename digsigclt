@@ -103,11 +103,15 @@ def strip_files(directory: Path, manifest: frozenset):
     whose SHA-256 checksums are not in the manifest.
     """
 
+    LOGGER.debug('Directory is "%s".', directory)
+    LOGGER.debug('Manifest is "%s".', manifest)
+
     for path in get_files(directory):
         relpath = path.relative_to(directory)
 
         if str(relpath) not in manifest:
             LOGGER.debug('Removing obsolete file "%s".', path)
+            LOGGER.debug('Relative path is: "%s".', relpath)
             path.unlink()
 
 
