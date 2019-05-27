@@ -379,6 +379,8 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):  # pylint: disable=C0103
         """Retrieves and updates digital signage data."""
+        LOGGER.info('Incoming sync from %s:%s.', *self.client_address)
+
         if LOCK.acquire():
             self.update_digsig_data()
             LOCK.release()
