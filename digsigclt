@@ -38,7 +38,7 @@ from os import linesep
 from pathlib import Path
 from sys import exit    # pylint: disable=W0622
 from tarfile import open as tar_open
-from tempfile import gettempdir, TemporaryDirectory
+from tempfile import TemporaryDirectory
 from threading import Lock
 from typing import Iterable
 
@@ -49,7 +49,7 @@ __all__ = ['main']
 DESCRIPTION = '''HOMEINFO multi-platform digital signage client.
 Synchronizes data to the current working directory when triggered.'''
 LOG_FORMAT = '[%(levelname)s] %(name)s: %(message)s'
-LOGFILE = 'synclog.txt'
+LOGFILE = Path('synclog.txt')
 LOGGER = getLogger('digsigclt')
 LOCK = Lock()
 
@@ -60,7 +60,7 @@ def get_files(directory: Path) -> Iterable[Path]:
     for inode in directory.iterdir():
         if inode.is_dir():
             yield from get_files(inode)
-        elif inode.is_file():
+        elif inode.is_file() and inode.relative_to(directory) != LOGFILE:
             yield inode
 
 
@@ -201,16 +201,15 @@ def server(socket: tuple, request_handler: BaseHTTPRequestHandler) -> int:
     return 0
 
 
-def requesthandler(args: Namespace) -> BaseHTTPRequestHandler:
+def requesthandler(directory: Path, chunk_size: int) -> BaseHTTPRequestHandler:
     """Returns a HTTP request handler for the given arguments."""
 
     class RequestHandler(HTTPRequestHandler):   # pylint: disable=E0601
         """A configured version of the request
         handler with DIRECTORY and CHUNK_SIZE set.
         """
-        DIRECTORY = args.directory
-        CHUNK_SIZE = args.chunk_size
-        LOG_DIR = args.log_dir
+        DIRECTORY = directory
+        CHUNK_SIZE = chunk_size
 
     return RequestHandler
 
@@ -229,9 +228,6 @@ def get_args() -> Namespace:
         '-d', '--directory', type=Path, metavar='dir', default=Path.cwd(),
         help='sets the target directory')
     parser.add_argument(
-        '-l', '--log-dir', type=Path, metavar='dir',
-        default=Path(gettempdir()), help='sets the logging directory')
-    parser.add_argument(
         '-c', '--chunk-size', type=int, default=4096, metavar='bytes',
         help='chunk size to use on file operations')
     parser.add_argument(
@@ -248,7 +244,7 @@ def main() -> int:
 
     if args.directory.is_dir():
         socket = (args.address, args.port)
-        request_handler = requesthandler(args)
+        request_handler = requesthandler(args.directory, args.chunk_size)
         return server(socket, request_handler)
 
     LOGGER.critical('Target directory "%s" does not exist.', args.directory)
@@ -261,7 +257,6 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     LAST_SYNC = None
     DIRECTORY = NotImplemented
     CHUNK_SIZE = NotImplemented
-    LOG_DIR = NotImplemented
 
     @property
     def last_sync(self) -> datetime:
@@ -279,14 +274,9 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         return type(self).DIRECTORY
 
     @property
-    def log_dir(self):
-        """Returns the logging directory."""
-        return type(self).LOG_DIR
-
-    @property
     def logfile(self):
         """Returns the log file."""
-        return self.log_dir.joinpath(LOGFILE)   # pylint: disable=E1101
+        return self.directory.joinpath(LOGFILE)     # pylint: disable=E1101
 
     @property
     def chunk_size(self) -> Path:
