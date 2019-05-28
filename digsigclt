@@ -151,8 +151,8 @@ def load_manifest(tmpd: Path) -> set:
         LOGGER.debug(text)
         raise ManifestError()
 
-    if not isinstance(manifest, dict):
-        LOGGER.error('Manifest is not a dict: "%s".', path)
+    if not isinstance(manifest, list):
+        LOGGER.error('Manifest is not a list: "%s".', path)
         LOGGER.debug(manifest, type(manifest))
         raise ManifestError()
 
