@@ -271,10 +271,11 @@ def main() -> int:
     if args.directory.is_dir():
         socket = (args.address, args.port)
         request_handler = requesthandler(args.directory, args.chunk_size)
-        return server(socket, request_handler)
+        server(socket, request_handler)
+        exit(0)
 
     LOGGER.critical('Target directory "%s" does not exist.', args.directory)
-    return 2
+    exit(2)
 
 
 class HTTPRequestHandler(BaseHTTPRequestHandler):
@@ -404,4 +405,4 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
 
 if __name__ == '__main__':
-    exit(main())
+    main()
