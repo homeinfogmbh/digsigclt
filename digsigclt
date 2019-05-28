@@ -148,6 +148,8 @@ def gen_manifest(directory: Path, chunk_size: int = 4096) -> Iterable[tuple]:
     respective SHA-256 sums in the given directory.
     """
 
+    manifest = {}
+
     for filename in get_files(directory):
         sha256sum = sha256()
 
@@ -158,7 +160,9 @@ def gen_manifest(directory: Path, chunk_size: int = 4096) -> Iterable[tuple]:
         sha256sum = sha256sum.hexdigest()
         LOGGER.debug('SHA-256 sum of "%s" is "%s".', filename, sha256sum)
         relpath = filename.relative_to(directory)
-        yield (str(relpath), sha256sum)
+        manifest[str(relpath)] = sha256sum
+
+    return manifest
 
 
 def update(file: BytesIO, directory: Path, *, chunk_size: int = 4096) -> bool:
@@ -302,7 +306,6 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         """Returns the manifest."""
         if LOCK.acquire():
             manifest = gen_manifest(self.directory, chunk_size=self.chunk_size)
-            manifest = dict(manifest)
             LOCK.release()
             return manifest
 
