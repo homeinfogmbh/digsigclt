@@ -35,6 +35,7 @@ from io import BytesIO
 from json import dumps, loads
 from logging import DEBUG, INFO, basicConfig, getLogger
 from os import linesep
+from os.path import join
 from pathlib import Path
 from sys import argv, exit  # pylint: disable=W0622
 from tarfile import open as tar_open
@@ -159,7 +160,7 @@ def load_manifest(tmpd: Path) -> set:
     # Remove file to prevent it from being
     # copied to digital signage data directory.
     path.unlink()
-    return {Path(relpath) for relpath in manifest}
+    return {Path(join(*parts)) for parts in manifest}
 
 
 def gen_manifest(directory: Path, chunk_size: int = 4096) -> Iterable[tuple]:
@@ -179,7 +180,8 @@ def gen_manifest(directory: Path, chunk_size: int = 4096) -> Iterable[tuple]:
         sha256sum = sha256sum.hexdigest()
         LOGGER.debug('SHA-256 sum of "%s" is "%s".', filename, sha256sum)
         relpath = filename.relative_to(directory)
-        manifest[str(relpath)] = sha256sum
+        parts = tuple(relpath.parts)
+        manifest[parts] = sha256sum
 
     return manifest
 
