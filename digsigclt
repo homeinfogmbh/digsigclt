@@ -355,9 +355,8 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         """Logs the synchronization."""
         self.last_sync = last_sync = datetime.now()
 
-        with self.logfile.open('a') as logfile:
-            logfile.write(last_sync.isoformat())
-            logfile.write(linesep)
+        with self.logfile.open('w') as logfile:
+            logfile.write(last_sync.isoformat() + linesep)
 
     def update_digsig_data(self):
         """Updates the digital signage data."""
