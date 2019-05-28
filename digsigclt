@@ -32,7 +32,7 @@ from functools import partial
 from hashlib import sha256
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from io import BytesIO
-from json import dumps, load, loads
+from json import dumps, loads
 from logging import DEBUG, INFO, basicConfig, getLogger
 from os import linesep
 from pathlib import Path
@@ -53,8 +53,12 @@ LOGGER = getLogger('digsigclt')
 LOCK = Lock()
 
 
+class ManifestError(Exception):
+    """Indicates general errors with the files manifest."""
+
+
 def get_files(directory: Path) -> Iterable[Path]:
-    """Lists the current files."""
+    """Lists files in the digital signage data directory."""
 
     for inode in directory.iterdir():
         if inode.is_dir():
@@ -63,24 +67,24 @@ def get_files(directory: Path) -> Iterable[Path]:
             yield inode
 
 
-def copy_file(src_file: Path, dst_file: Path, *, chunk_size: int = 4096):
+def copy_file(src: Path, dst: Path, *, chunk_size: int = 4096):
     """Copies a file from src to dst."""
 
-    with src_file.open('rb') as src, dst_file.open('wb') as dst:
-        for chunk in iter(partial(src.read, chunk_size), b''):
-            dst.write(chunk)
+    with src.open('rb') as src_file, dst.open('wb') as dst_file:
+        for chunk in iter(partial(src_file.read, chunk_size), b''):
+            dst_file.write(chunk)
 
 
-def copydir(source_dir: Path, dest_dir: Path, *, chunk_size: int = 4096):
-    """Copies all contents of source_dir
-    into dest_dir, overwriting all files.
+def copydir(src: Path, dst: Path, *, chunk_size: int = 4096):
+    """Copies all contents of the source directory src
+    into the destination directory dst, overwriting all files.
     """
 
-    LOGGER.debug('Copying "%s" to "%s".', source_dir, dest_dir)
+    LOGGER.debug('Copying "%s" to "%s".', src, dst)
 
-    for source_path in source_dir.iterdir():
-        relpath = source_path.relative_to(source_dir)
-        dest_path = dest_dir.joinpath(relpath)
+    for source_path in src.iterdir():
+        relpath = source_path.relative_to(src)
+        dest_path = dst.joinpath(relpath)
 
         if source_path.is_file():
             LOGGER.info('Updating file "%s".', dest_path)
@@ -92,14 +96,12 @@ def copydir(source_dir: Path, dest_dir: Path, *, chunk_size: int = 4096):
             dest_path.mkdir(mode=0o755, parents=True, exist_ok=True)
             copydir(source_path, dest_path, chunk_size=chunk_size)
         else:
-            LOGGER.warning(
-                'Skipping "%s" which is neither a file nor a directory.',
-                source_path)
+            LOGGER.warning('Skipping unknown file: "%s".', source_path)
 
 
 def strip_files(directory: Path, manifest: set):
-    """Removes all files from the directory tree,
-    whose SHA-256 checksums are not in the manifest.
+    """Removes all files from the directory
+    tree, which are not in the manifest.
     """
 
     for path in get_files(directory):
@@ -119,9 +121,10 @@ def strip_tree(directory: Path):
             if inode.is_dir():
                 strip_subdir(inode)
 
-        if not tuple(subdir.iterdir()):     # Directory is empty.
-            LOGGER.debug('Removing empty directory "%s".', subdir)
-            subdir.rmdir()
+        if not set(subdir.iterdir()):   # Directory is probably empty.
+            with suppress(OSError):
+                subdir.rmdir()
+                LOGGER.debug('Removed empty directory "%s".', subdir)
 
     for inode in directory.iterdir():
         if inode.is_dir():
@@ -134,8 +137,24 @@ def load_manifest(tmpd: Path) -> set:
     path = tmpd.joinpath('manifest.json')
     LOGGER.debug('Reading manifest from "%s".', path)
 
-    with path.open('r') as file:
-        manifest = load(file)
+    try:
+        with path.open('r') as file:
+            text = file.read()
+    except FileNotFoundError:
+        LOGGER.error('Manifest not found: "%s".', path)
+        raise ManifestError()
+
+    try:
+        manifest = loads(text)
+    except ValueError:
+        LOGGER.error('Manifest is not valid JSON: "%s".', path)
+        LOGGER.debug(text)
+        raise ManifestError()
+
+    if not isinstance(manifest, dict):
+        LOGGER.error('Manifest is not a dict: "%s".', path)
+        LOGGER.debug(manifest, type(manifest))
+        raise ManifestError()
 
     # Remove file to prevent it from being
     # copied to digital signage data directory.
@@ -144,8 +163,8 @@ def load_manifest(tmpd: Path) -> set:
 
 
 def gen_manifest(directory: Path, chunk_size: int = 4096) -> Iterable[tuple]:
-    """Yields tuples of all file's names and their
-    respective SHA-256 sums in the given directory.
+    """Generates the manifest of relative
+    file paths and their SHA-256 checksums.
     """
 
     manifest = {}
@@ -177,12 +196,16 @@ def update(file: BytesIO, directory: Path, *, chunk_size: int = 4096) -> bool:
             tar.extractall(path=tmpd)
 
         tmpd = Path(tmpd)
-        manifest = load_manifest(tmpd)
+
+        try:
+            manifest = load_manifest(tmpd)
+        except ManifestError:
+            return False
 
         try:
             copydir(tmpd, directory, chunk_size=chunk_size)
         except PermissionError as permission_error:
-            LOGGER.critical(permission_error)
+            LOGGER.error(permission_error)
             return False
 
     strip_files(directory, manifest)
