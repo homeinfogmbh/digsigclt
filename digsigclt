@@ -182,7 +182,7 @@ def gen_manifest(directory: Path, chunk_size: int = 4096) -> Iterable[tuple]:
         relpath = filename.relative_to(directory)
         manifest[relpath.parts] = sha256sum
 
-    return manifest
+    return [(key, value) for key, value in manifest.items()]
 
 
 def update(file: BytesIO, directory: Path, *, chunk_size: int = 4096) -> bool:
