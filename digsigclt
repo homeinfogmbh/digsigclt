@@ -180,8 +180,7 @@ def gen_manifest(directory: Path, chunk_size: int = 4096) -> Iterable[tuple]:
         sha256sum = sha256sum.hexdigest()
         LOGGER.debug('SHA-256 sum of "%s" is "%s".', filename, sha256sum)
         relpath = filename.relative_to(directory)
-        parts = tuple(relpath.parts)
-        manifest[parts] = sha256sum
+        manifest[relpath.parts] = sha256sum
 
     return manifest
 
