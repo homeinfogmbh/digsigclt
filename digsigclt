@@ -372,24 +372,31 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             text = 'System synchronized.'
             status_code = 200
             self.log_sync()
+            LOGGER.info(text)
         else:
             text = 'Synchronization failed.'
             status_code = 500
+            LOGGER.error(text)
 
         return self.send_data(text, status_code)
 
     def do_GET(self):   # pylint: disable=C0103
         """Returns current status information."""
+        LOGGER.info('Incoming manifest query from %s:%s.',
+                    *self.client_address)
         manifest = self.manifest
 
         if manifest is None:
-            return self.send_data('System is currently locked.', 503)
+            text = 'System is currently locked.'
+            LOGGER.error(text)
+            return self.send_data(text, 503)
 
         json = {'manifest': manifest}
 
         if self.last_sync is not None:
             json['last_sync'] = self.last_sync.isoformat()
 
+        LOGGER.info('Manifest sent.')
         return self.send_data(json, 200)
 
     def do_POST(self):  # pylint: disable=C0103
@@ -400,7 +407,9 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             self.update_digsig_data()
             LOCK.release()
         else:
-            self.send_data('Synchronization already in progress.', 503)
+            text = 'Synchronization already in progress.'
+            LOGGER.error(text)
+            self.send_data(text, 503)
 
 
 if __name__ == '__main__':
