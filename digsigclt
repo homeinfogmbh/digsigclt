@@ -46,8 +46,7 @@ from typing import Iterable
 __all__ = ['main']
 
 
-DESCRIPTION = '''HOMEINFO multi-platform digital signage client.
-Synchronizes data to the current working directory when triggered.'''
+DESCRIPTION = 'HOMEINFO cross-platform digital signage client.'
 LOG_FORMAT = '[%(levelname)s] %(name)s: %(message)s'
 LOGFILE = Path('synclog.txt')
 LOGGER = getLogger('digsigclt')
