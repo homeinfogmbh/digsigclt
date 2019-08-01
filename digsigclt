@@ -15,9 +15,6 @@
 #  You should have received a copy of the GNU General Public License
 #  along with digsigclt.  If not, see <http://www.gnu.org/licenses/>.
 #
-#  This unit provides a service to automatically login
-#  the digital signage user to a certain terminal.
-#
 #  (C) 2019: HOMEINFO - Digitale Informationssysteme GmbH
 #
 #  Maintainer: Richard Neumann <r dot neumann at homeinfo period de>
