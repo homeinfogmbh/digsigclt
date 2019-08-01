@@ -318,11 +318,6 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         return self.rfile.read(self.content_length)
 
     @property
-    def json(self) -> dict:
-        """Returns received JSON data."""
-        return loads(self.bytes)
-
-    @property
     def manifest(self):
         """Returns the manifest."""
         if LOCK.acquire():
@@ -396,7 +391,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         if self.last_sync is not None:
             json['last_sync'] = self.last_sync.isoformat()
 
-        LOGGER.info('Manifest sent.')
+        LOGGER.debug('Sending manifest.')
         return self.send_data(json, 200)
 
     def do_POST(self):  # pylint: disable=C0103
