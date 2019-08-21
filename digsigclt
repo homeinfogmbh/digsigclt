@@ -351,16 +351,18 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
     def update_digsig_data(self):
         """Updates the digital signage data."""
-        bytec = self.content_length
+        max_chunk_size = self.chunk_size
+        remaining_bytes = self.content_length
+        chunkno = 0
 
         with TemporaryFile('w+b') as file:
-            while bytec > 0:
-                chunk_size = min(bytec, self.chunk_size)
-                bytec -= chunk_size
-                LOGGER.debug('Reading chunk of size %i bytes.', chunk_size)
-                chunk = self.rfile.read(chunk_size)
-                LOGGER.debug('Writing chunk of size %i bytes.', chunk_size)
-                file.write(chunk)
+            while remaining_bytes > 0:
+                chunk_size = min(remaining_bytes, max_chunk_size)
+                chunkno += 1
+                remaining_bytes -= chunk_size
+                LOGGER.debug('Processing chunk #%i of %i bytes.',
+                             chunkno, chunk_size)
+                file.write(self.rfile.read(chunk_size))
 
             LOGGER.debug('Flushing temporary file.')
             file.flush()
