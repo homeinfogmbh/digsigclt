@@ -30,14 +30,13 @@ from datetime import datetime
 from functools import partial
 from hashlib import sha256
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from io import BytesIO
 from json import dumps, loads
 from logging import DEBUG, INFO, basicConfig, getLogger
 from os import linesep, name
 from pathlib import Path
 from sys import argv, exit  # pylint: disable=W0622
 from tarfile import open as tar_open
-from tempfile import TemporaryDirectory
+from tempfile import TemporaryDirectory, TemporaryFile
 from threading import Lock
 
 
@@ -356,23 +355,21 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
     def update_digsig_data(self):
         """Updates the digital signage data."""
-        try:
-            file = BytesIO(self.bytes)
-        except MemoryError:
-            LOGGER.critical('Received file is too large.')
-            status_code = 507   # Insufficient Storage.
-            body = 'File cannot be processed due to insufficient memory.'
-            return self.send_data(body, status_code)
+        with TemporaryFile('w+b') as file:
+            for chunk in iter(partial(self.rfile.read, self.chunk_size), b''):
+                file.write(chunk)
 
-        if update(file, self.directory, chunk_size=self.chunk_size):
-            text = 'System synchronized.'
-            status_code = 200
-            self.log_sync()
-            LOGGER.info(text)
-        else:
-            text = 'Synchronization failed.'
-            status_code = 500
-            LOGGER.error(text)
+            file.flush()
+
+            if update(file, self.directory, chunk_size=self.chunk_size):
+                text = 'System synchronized.'
+                status_code = 200
+                self.log_sync()
+                LOGGER.info(text)
+            else:
+                text = 'Synchronization failed.'
+                status_code = 500
+                LOGGER.error(text)
 
         return self.send_data(text, status_code)
 
