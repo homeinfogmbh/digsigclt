@@ -351,24 +351,27 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             if name == 'posix':
                 logfile.write(linesep)
 
+    def read_to_file(self, file):
+        """Reads the POSTed bytes and writes
+        them to the given opened file object.
+        """
+        chunk_size = self.chunk_size
+        remaining_bytes = self.content_length
+        chunks = 0
+
+        while remaining_bytes > 0:
+            bytec = min(remaining_bytes, chunk_size)
+            chunks += 1
+            remaining_bytes -= bytec
+            LOGGER.debug('Processing chunk #%i of %i bytes.', chunks, bytec)
+            file.write(self.rfile.read(bytec))
+
     def update_digsig_data(self):
         """Updates the digital signage data."""
-        max_chunk_size = self.chunk_size
-        remaining_bytes = self.content_length
-        chunkno = 0
-
         with TemporaryFile('w+b') as file:
-            while remaining_bytes > 0:
-                chunk_size = min(remaining_bytes, max_chunk_size)
-                chunkno += 1
-                remaining_bytes -= chunk_size
-                LOGGER.debug('Processing chunk #%i of %i bytes.',
-                             chunkno, chunk_size)
-                file.write(self.rfile.read(chunk_size))
-
+            self.read_to_file(file)
             LOGGER.debug('Flushing temporary file.')
             file.flush()
-            LOGGER.debug('Resetting file pointer of temporary file.')
             file.seek(0)
 
             if update(file, self.directory, chunk_size=self.chunk_size):
