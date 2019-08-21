@@ -22,10 +22,12 @@
 #
 #  Maintainer: Richard Neumann <r dot neumann at homeinfo period de>
 #
+#  XXX: Keep compatible to Python 3.4 for Windows XP systems.
+#
 #######################################################################
 """Digital signage cross-platform client."""
 
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 from contextlib import suppress
 from datetime import datetime
 from functools import partial
@@ -40,7 +42,6 @@ from sys import argv, exit  # pylint: disable=W0622
 from tarfile import open as tar_open
 from tempfile import TemporaryDirectory
 from threading import Lock
-from typing import Iterable
 
 
 __all__ = ['main']
@@ -57,7 +58,7 @@ class ManifestError(Exception):
     """Indicates general errors with the files manifest."""
 
 
-def get_files(directory: Path) -> Iterable[Path]:
+def get_files(directory):
     """Lists files in the digital signage data directory."""
 
     for inode in directory.iterdir():
@@ -67,7 +68,7 @@ def get_files(directory: Path) -> Iterable[Path]:
             yield inode
 
 
-def copy_file(src: Path, dst: Path, *, chunk_size: int = 4096):
+def copy_file(src, dst, *, chunk_size=4096):
     """Copies a file from src to dst."""
 
     with src.open('rb') as src_file, dst.open('wb') as dst_file:
@@ -75,7 +76,7 @@ def copy_file(src: Path, dst: Path, *, chunk_size: int = 4096):
             dst_file.write(chunk)
 
 
-def copydir(src: Path, dst: Path, *, chunk_size: int = 4096):
+def copydir(src, dst, *, chunk_size=4096):
     """Copies all contents of the source directory src
     into the destination directory dst, overwriting all files.
     """
@@ -99,7 +100,7 @@ def copydir(src: Path, dst: Path, *, chunk_size: int = 4096):
             LOGGER.warning('Skipping unknown file: "%s".', source_path)
 
 
-def strip_files(directory: Path, manifest: set):
+def strip_files(directory, manifest):
     """Removes all files from the directory
     tree, which are not in the manifest.
     """
@@ -112,10 +113,10 @@ def strip_files(directory: Path, manifest: set):
             path.unlink()
 
 
-def strip_tree(directory: Path):
+def strip_tree(directory):
     """Removes all empty directory sub-trees."""
 
-    def strip_subdir(subdir: Path):
+    def strip_subdir(subdir):
         """Recursively removes empty directory trees."""
         for inode in subdir.iterdir():
             if inode.is_dir():
@@ -131,7 +132,7 @@ def strip_tree(directory: Path):
             strip_subdir(inode)
 
 
-def load_manifest(tmpd: Path) -> set:
+def load_manifest(tmpd):
     """Reads the manifest from the respective temporary directory."""
 
     path = tmpd.joinpath('manifest.json')
@@ -162,7 +163,7 @@ def load_manifest(tmpd: Path) -> set:
     return {Path(*parts) for parts in manifest}
 
 
-def gen_manifest(directory: Path, chunk_size: int = 4096) -> Iterable[tuple]:
+def gen_manifest(directory, chunk_size=4096):
     """Generates the manifest of relative
     file paths and their SHA-256 checksums.
     """
@@ -184,7 +185,7 @@ def gen_manifest(directory: Path, chunk_size: int = 4096) -> Iterable[tuple]:
     return [(key, value) for key, value in manifest.items()]
 
 
-def update(file: BytesIO, directory: Path, *, chunk_size: int = 4096) -> bool:
+def update(file, directory, *, chunk_size=4096):
     """Updates the digital signage data
     from the respective tar.xz archive.
     """
@@ -213,7 +214,7 @@ def update(file: BytesIO, directory: Path, *, chunk_size: int = 4096) -> bool:
     return True
 
 
-def server(socket: tuple, request_handler: BaseHTTPRequestHandler) -> int:
+def server(socket, request_handler):
     """Runs the HTTP server."""
 
     httpd = HTTPServer(socket, request_handler)
@@ -227,7 +228,7 @@ def server(socket: tuple, request_handler: BaseHTTPRequestHandler) -> int:
     return 0
 
 
-def requesthandler(directory: Path, chunk_size: int) -> BaseHTTPRequestHandler:
+def requesthandler(directory, chunk_size):
     """Returns a HTTP request handler for the given arguments."""
 
     class RequestHandler(HTTPRequestHandler):   # pylint: disable=E0601
@@ -240,7 +241,7 @@ def requesthandler(directory: Path, chunk_size: int) -> BaseHTTPRequestHandler:
     return RequestHandler
 
 
-def get_args() -> Namespace:
+def get_args():
     """Returns the command line arguments."""
 
     parser = ArgumentParser(description=DESCRIPTION)
@@ -286,17 +287,17 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     CHUNK_SIZE = NotImplemented
 
     @property
-    def last_sync(self) -> datetime:
+    def last_sync(self):
         """Returns the datetime of the last sync."""
         return type(self).LAST_SYNC
 
     @last_sync.setter
-    def last_sync(self, last_sync: datetime):
+    def last_sync(self, last_sync):
         """Sets the datetime of the last sync."""
         type(self).LAST_SYNC = last_sync
 
     @property
-    def directory(self) -> Path:
+    def directory(self):
         """Returns the working directory."""
         return type(self).DIRECTORY
 
@@ -306,22 +307,22 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         return self.directory.joinpath(LOGFILE)     # pylint: disable=E1101
 
     @property
-    def chunk_size(self) -> Path:
+    def chunk_size(self):
         """Returns the chunk size for file operations."""
         return type(self).CHUNK_SIZE
 
     @property
-    def content_length(self) -> int:
+    def content_length(self):
         """Returns the content length."""
         return int(self.headers['Content-Length'])
 
     @property
-    def bytes(self) -> bytes:
+    def bytes(self):
         """Returns the POST-ed bytes."""
         return self.rfile.read(self.content_length)
 
     @property
-    def json(self) -> dict:
+    def json(self):
         """Returns received JSON data."""
         return loads(self.bytes)
 
@@ -335,7 +336,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
         return None
 
-    def send_data(self, value, status_code: int, content_type: str = None):
+    def send_data(self, value, status_code, content_type=None):
         """Sends the respective data."""
         if isinstance(value, (dict, list)):
             value = dumps(value)
