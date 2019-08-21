@@ -91,7 +91,9 @@ def copydir(src, dst, *, chunk_size=CHUNK_SIZE):
             if dest_path.is_file():
                 dest_path.unlink()
 
-            dest_path.mkdir(mode=0o755, parents=True, exist_ok=True)
+            if not dest_path.is_dir():
+                dest_path.mkdir(mode=0o755, parents=True)
+
             copydir(source_path, dest_path, chunk_size=chunk_size)
         else:
             LOGGER.warning('Skipping unknown file: "%s".', source_path)
