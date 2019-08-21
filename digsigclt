@@ -308,16 +308,6 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         return type(self).CHUNK_SIZE
 
     @property
-    def content_length(self):
-        """Returns the content length."""
-        return int(self.headers['Content-Length'])
-
-    @property
-    def bytes(self):
-        """Returns the POST-ed bytes."""
-        return self.rfile.read(self.content_length)
-
-    @property
     def manifest(self):
         """Returns the manifest."""
         if LOCK.acquire():
@@ -326,6 +316,10 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             return manifest
 
         return None
+
+    def read(self):
+        """Returns the POST-ed bytes."""
+        return self.rfile.read(self.chunk_size)
 
     def send_data(self, value, status_code, content_type=None):
         """Sends the respective data."""
@@ -355,11 +349,18 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
     def update_digsig_data(self):
         """Updates the digital signage data."""
+        bytec = 0
+
         with TemporaryFile('w+b') as file:
-            for chunk in iter(partial(self.rfile.read, self.chunk_size), b''):
+            for chunkno, chunk in enumerate(iter(self.read, b''), start=1):
+                LOGGER.debug('Writing chunk #%i.', chunkno)
+                bytec += len(chunk)
+                LOGGER.debug('Read %i bytes.', bytec)
                 file.write(chunk)
 
+            LOGGER.debug('Flushing temporary file.')
             file.flush()
+            LOGGER.debug('Resetting file pointer of temporary file.')
             file.seek(0)
 
             if update(file, self.directory, chunk_size=self.chunk_size):
