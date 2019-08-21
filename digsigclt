@@ -360,6 +360,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                 file.write(chunk)
 
             file.flush()
+            file.seek(0)
 
             if update(file, self.directory, chunk_size=self.chunk_size):
                 text = 'System synchronized.'
