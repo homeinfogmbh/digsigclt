@@ -15,9 +15,6 @@
 #  You should have received a copy of the GNU General Public License
 #  along with digsigclt.  If not, see <http://www.gnu.org/licenses/>.
 #
-#  This unit provides a service to automatically login
-#  the digital signage user to a certain terminal.
-#
 #  (C) 2019: HOMEINFO - Digitale Informationssysteme GmbH
 #
 #  Maintainer: Richard Neumann <r dot neumann at homeinfo period de>
@@ -322,11 +319,6 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         return self.rfile.read(self.content_length)
 
     @property
-    def json(self):
-        """Returns received JSON data."""
-        return loads(self.bytes)
-
-    @property
     def manifest(self):
         """Returns the manifest."""
         if LOCK.acquire():
@@ -400,7 +392,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         if self.last_sync is not None:
             json['last_sync'] = self.last_sync.isoformat()
 
-        LOGGER.info('Manifest sent.')
+        LOGGER.debug('Sending manifest.')
         return self.send_data(json, 200)
 
     def do_POST(self):  # pylint: disable=C0103
