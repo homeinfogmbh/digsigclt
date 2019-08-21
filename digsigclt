@@ -309,6 +309,11 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         return type(self).CHUNK_SIZE
 
     @property
+    def content_length(self):
+        """Returns the content length."""
+        return int(self.headers['Content-Length'])
+
+    @property
     def manifest(self):
         """Returns the manifest."""
         if LOCK.acquire():
@@ -317,10 +322,6 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             return manifest
 
         return None
-
-    def read(self):
-        """Returns the POST-ed bytes."""
-        return self.rfile.read(self.chunk_size)
 
     def send_data(self, value, status_code, content_type=None):
         """Sends the respective data."""
@@ -350,13 +351,15 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
     def update_digsig_data(self):
         """Updates the digital signage data."""
-        bytec = 0
+        bytec = self.content_length
 
         with TemporaryFile('w+b') as file:
-            for chunkno, chunk in enumerate(iter(self.read, b''), start=1):
-                LOGGER.debug('Writing chunk #%i.', chunkno)
-                bytec += len(chunk)
-                LOGGER.debug('Read %i bytes.', bytec)
+            while bytec > 0:
+                chunk_size = min(bytec, self.chunk_size)
+                bytec -= chunk_size
+                LOGGER.debug('Reading chunk of size %i bytes.', chunk_size)
+                chunk = self.rfile.read(chunk_size)
+                LOGGER.debug('Writing chunk of size %i bytes.', chunk_size)
                 file.write(chunk)
 
             LOGGER.debug('Flushing temporary file.')
