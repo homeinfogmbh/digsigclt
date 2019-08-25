@@ -56,7 +56,9 @@ class ManifestError(Exception):
 
 
 def get_files(directory):
-    """Lists files in the digital signage data directory."""
+    """Recursively lists files in the given
+    directory, excluding the LOGFILE.
+    """
 
     for inode in directory.iterdir():
         if inode.is_dir():
@@ -131,10 +133,10 @@ def strip_tree(directory):
             strip_subdir(inode)
 
 
-def load_manifest(tmpd):
-    """Reads the manifest from the respective temporary directory."""
+def load_manifest(directory):
+    """Reads the manifest from the respective directory."""
 
-    path = tmpd.joinpath('manifest.json')
+    path = directory.joinpath('manifest.json')
     LOGGER.debug('Reading manifest from "%s".', path)
 
     try:
@@ -156,13 +158,13 @@ def load_manifest(tmpd):
         LOGGER.debug(manifest, type(manifest))
         raise ManifestError()
 
-    # Remove file to prevent it from being
-    # copied to digital signage data directory.
+    # Remove file to prevent it from being copied
+    # to the digital signage data directory.
     path.unlink()
     return {Path(*parts) for parts in manifest}
 
 
-def gen_manifest(directory, chunk_size=CHUNK_SIZE):
+def gen_manifest(directory, *, chunk_size=CHUNK_SIZE):
     """Generates the manifest of relative
     file paths and their SHA-256 checksums.
     """
@@ -181,7 +183,7 @@ def gen_manifest(directory, chunk_size=CHUNK_SIZE):
         relpath = filename.relative_to(directory)
         manifest[relpath.parts] = sha256sum
 
-    return [(key, value) for key, value in manifest.items()]
+    return list(manifest.items())
 
 
 def update(file, directory, *, chunk_size=CHUNK_SIZE):
