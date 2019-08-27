@@ -1,4 +1,5 @@
 .eggs
+.idea
 build
 dist
 *.egg-info
