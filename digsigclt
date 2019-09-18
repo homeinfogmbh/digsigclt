@@ -255,6 +255,29 @@ def beep():
     raise NotImplementedError()
 
 
+def safe_beep():
+    """Runs the beep function, handles exceptions
+    and returns a JSON response and a HTTP status code.
+    """
+
+    try:
+        beep()
+    except CalledProcessError as cpe:
+        json = {'message': 'Could not beep.', 'error': str(cpe)}
+        status_code = 500
+    except NotImplementedError:
+        json = {
+            'message': 'Could not beep.',
+            'error': 'Beeping is not implemented on this platform.'
+        }
+        status_code = 501
+    else:
+        json = {'message': 'System should have beeped.'}
+        status_code = 200
+
+    return (json, status_code)
+
+
 def get_args():
     """Returns the command line arguments."""
 
@@ -442,22 +465,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             return self.send_data('No command specified.', 400)
 
         if command == 'beep':
-            try:
-                beep()
-            except CalledProcessError as cpe:
-                message = 'Could not beep.'
-                error = str(cpe)
-                status_code = 500
-            except NotImplementedError:
-                message = 'Could not beep.'
-                error = 'Beeping is not implemented on this platform.'
-                status_code = 501
-            else:
-                message = 'System should have beeped.'
-                error = None
-                status_code = 200
-
-            json = {'message': message, 'error': error}
+            json, status_code = safe_beep()
         else:
             status_code = 403
             json = {
