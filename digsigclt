@@ -250,7 +250,7 @@ def beep():
         return check_call('/usr/bin/beep')
 
     if name == 'nt':
-        return check_call('@echo ^G', shell=True)
+        return check_call('@echo \x07', shell=True)
 
     raise NotImplementedError()
 
@@ -451,7 +451,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             except NotImplementedError:
                 message = 'Could not beep.'
                 error = 'Beeping is not implemented on this platform.'
-                status_code = 500
+                status_code = 501
             else:
                 message = 'System should have beeped.'
                 error = None
@@ -459,6 +459,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
             json = {'message': message, 'error': error}
         else:
+            status_code = 403
             json = {
                 'message': 'Invalid command.',
                 'error': 'The requested command is not implemented.'
