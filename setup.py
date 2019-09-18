@@ -16,7 +16,6 @@ setup(
     maintainer_email='<r.neumann@homeinfo.de>',
     packages=['digsigclt'],
     scripts=['files/digsigclt'],
-    data_files=['/usr/lib/systemd/system/digsigclt.service', [
-        'files/digsigclt.service']],
+    data_files=['/usr/lib/systemd/system/', ['files/digsigclt.service']],
     description=('Digital signage data synchronization client.')
 )
