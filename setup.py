@@ -1,6 +1,9 @@
 #! /usr/bin/env python3
+"""Installations script."""
+
 
 from setuptools import setup
+
 
 setup(
     name='digsigclt',
@@ -13,5 +16,7 @@ setup(
     maintainer_email='<r.neumann@homeinfo.de>',
     packages=['digsigclt'],
     scripts=['files/digsigclt'],
+    data_files=['/usr/lib/systemd/system/digsigclt.service', [
+        'files/digsigclt.service']],
     description=('Digital signage data synchronization client.')
 )
