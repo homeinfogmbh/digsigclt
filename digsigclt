@@ -458,7 +458,14 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     def do_PUT(self):  # pylint: disable=C0103
         """Handles special commands."""
         LOGGER.info('Incoming command from %s:%s.', *self.client_address)
-        json = loads(self.rfile.read(self.content_length))
+
+        try:
+            json = loads(self.rfile.read(self.content_length))
+        except MemoryError:
+            return self.send_data('Out of memory.', 500)
+        except ValueError:
+            return self.send_data('Sent data is not JSON.', 406)
+
         command = json.pop('command', None)
 
         if command is None:
