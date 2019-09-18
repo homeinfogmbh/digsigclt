@@ -464,14 +464,14 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         if command is None:
             return self.send_data('No command specified.', 400)
 
+        status_code = 403
+        json = {
+            'message': 'Invalid command.',
+            'error': 'The requested command is not implemented.'
+        }
+
         if command == 'beep':
             json, status_code = safe_beep()
-        else:
-            status_code = 403
-            json = {
-                'message': 'Invalid command.',
-                'error': 'The requested command is not implemented.'
-            }
 
         return self.send_data(json, status_code)
 
