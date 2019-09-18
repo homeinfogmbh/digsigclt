@@ -34,6 +34,7 @@ from json import dumps, loads
 from logging import DEBUG, INFO, basicConfig, getLogger
 from os import linesep, name
 from pathlib import Path
+from subprocess import CalledProcessError, check_call
 from sys import argv, exit  # pylint: disable=W0622
 from tarfile import open as tar_open
 from tempfile import TemporaryDirectory, TemporaryFile
@@ -242,6 +243,18 @@ def requesthandler(directory, chunk_size):
     return RequestHandler
 
 
+def beep():
+    """Performs a speaker beep to identify the system."""
+
+    if name == 'posix':
+        return check_call('/usr/bin/beep')
+
+    if name == 'nt':
+        return check_call('@echo ^G', shell=True)
+
+    raise NotImplementedError()
+
+
 def get_args():
     """Returns the command line arguments."""
 
@@ -418,6 +431,40 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             text = 'Synchronization already in progress.'
             LOGGER.error(text)
             self.send_data(text, 503)
+
+    def do_PUT(self):  # pylint: disable=C0103
+        """Handles special commands."""
+        LOGGER.info('Incoming command from %s:%s.', *self.client_address)
+        json = loads(self.rfile.read(self.content_length))
+        command = json.pop('command', None)
+
+        if command is None:
+            return self.send_data('No command specified.', 400)
+
+        if command == 'beep':
+            try:
+                beep()
+            except CalledProcessError as cpe:
+                message = 'Could not beep.'
+                error = str(cpe)
+                status_code = 500
+            except NotImplementedError:
+                message = 'Could not beep.'
+                error = 'Beeping is not implemented on this platform.'
+                status_code = 500
+            else:
+                message = 'System should have beeped.'
+                error = None
+                status_code = 200
+
+            json = {'message': message, 'error': error}
+        else:
+            json = {
+                'message': 'Invalid command.',
+                'error': 'The requested command is not implemented.'
+            }
+
+        return self.send_data(json, status_code)
 
 
 if __name__ == '__main__':
