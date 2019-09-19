@@ -1,0 +1,23 @@
+[Anjuta]
+Geometry=1920x983+26+23
+
+[Execution]
+Run in terminal=2
+Working directories=../../.
+
+[File Loader]
+Files=../../digsigclt#481%%%../../compile.bat#3%%%../../digsigclt/cli.py#47%%%../../digsigclt_#27%%%../../digsigclt/commands.py#22%%%../../digsigclt/common.py#8%%%../../digsigclt/server.py#7%%%../../digsigclt/sync.py#9%%%../../digsigclt/__init__.py#7%%%../../files/digsigclt#21%%%../../setup.py#19
+
+[Document Manager]
+bookmarks=<?xml version="1.0" encoding="UTF-8"?>\n<bookmarks/>\n
+
+[Build]
+Configuration list=1:Default:%%%1:Debug:Debug%%%1:Profiling:Profiling%%%1:Optimized:Optimized
+Selected Configuration=Default
+BuildArgs/Default=--enable-maintainer-mode
+BuildArgs/Debug=--enable-maintainer-mode 'CFLAGS=-g -O0' 'CXXFLAGS=-g -O0' 'JFLAGS=-g -O0' 'FFLAGS=-g -O0'
+BuildArgs/Profiling=--enable-maintainer-mode 'CFLAGS=-g -pg' 'CXXFLAGS=-g -pg' 'JFLAGS=-g -pg' 'FFLAGS=-g -pg'
+BuildArgs/Optimized=--enable-maintainer-mode 'CFLAGS=-O2' 'CXXFLAGS=-O2' 'JFLAGS=-O2' 'FFLAGS=-O2'
+
+[Debugger]
+Stop at beginning=2
