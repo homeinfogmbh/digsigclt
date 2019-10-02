@@ -16,11 +16,5 @@ setup(
     maintainer_email='<r.neumann@homeinfo.de>',
     packages=['digsigclt'],
     scripts=['files/digsigclt'],
-    data_files=[
-        ('/usr/lib/systemd/system/', ['files/digsigclt.service']),
-        ('/etc/sudoers.d/digsigclt', ['files/digsigclt.sudo']),
-        ('/usr/lib/udev/rules.d/', ['files/70-pcspkr-beep.rules']),
-        ('/usr/lib/sysusers.d/', ['files/digsigclt.conf']),
-    ],
     description=('Digital signage data synchronization client.')
 )
