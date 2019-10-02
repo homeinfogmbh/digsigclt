@@ -11,4 +11,4 @@ Cmnd_Alias UNLOCK_PACMAN = /usr/bin/rm -f /var/lib/pacman/db.lck
 Cmnd_Alias ENABLE_APPLICATION = /usr/bin/systemctl enable --now application.service
 Cmnd_Alias DISABLE_APPLICATION = /usr/bin/systemctl disable --now application.service
 
-termgr ALL = NOPASSWD: REBOOT, UNLOCK_PACMAN, ENABLE_APPLICATION, DISABLE_APPLICATION, UPDATE, UPGRADE
+digsig ALL = NOPASSWD: REBOOT, UNLOCK_PACMAN, ENABLE_APPLICATION, DISABLE_APPLICATION, UPDATE, UPGRADE
