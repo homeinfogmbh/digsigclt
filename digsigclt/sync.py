@@ -38,7 +38,7 @@ def copy_file(src, dst, *, chunk_size=CHUNK_SIZE):
             dst_file.write(chunk)
 
 
-def copydir(src, dst, *, chunk_size=CHUNK_SIZE):
+def copy_directory(src, dst, *, chunk_size=CHUNK_SIZE):
     """Copies all contents of the source directory src
     into the destination directory dst, overwriting all files.
     """
@@ -59,7 +59,7 @@ def copydir(src, dst, *, chunk_size=CHUNK_SIZE):
             if not dest_path.is_dir():
                 dest_path.mkdir(mode=0o755, parents=True)
 
-            copydir(source_path, dest_path, chunk_size=chunk_size)
+            copy_directory(source_path, dest_path, chunk_size=chunk_size)
         else:
             LOGGER.warning('Skipping unknown file: "%s".', source_path)
 
@@ -118,7 +118,8 @@ def load_manifest(directory):
 
     if not isinstance(manifest, list):
         LOGGER.error('Manifest is not a list: "%s".', path)
-        LOGGER.debug(manifest, type(manifest))
+        LOGGER.debug(type(manifest))
+        LOGGER.debug(manifest)
         raise ManifestError()
 
     # Remove file to prevent it from being copied
@@ -146,7 +147,7 @@ def gen_manifest(directory, *, chunk_size=CHUNK_SIZE):
         relpath = filename.relative_to(directory)
         manifest[relpath.parts] = sha256sum
 
-    return list(manifest.items())
+    return list(manifest.items())   # Need list for JSON serialization.
 
 
 def update(file, directory, *, chunk_size=CHUNK_SIZE):
@@ -168,7 +169,7 @@ def update(file, directory, *, chunk_size=CHUNK_SIZE):
             return False
 
         try:
-            copydir(tmpd, directory, chunk_size=chunk_size)
+            copy_directory(tmpd, directory, chunk_size=chunk_size)
         except PermissionError as permission_error:
             LOGGER.error(permission_error)
             return False
