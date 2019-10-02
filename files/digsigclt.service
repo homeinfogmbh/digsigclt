@@ -1,5 +1,5 @@
 [Unit]
-Description=Digital signage data synchronization client
+Description=Digital signage data synchronization and RPC client
 Requires=network-online.target
 After=network-online.target
 
