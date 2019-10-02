@@ -9,13 +9,10 @@ from tarfile import open as tar_open
 from tempfile import TemporaryDirectory
 
 from digsigclt.common import CHUNK_SIZE, LOGFILE, LOGGER
+from digsigclt.exceptions import ManifestError
 
 
 __all__ = ['gen_manifest', 'update']
-
-
-class ManifestError(Exception):
-    """Indicates general errors with the files manifest."""
 
 
 def get_files(directory):

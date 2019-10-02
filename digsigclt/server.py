@@ -8,9 +8,9 @@ from os import linesep, name
 from tempfile import TemporaryFile
 from threading import Lock
 
-from digsigclt.sync import gen_manifest, update
-from digsigclt.commands import http_beep
 from digsigclt.common import LOGFILE, LOGGER
+from digsigclt.httpcmds import COMMANDS
+from digsigclt.sync import gen_manifest, update
 
 
 __all__ = ['spawn']
@@ -88,6 +88,11 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     def content_length(self):
         """Returns the content length."""
         return int(self.headers['Content-Length'])
+
+    @property
+    def json(self):
+        """Returns sent JSON data."""
+        return loads(self.rfile.read(self.content_length))
 
     @property
     def manifest(self):
@@ -191,29 +196,35 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             LOGGER.error(text)
             self.send_data(text, 503)
 
-    def do_PUT(self):  # pylint: disable=C0103
+    def do_PUT(self):  # pylint: disable=C0103,R0911
         """Handles special commands."""
         LOGGER.info('Incoming command from %s:%s.', *self.client_address)
 
         try:
-            json = loads(self.rfile.read(self.content_length))
+            json = self.json
         except MemoryError:
             return self.send_data('Out of memory.', 500)
         except ValueError:
             return self.send_data('Sent data is not JSON.', 406)
 
-        command = json.pop('command', None)
-
-        if command is None:
+        try:
+            command = json.pop('command')
+        except KeyError:
             return self.send_data('No command specified.', 400)
 
-        status_code = 403
-        json = {
-            'message': 'Invalid command.',
-            'error': 'The requested command is not implemented.'
-        }
+        try:
+            function = COMMANDS[command]
+        except KeyError:
+            return self.send_data('Invalid command specified.', 400)
 
-        if command == 'beep':
-            json, status_code = http_beep()
+        try:
+            result = function(**json)
+        except TypeError:
+            return self.send_data('Invalid arguments specified.', 400)
 
-        return self.send_data(json, status_code)
+        try:
+            text, status_code = result
+        except (TypeError, ValueError):
+            return self.send_data('Internal function returned garbage.', 500)
+
+        return self.send_data(text, status_code)
