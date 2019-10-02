@@ -1,0 +1,14 @@
+# This file is part of the "digsigclt" package by
+#
+# HOMEINFO - Digitale Informationssysteme GmbH
+#
+# Maintainer: Richard Neumann <r.neumann@homeinfo.de>
+#
+############################################################
+
+Cmnd_Alias REBOOT = /usr/bin/systemctl reboot
+Cmnd_Alias UNLOCK_PACMAN = /usr/bin/rm -f /var/lib/pacman/db.lck
+Cmnd_Alias ENABLE_APPLICATION = /usr/bin/systemctl enable --now application.service
+Cmnd_Alias DISABLE_APPLICATION = /usr/bin/systemctl disable --now application.service
+
+termgr ALL = NOPASSWD: REBOOT, UNLOCK_PACMAN, ENABLE_APPLICATION, DISABLE_APPLICATION, UPDATE, UPGRADE
