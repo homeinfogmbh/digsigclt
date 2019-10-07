@@ -5,7 +5,7 @@ from os import name
 from pathlib import Path
 from subprocess import CalledProcessError, check_call, check_output
 
-from digsigclt.common import LOGGER
+from digsigclt.common import LOGGER, ServiceState
 from digsigclt.exceptions import UnderAdministration, PackageManagerActive
 
 
@@ -52,7 +52,8 @@ _ENABLE_APPLICATION = _sudo(_systemctl(
     'enable', '--now', _APPLICATION_SERVICE))
 _DISABLE_APPLICATION = _sudo(_systemctl(
     'disable', '--now', _APPLICATION_SERVICE))
-_APPLICATION_STATUS = _systemctl('is-active', _APPLICATION_SERVICE)
+_APPLICATION_ENABLED = _systemctl('is-enabled', _APPLICATION_SERVICE)
+_APPLICATION_RUNNING = _systemctl('is-active', _APPLICATION_SERVICE)
 
 
 def _list_serssions():
@@ -162,8 +163,17 @@ def application_status():
         raise NotImplementedError()
 
     try:
-        check_call(_APPLICATION_STATUS)
+        check_call(_APPLICATION_ENABLED)
     except CalledProcessError:
-        return False
+        enabled = False
+    else:
+        enabled = True
 
-    return True
+    try:
+        check_call(_APPLICATION_RUNNING)
+    except CalledProcessError:
+        running = False
+    else:
+        running = True
+
+    return ServiceState(enabled, running)

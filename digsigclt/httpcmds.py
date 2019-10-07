@@ -85,10 +85,9 @@ def handle_application(state):
 
     if state is None:
         with ExceptionHandler(None) as handler:
-            if application_status():
-                return ('Application is running.', 200)
-
-            return ('Application is not running.', 200)
+            state = application_status()
+            json = {'enabled': state.enabled, 'running': state.running}
+            return (json, 200)
 
         return handler
 
