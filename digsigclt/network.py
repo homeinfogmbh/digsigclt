@@ -4,11 +4,10 @@ from ipaddress import IPv4Address
 
 from netifaces import interfaces, ifaddresses, AF_INET
 
-from digsigclt.common import TERMINAL_NETWORK
 from digsigclt.exceptions import NetworkError
 
 
-__all__ = ['terminal_network_address']
+__all__ = ['get_address']
 
 
 def ipv4addresses():
@@ -19,18 +18,10 @@ def ipv4addresses():
             yield IPv4Address(ipv4config['addr'])
 
 
-def terminal_network_addresses():
-    """Yields addresses of the private terminal network."""
+def get_address(network):
+    """Returns a configured address that is in the given network."""
 
-    for ipv4address in ipv4addresses():
-        if ipv4address in TERMINAL_NETWORK:
-            yield ipv4address
-
-
-def terminal_network_address():
-    """Returns the address of the private terminal network."""
-
-    addresses = set(terminal_network_addresses())
+    addresses = {addr for addr in ipv4addresses() if addr in network}
 
     if not addresses:
         raise NetworkError('No terminal network address found.')

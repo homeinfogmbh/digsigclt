@@ -1,13 +1,14 @@
 """Command line interface."""
 
 from argparse import ArgumentParser
+from ipaddress import IPv4Network
 from logging import DEBUG, INFO, basicConfig
 from pathlib import Path
 from sys import exit    # pylint: disable=W0622
 
 from digsigclt.common import CHUNK_SIZE, LOG_FORMAT, LOGGER
 from digsigclt.exceptions import NetworkError
-from digsigclt.network import terminal_network_address
+from digsigclt.network import get_address
 from digsigclt.server import spawn
 
 
@@ -15,6 +16,7 @@ __all__ = ['main']
 
 
 DESCRIPTION = 'HOMEINFO cross-platform digital signage client.'
+DEFAULT_NETWORK = IPv4Network('10.8.0.0/16')
 
 
 def get_args():
@@ -27,6 +29,9 @@ def get_args():
     parser.add_argument(
         '-p', '--port', type=int, default=8000, metavar='port',
         help='port to listen on')
+    parser.add_argument(
+        '-n', '--network', type=IPv4Network, default=DEFAULT_NETWORK,
+        metavar='network', help='network to search IP address on')
     parser.add_argument(
         '-d', '--directory', type=Path, metavar='dir', default=Path.cwd(),
         help='sets the target directory')
@@ -48,7 +53,7 @@ def main():
 
     if address is None:
         try:
-            address = terminal_network_address()
+            address = get_address(args.network)
         except NetworkError as network_error:
             LOGGER.critical(network_error)
             exit(2)
