@@ -6,6 +6,8 @@ from pathlib import Path
 from sys import exit    # pylint: disable=W0622
 
 from digsigclt.common import CHUNK_SIZE, LOG_FORMAT, LOGGER
+from digsigclt.exceptions import NetworkError
+from digsigclt.network import terminal_network_address
 from digsigclt.server import spawn
 
 
@@ -20,7 +22,7 @@ def get_args():
 
     parser = ArgumentParser(description=DESCRIPTION)
     parser.add_argument(
-        '-a', '--address', default='0.0.0.0', metavar='address',
+        '-a', '--address', metavar='address',
         help='IPv4 address to listen on')
     parser.add_argument(
         '-p', '--port', type=int, default=8000, metavar='port',
@@ -42,6 +44,14 @@ def main():
     args = get_args()
     basicConfig(level=DEBUG if args.verbose else INFO, format=LOG_FORMAT)
     LOGGER.debug('Target directory set to "%s".', args.directory)
+    address = args.address
+
+    if address is None:
+        try:
+            address = terminal_network_address()
+        except NetworkError as network_error:
+            LOGGER.critical(network_error)
+            exit(2)
 
     if args.directory.is_dir():
         socket = (args.address, args.port)
@@ -49,4 +59,4 @@ def main():
         exit(0)
 
     LOGGER.critical('Target directory "%s" does not exist.', args.directory)
-    exit(2)
+    exit(3)

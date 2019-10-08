@@ -1,7 +1,12 @@
 """Common exceptions."""
 
 
-__all__ = ['ManifestError', 'UnderAdministration', 'PackageManagerActive']
+__all__ = [
+    'ManifestError',
+    'UnderAdministration',
+    'PackageManagerActive',
+    'NetworkError'
+]
 
 
 class ManifestError(Exception):
@@ -16,3 +21,7 @@ class UnderAdministration(Exception):
 
 class PackageManagerActive(Exception):
     """Indicates that a running package manager is blocking an action."""
+
+
+class NetworkError(Exception):
+    """Indicates an error with the network configuration."""
