@@ -1,7 +1,8 @@
 """Miscellaneous functions."""
 
-from ipaddress import IPv4Address, IPv6Address
-from socket import getaddrinfo, gethostname
+from ipaddress import IPv4Address
+
+from netifaces import interfaces, ifaddresses, AF_INET
 
 from digsigclt.common import TERMINAL_NETWORK
 from digsigclt.exceptions import NetworkError
@@ -10,24 +11,20 @@ from digsigclt.exceptions import NetworkError
 __all__ = ['terminal_network_address']
 
 
-def ipaddresses():
-    """Yields IP addresses of this system."""
+def ipv4addresses():
+    """Yields IP addresses of all network interfaces."""
 
-    for info in getaddrinfo(gethostname(), None):
-        ipaddress = info[4][0]
-
-        try:
-            yield IPv6Address(ipaddress)
-        except ValueError:
-            yield IPv4Address(ipaddress)
+    for interface in interfaces():
+        for ipv4config in ifaddresses(interface).get(AF_INET, ()):
+            yield IPv4Address(ipv4config['addr'])
 
 
 def terminal_network_addresses():
     """Yields addresses of the private terminal network."""
 
-    for address in ipaddresses():
-        if address in TERMINAL_NETWORK:
-            yield address
+    for ipv4address in ipv4addresses():
+        if ipv4address in TERMINAL_NETWORK:
+            yield ipv4address
 
 
 def terminal_network_address():
