@@ -85,7 +85,7 @@ def beep(args=None):
 
     if name == 'posix':
         if args:
-            command = ('/usr/bin/beep',) + args
+            command = ['/usr/bin/beep'] + args
         else:
             command = '/usr/bin/beep'
 
