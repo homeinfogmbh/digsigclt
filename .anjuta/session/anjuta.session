@@ -1,16 +1,19 @@
 [Anjuta]
 Maximized=1
-Geometry=1920x983+0+27
-
-[File Loader]
-Files=../../compile.bat#10%%%../../digsigclt/cli.py#19%%%../../digsigclt/commands.py#102%%%../../digsigclt/common.py#8%%%../../digsigclt/server.py#199%%%../../digsigclt/sync.py#12%%%../../digsigclt/__init__.py#7%%%../../files/digsigclt#28%%%../../setup.py#18%%%../../files/digsigclt.service#16%%%../../LICENSE#1%%%../../digsigclt/httpcmds.py#101%%%../../digsigclt/exceptions.py#19%%%../../digsigclt.sudo#12%%%../../files/digsigclt.conf#1%%%../../files/digsigclt.sudo#15
-
-[Document Manager]
-bookmarks=<?xml version="1.0" encoding="UTF-8"?>\n<bookmarks/>\n
+Geometry=1920x983+0+0
 
 [Execution]
 Run in terminal=2
 Working directories=../../.
+
+[File Loader]
+Files=../../compile.bat#10%%%../../digsigclt/cli.py#19%%%../../digsigclt/commands.py#179%%%../../digsigclt/common.py#9%%%../../digsigclt/server.py#199%%%../../digsigclt/sync.py#12%%%../../digsigclt/__init__.py#7%%%../../files/digsigclt#28%%%../../setup.py#18%%%../../files/digsigclt.service#16%%%../../LICENSE#1%%%../../digsigclt/httpcmds.py#91%%%../../digsigclt/exceptions.py#19%%%../../files/digsigclt.conf#1%%%../../files/digsigclt.sudo#15
+
+[Document Manager]
+bookmarks=<?xml version="1.0" encoding="UTF-8"?>\n<bookmarks/>\n
+
+[Project Manager]
+Expand=digsigclt
 
 [Debugger]
 Stop at beginning=2
