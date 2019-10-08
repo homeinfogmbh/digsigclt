@@ -31,6 +31,7 @@ def get_address(network):
 
     if addresses:
         LOGGER.debug('Found ambiguous addresses for network %s.', network)
+        addresses.add(address)
 
         for index, address in enumerate(addresses, start=1):
             LOGGER.debug('#%i: %s.', index, address)
