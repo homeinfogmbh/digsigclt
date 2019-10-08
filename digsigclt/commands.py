@@ -84,10 +84,10 @@ def beep(args=None):
     """Performs a speaker beep to identify the system."""
 
     if name == 'posix':
+        command = ['/usr/bin/beep']
+
         if args:
-            command = ['/usr/bin/beep'] + args
-        else:
-            command = '/usr/bin/beep'
+            command += args
 
         return check_call(command)
 
