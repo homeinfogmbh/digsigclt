@@ -4,6 +4,7 @@ from ipaddress import IPv4Address
 
 from netifaces import interfaces, ifaddresses, AF_INET
 
+from digsigclt.common import LOGGER
 from digsigclt.exceptions import NetworkError
 
 
@@ -23,10 +24,18 @@ def get_address(network):
 
     addresses = {addr for addr in ipv4addresses() if addr in network}
 
-    if not addresses:
+    try:
+        address = addresses.pop()
+    except KeyError:
         raise NetworkError('No terminal network address found.')
 
-    if len(addresses) > 1:
+    if addresses:
+        LOGGER.debug('Found ambiguous addresses for network %s.', network)
+
+        for index, address in enumerate(addresses, start=1):
+            LOGGER.debug('#%i: %s.', index, address)
+
         raise NetworkError('Ambiguous terminal network addresses found.')
 
-    return addresses.pop()
+    LOGGER.debug('Found network address %s of network %s.', address, network)
+    return address
