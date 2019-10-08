@@ -54,7 +54,7 @@ def main():
             exit(2)
 
     if args.directory.is_dir():
-        socket = (args.address, args.port)
+        socket = (str(address), args.port)
         spawn(socket, args.directory, args.chunk_size)
         exit(0)
 
