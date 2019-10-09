@@ -41,11 +41,18 @@ def get_address(network):
 def retry_get_address(network, *, interval=1, retries=60):
     """Periodically retry to get an address on the network."""
 
-    while retries:
+    tries = 0
+
+    while tries < retries:
         try:
-            return get_address(network)
+            address = get_address(network)
         except NoAddressFound:
-            retries -= 1
+            tries += 1
             sleep(interval)
+        else:
+            LOGGER.info(
+                'Discovered address %s after %i seconds.', address,
+                interval * tries)
+            return address
 
     raise NoAddressFound()
