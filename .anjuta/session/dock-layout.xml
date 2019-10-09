@@ -3,7 +3,7 @@
   <layout name="__default__">
     <dock name="__dock_1" floating="no" width="-1" height="-1" floatx="0" floaty="0" skip-taskbar="yes">
       <paned orientation="vertical" resize="yes" locked="no" iconified="no" closed="no" position="326">
-        <paned orientation="horizontal" resize="yes" locked="no" iconified="no" closed="no" position="231">
+        <paned orientation="horizontal" resize="yes" locked="no" iconified="no" closed="no" position="219">
           <notebook orientation="vertical" resize="yes" locked="no" iconified="no" closed="no" page="0">
             <item name="AnjutaFileManager" orientation="vertical" resize="yes" locked="no" iconified="no" closed="no"/>
             <item name="AnjutaProjectManager" orientation="vertical" resize="yes" locked="no" iconified="no" closed="no"/>
@@ -17,7 +17,7 @@
           <paned orientation="horizontal" resize="yes" locked="no" iconified="no" closed="no" position="500">
             <paned orientation="vertical" resize="yes" locked="no" iconified="no" closed="no" position="200">
               <notebook orientation="vertical" resize="yes" locked="no" iconified="no" closed="yes" page="-1"/>
-              <paned orientation="horizontal" resize="yes" locked="no" iconified="no" closed="no" position="739">
+              <paned orientation="horizontal" resize="yes" locked="no" iconified="no" closed="no" position="748">
                 <notebook orientation="vertical" resize="yes" locked="no" iconified="no" closed="no" page="1">
                   <item name="AnjutaStarter" orientation="horizontal" resize="yes" locked="no" iconified="no" closed="yes"/>
                   <item name="AnjutaDocumentManager" orientation="vertical" resize="yes" locked="no" iconified="no" closed="no"/>
