@@ -7,8 +7,8 @@ from pathlib import Path
 from sys import exit    # pylint: disable=W0622
 
 from digsigclt.common import CHUNK_SIZE, LOG_FORMAT, LOGGER
-from digsigclt.exceptions import NetworkError
-from digsigclt.network import get_address
+from digsigclt.exceptions import NoAddressFound, AmbiguousAddressesFound
+from digsigclt.network import retry_get_address
 from digsigclt.server import spawn
 
 
@@ -39,8 +39,33 @@ def get_args():
         '-c', '--chunk-size', type=int, default=CHUNK_SIZE, metavar='bytes',
         help='chunk size to use on file operations')
     parser.add_argument(
+        '-i', '--interval', type=int, default=1, metavar='seconds',
+        help='interval to wait for network address discovery')
+    parser.add_argument(
+        '-r', '--retries', type=int, default=60, metavar='amount',
+        help='amount of retries of network address discovery')
+    parser.add_argument(
         '-v', '--verbose', action='store_true', help='turn on verbose logging')
     return parser.parse_args()
+
+
+def get_address(args):
+    """Returns the respective address."""
+
+    if args.address is None:
+        try:
+            return retry_get_address(
+                args.network, interval=args.interval, retries=args.retries)
+        except NoAddressFound:
+            LOGGER.critical('No address found on network %s.', args.network)
+            exit(2)
+        except AmbiguousAddressesFound as aaf:
+            LOGGER.critical(
+                'Ambiguous addresses found on network %s.', args.network)
+            LOGGER.debug('Addresses found: %s.', aaf.addresses)
+            exit(3)
+
+    return args.address
 
 
 def main():
@@ -49,19 +74,12 @@ def main():
     args = get_args()
     basicConfig(level=DEBUG if args.verbose else INFO, format=LOG_FORMAT)
     LOGGER.debug('Target directory set to "%s".', args.directory)
-    address = args.address
-
-    if address is None:
-        try:
-            address = get_address(args.network)
-        except NetworkError as network_error:
-            LOGGER.critical(network_error)
-            exit(2)
+    address = get_address(args)
 
     if args.directory.is_dir():
         socket = (str(address), args.port)
         spawn(socket, args.directory, args.chunk_size)
-        exit(0)
+        exit(4)
 
     LOGGER.critical('Target directory "%s" does not exist.', args.directory)
     exit(3)

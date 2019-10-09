@@ -1,14 +1,15 @@
 """Miscellaneous functions."""
 
 from ipaddress import IPv4Address
+from time import sleep
 
 from netifaces import interfaces, ifaddresses, AF_INET
 
 from digsigclt.common import LOGGER
-from digsigclt.exceptions import NetworkError
+from digsigclt.exceptions import NoAddressFound, AmbiguousAddressesFound
 
 
-__all__ = ['get_address']
+__all__ = ['retry_get_address']
 
 
 def ipv4addresses():
@@ -27,16 +28,24 @@ def get_address(network):
     try:
         address = addresses.pop()
     except KeyError:
-        raise NetworkError('No terminal network address found.')
+        raise NoAddressFound()
 
     if addresses:
-        LOGGER.debug('Found ambiguous addresses for network %s.', network)
         addresses.add(address)
-
-        for index, address in enumerate(addresses, start=1):
-            LOGGER.debug('#%i: %s.', index, address)
-
-        raise NetworkError('Ambiguous terminal network addresses found.')
+        raise AmbiguousAddressesFound(addresses)
 
     LOGGER.debug('Found network address %s of network %s.', address, network)
     return address
+
+
+def retry_get_address(network, *, interval=1, retries=60):
+    """Periodically retry to get an address on the network."""
+
+    while retries:
+        try:
+            return get_address(network)
+        except NoAddressFound:
+            retries -= 1
+            sleep(interval)
+
+    raise NoAddressFound()
