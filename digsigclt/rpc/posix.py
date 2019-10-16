@@ -1,4 +1,4 @@
-"""System adminstration command handling."""
+"""POSIX system commands."""
 
 from json import loads
 from pathlib import Path
