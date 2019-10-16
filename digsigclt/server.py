@@ -9,7 +9,7 @@ from tempfile import TemporaryFile
 from threading import Lock
 
 from digsigclt.common import LOGFILE, LOGGER
-from digsigclt.httpcmds import COMMANDS
+from digsigclt.rpc import COMMANDS
 from digsigclt.sync import gen_manifest, update
 
 
