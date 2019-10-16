@@ -3,7 +3,7 @@ Maximized=1
 Geometry=1920x983+0+0
 
 [File Loader]
-Files=../../compile.bat#10%%%../../digsigclt/cli.py#64%%%../../digsigclt/commands.py#92%%%../../digsigclt/common.py#3%%%../../digsigclt/server.py#199%%%../../digsigclt/sync.py#12%%%../../digsigclt/__init__.py#7%%%../../files/digsigclt#28%%%../../setup.py#18%%%../../files/digsigclt.service#16%%%../../LICENSE#1%%%../../digsigclt/httpcmds.py#111%%%../../digsigclt/exceptions.py#40%%%../../files/digsigclt.conf#1%%%../../files/digsigclt.sudo#15%%%../../digsigclt/network.py#43
+Files=../../compile.bat#10%%%../../digsigclt/cli.py#56%%%../../digsigclt/commands.py#92%%%../../digsigclt/common.py#3%%%../../digsigclt/server.py#199%%%../../digsigclt/sync.py#12%%%../../digsigclt/__init__.py#7%%%../../files/digsigclt#28%%%../../setup.py#18%%%../../files/digsigclt.service#16%%%../../LICENSE#1%%%../../digsigclt/httpcmds.py#111%%%../../digsigclt/exceptions.py#27%%%../../files/digsigclt.conf#1%%%../../files/digsigclt.sudo#15%%%../../digsigclt/network.py#20
 
 [Document Manager]
 bookmarks=<?xml version="1.0" encoding="UTF-8"?>\n<bookmarks/>\n
@@ -15,10 +15,6 @@ Working directories=../../.
 [Project Manager]
 Expand=digsigclt
 
-[Debugger]
-Breakpoint=1:../../digsigclt/functions.py:2:0:
-Stop at beginning=2
-
 [Build]
 Configuration list=1:Default:%%%1:Debug:Debug%%%1:Profiling:Profiling%%%1:Optimized:Optimized
 Selected Configuration=Default
@@ -26,3 +22,7 @@ BuildArgs/Default=--enable-maintainer-mode
 BuildArgs/Debug=--enable-maintainer-mode 'CFLAGS=-g -O0' 'CXXFLAGS=-g -O0' 'JFLAGS=-g -O0' 'FFLAGS=-g -O0'
 BuildArgs/Profiling=--enable-maintainer-mode 'CFLAGS=-g -pg' 'CXXFLAGS=-g -pg' 'JFLAGS=-g -pg' 'FFLAGS=-g -pg'
 BuildArgs/Optimized=--enable-maintainer-mode 'CFLAGS=-O2' 'CXXFLAGS=-O2' 'JFLAGS=-O2' 'FFLAGS=-O2'
+
+[Debugger]
+Breakpoint=1:../../digsigclt/functions.py:2:0:
+Stop at beginning=2
