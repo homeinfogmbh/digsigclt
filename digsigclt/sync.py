@@ -5,7 +5,7 @@ from functools import partial
 from hashlib import sha256
 from json import loads
 from pathlib import Path
-from tarfile import open as tar_open
+from tarfile import ReadError, open as tar_open
 from tempfile import TemporaryDirectory
 
 from digsigclt.common import CHUNK_SIZE, LOGFILE, LOGGER
@@ -156,7 +156,14 @@ def update(file, directory, *, chunk_size=CHUNK_SIZE):
         LOGGER.debug('Extracting archive to "%s".', tmpd)
 
         with tar_open(mode='r:xz', fileobj=file, bufsize=chunk_size) as tar:
-            tar.extractall(path=tmpd)
+            try:
+                tar.extractall(path=tmpd)
+            except EOFError as eof_error:
+                LOGGER.critical(eof_error)
+                return False
+            except ReadError as read_error:
+                LOGGER.critical(read_error)
+                return False
 
         tmpd = Path(tmpd)
 
