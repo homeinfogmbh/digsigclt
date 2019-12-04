@@ -203,28 +203,41 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         try:
             json = self.json
         except MemoryError:
+            LOGGER.error('Out of memory.')
             return self.send_data('Out of memory.', 500)
         except ValueError:
-            return self.send_data('Sent data is not JSON.', 406)
+            LOGGER.warning('Received data is not JSON.')
+            return self.send_data('Received data is not JSON.', 406)
 
         try:
             command = json.pop('command')
         except KeyError:
+            LOGGER.warning('No command specified.')
             return self.send_data('No command specified.', 400)
+
+        LOGGER.debug('Received command: "%s".', command)
 
         try:
             function = COMMANDS[command]
         except KeyError:
+            LOGGER.warning('Invalid command specified: "%s".', command)
             return self.send_data('Invalid command specified.', 400)
+
+        LOGGER.debug('Executing function "%s" with args "%s".', function, json)
 
         try:
             result = function(**json)
         except TypeError:
+            LOGGER.warning('Invalid arguments specified: "%s".', json)
             return self.send_data('Invalid arguments specified.', 400)
+
+        LOGGER.debug('Function returned: "%s".', result)
 
         try:
             text, status_code = result
         except (TypeError, ValueError):
+            LOGGER.warning('Internal function returned garbage: "%s".', result)
             return self.send_data('Internal function returned garbage.', 500)
 
+        LOGGER.debug('Sending text "%s" with status "%s".', text, status_code)
         return self.send_data(text, status_code)
