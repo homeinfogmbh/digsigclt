@@ -36,7 +36,7 @@ def unlock_pacman():
     return handler
 
 
-def application(state):
+def application(state=None):
     """Handles the application state."""
 
     if state is None:
