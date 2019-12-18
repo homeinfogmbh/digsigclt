@@ -76,7 +76,7 @@ def update(url):
         LOGGER.debug('Reason: %s.', error.reason)
         return
     except UpdateProtocolError as error:
-        LOGGER.info('Update protocol error.')
+        LOGGER.error('Update protocol error.')
         LOGGER.debug('Server responded with status: %i.', error.status)
         return
     except NoUpdateAvailable:
