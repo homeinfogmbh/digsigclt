@@ -87,9 +87,9 @@ def update(url):
     rename(executable, old_path)
 
     LOGGER.debug('Writing new exe file.')
-    with open(executable, 'wb') as file:
-        file.write(new_exe)
-        file.flush()
+    with EXECUTABLE.open('wb') as exe:
+        exe.write(new_exe)
+        exe.flush()
 
     args = ([executable] + argv)
     LOGGER.debug('Substituting running process with new executable.')
