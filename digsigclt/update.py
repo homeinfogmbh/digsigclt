@@ -2,7 +2,7 @@
 
 from contextlib import suppress
 from hashlib import sha256
-from os import execl, name, rename
+from os import execv, name, rename
 from pathlib import Path
 from sys import argv, executable
 from urllib.error import URLError, HTTPError
@@ -36,7 +36,7 @@ def get_old_path():
 def get_checksum():
     """Returns the checksum of the running digital signage client exe."""
 
-    with open(executable, 'rb') as file:
+    with EXECUTABLE.open('rb') as file:
         return sha256(file.read()).hexdigest()
 
 
@@ -65,6 +65,7 @@ def update(url):
     LOGGER.info('Checking for update.')
     old_path = get_old_path()
 
+    LOGGER.debug('Removing old exe.')
     with suppress(FileNotFoundError):
         old_path.unlink()
 
@@ -72,7 +73,7 @@ def update(url):
         new_exe = retrieve_update(url)
     except HTTPError as error:
         LOGGER.error('Could not query update server.')
-        LOGGER.debug('Status: %i, reason: %s.', error.status, error.reason)
+        LOGGER.debug('Status: %i, reason: %s.', error.code, error.reason)
         return
     except URLError as error:
         LOGGER.error('Could not query update server.')
@@ -80,20 +81,19 @@ def update(url):
         return
     except UpdateProtocolError as error:
         LOGGER.error('Update protocol error.')
-        LOGGER.debug('Server responded with status: %i.', error.status)
+        LOGGER.debug('Server responded with status: %i.', error.code)
         return
     except NoUpdateAvailable:
         LOGGER.info('No update available.')
         return
 
     LOGGER.debug('Renaming current exe to old exe.')
-    rename(executable, old_path)
+    rename(executable, str(old_path))
 
     LOGGER.debug('Writing new exe file.')
     with EXECUTABLE.open('wb') as exe:
         exe.write(new_exe)
         exe.flush()
 
-    args = ([executable] + argv)
     LOGGER.debug('Substituting running process with new executable.')
-    execl(executable, *args)
+    execv(executable, argv)
