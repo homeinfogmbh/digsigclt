@@ -1,5 +1,6 @@
 """Updating process for Windows systems."""
 
+from contextlib import suppress
 from hashlib import sha256
 from os import execl, name, rename
 from pathlib import Path
@@ -63,7 +64,9 @@ def update(url):
 
     LOGGER.info('Checking for update.')
     old_path = get_old_path()
-    old_path.unlink(exist_ok=True)
+
+    with suppress(FileNotFoundError):
+        old_path.unlink()
 
     try:
         new_exe = retrieve_update(url)
