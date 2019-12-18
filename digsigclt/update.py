@@ -55,7 +55,7 @@ def retrieve_update(url):
 
 
 def update(url):
-    """Updates the Windows executable."""
+    """Updates the Windows executable and restarts it."""
 
     if name != 'nt':
         LOGGER.debug('Not running on Windows. Skipping update process.')
