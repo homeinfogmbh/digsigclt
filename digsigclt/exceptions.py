@@ -6,7 +6,9 @@ __all__ = [
     'UnderAdministration',
     'PackageManagerActive',
     'NoAddressFound',
-    'AmbiguousAddressesFound'
+    'AmbiguousAddressesFound',
+    'RunningOldExe',
+    'NoUpdateAvailable'
 ]
 
 
@@ -39,3 +41,13 @@ class AmbiguousAddressesFound(Exception):
         """Sets the respective ambiguous addresses."""
         super().__init__()
         self.addresses = addresses
+
+
+class RunningOldExe(Exception):
+    """Indicates the attempt to run an old
+    version of the exe unter Windows.
+    """
+
+
+class NoUpdateAvailable(Exception):
+    """Indicates that no update is available on the server."""

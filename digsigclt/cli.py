@@ -7,9 +7,12 @@ from pathlib import Path
 from sys import exit    # pylint: disable=W0622
 
 from digsigclt.common import CHUNK_SIZE, LOG_FORMAT, LOGGER
-from digsigclt.exceptions import NoAddressFound, AmbiguousAddressesFound
+from digsigclt.exceptions import NoAddressFound
+from digsigclt.exceptions import AmbiguousAddressesFound
+from digsigclt.exceptions import RunningOldExe
 from digsigclt.network import retry_get_address
 from digsigclt.server import spawn
+from digsigclt.update import update
 
 
 __all__ = ['main']
@@ -73,6 +76,13 @@ def main():
 
     args = get_args()
     basicConfig(level=DEBUG if args.verbose else INFO, format=LOG_FORMAT)
+
+    try:
+        update()
+    except RunningOldExe:
+        LOGGER.critical('Refusing to run old exe version.')
+        exit(5)
+
     LOGGER.debug('Target directory set to "%s".', args.directory)
     address = get_address(args)
 

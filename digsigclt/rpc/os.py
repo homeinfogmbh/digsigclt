@@ -80,4 +80,3 @@ def application_status():
         raise NotImplementedError()
 
     return posix.application_status()
-
