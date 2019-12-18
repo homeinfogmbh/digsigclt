@@ -79,15 +79,14 @@ def main():
 
     args = get_args()
     basicConfig(level=DEBUG if args.verbose else INFO, format=LOG_FORMAT)
+    LOGGER.debug('Target directory set to "%s".', args.directory)
+    address = get_address(args)
 
     try:
         update(args.update_server)
     except RunningOldExe:
         LOGGER.critical('Refusing to run old exe version.')
         exit(5)
-
-    LOGGER.debug('Target directory set to "%s".', args.directory)
-    address = get_address(args)
 
     if args.directory.is_dir():
         socket = (str(address), args.port)
