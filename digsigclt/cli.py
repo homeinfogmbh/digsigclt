@@ -12,7 +12,7 @@ from digsigclt.exceptions import AmbiguousAddressesFound
 from digsigclt.exceptions import RunningOldExe
 from digsigclt.network import retry_get_address
 from digsigclt.server import spawn
-from digsigclt.update import update
+from digsigclt.update import UPDATE_URL, update
 
 
 __all__ = ['main']
@@ -38,6 +38,9 @@ def get_args():
     parser.add_argument(
         '-d', '--directory', type=Path, metavar='dir', default=Path.cwd(),
         help='sets the target directory')
+    parser.add_argument(
+        '-s', '--update-server', metavar='url', default=UPDATE_URL,
+        help='URL of the update server')
     parser.add_argument(
         '-c', '--chunk-size', type=int, default=CHUNK_SIZE, metavar='bytes',
         help='chunk size to use on file operations')
@@ -78,7 +81,7 @@ def main():
     basicConfig(level=DEBUG if args.verbose else INFO, format=LOG_FORMAT)
 
     try:
-        update()
+        update(args.update_server)
     except RunningOldExe:
         LOGGER.critical('Refusing to run old exe version.')
         exit(5)

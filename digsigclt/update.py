@@ -8,10 +8,12 @@ from urllib.error import URLError, HTTPError
 from urllib.request import urlopen
 
 from digsigclt.common import LOGGER
-from digsigclt.exceptions import RunningOldExe, NoUpdateAvailable
+from digsigclt.exceptions import RunningOldExe
+from digsigclt.exceptions import NoUpdateAvailable
+from digsigclt.exceptions import UpdateProtocolError
 
 
-__all__ = ['update']
+__all__ = ['UPDATE_URL', 'update']
 
 
 EXECUTABLE = Path(executable)
@@ -37,18 +39,22 @@ def get_checksum():
         return sha256(file.read()).hexdigest()
 
 
-def retrieve_update():
+def retrieve_update(url):
     """Retrieves a new version of the exe."""
 
     data = get_checksum().encode()
 
-    with urlopen(UPDATE_URL, data=data) as response:
+    with urlopen(url, data=data) as response:
         if response.code == 204:
             raise NoUpdateAvailable()
 
-        return response.read()
+        if response.code == 200:
+            return response.read()
 
-def update():
+        raise UpdateProtocolError(response.code)
+
+
+def update(url):
     """Updates the Windows executable."""
 
     if name != 'nt':
@@ -60,7 +66,7 @@ def update():
     old_path.unlink(exist_ok=True)
 
     try:
-        new_exe = retrieve_update()
+        new_exe = retrieve_update(url)
     except HTTPError as error:
         LOGGER.error('Could not query update server.')
         LOGGER.debug('Status: %i, reason: %s.', error.status, error.reason)
@@ -68,6 +74,10 @@ def update():
     except URLError as error:
         LOGGER.error('Could not query update server.')
         LOGGER.debug('Reason: %s.', error.reason)
+        return
+    except UpdateProtocolError as error:
+        LOGGER.info('Update protocol error.')
+        LOGGER.debug('Server responded with status: %i.', error.status)
         return
     except NoUpdateAvailable:
         LOGGER.info('No update available.')
