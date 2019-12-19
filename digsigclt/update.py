@@ -89,8 +89,8 @@ def update(url):
 
     LOGGER.debug('Renaming current exe to old exe.')
     rename(executable, str(old_path))
-
     LOGGER.debug('Writing new exe file.')
+
     with EXECUTABLE.open('wb') as exe:
         exe.write(new_exe)
         exe.flush()
