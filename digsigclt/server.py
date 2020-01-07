@@ -90,9 +90,19 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         return int(self.headers['Content-Length'])
 
     @property
+    def bytes(self):
+        """Returns sent bytes."""
+        return self.rfile.read(self.content_length)
+
+    @property
+    def text(self):
+        """Returns sent text."""
+        return self.bytes.decode()
+
+    @property
     def json(self):
         """Returns sent JSON data."""
-        return loads(self.rfile.read(self.content_length))
+        return loads(self.text)
 
     @property
     def manifest(self):
