@@ -120,7 +120,7 @@ def disable_application():
 
 
 def application_status():
-    """Enables the digital signage application."""
+    """Checks the status of the digital signage application."""
 
     try:
         check_call(APPLICATION_ENABLED)
