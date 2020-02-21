@@ -17,7 +17,10 @@ __all__ = [
 
 
 ADMIN_USERS = {'homeinfo'}
-LIST_SESSIONS_JSON = ('/usr/bin/loginctl', 'list-sessions', '-o', 'json')
+SUDO = '/usr/bin/sudo'
+SYSTEMCTL = '/usr/bin/systemctl'
+LOGINCTL = '/usr/bin/loginctl'
+LIST_SESSIONS_JSON = (LOGINCTL, 'list-sessions', '-o', 'json')
 PACMAN_LOCKFILE = Path('/var/lib/pacman/db.lck')
 
 
@@ -25,18 +28,18 @@ def sudo(command, *args):
     """Returns the command ran as sudo."""
 
     if args:
-        return ('/usr/bin/sudo', command) + args
+        return (SUDO, command) + args
 
     if isinstance(command, str):
-        return ('/usr/bin/sudo', command)
+        return (SUDO, command)
 
-    return ('/usr/bin/sudo',) + command
+    return (SUDO,) + tuple(command)
 
 
 def systemctl(*args):
     """Runs systemctl with the respective arguments."""
 
-    return ('/usr/bin/systemctl',) + args
+    return (SYSTEMCTL,) + args
 
 
 def list_sessions():

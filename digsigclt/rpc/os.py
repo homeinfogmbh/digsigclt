@@ -12,7 +12,8 @@ __all__ = [
     'unlock_pacman',
     'enable_application',
     'disable_application',
-    'application_status'
+    'application_status',
+    'smartctl'
 ]
 
 
@@ -78,5 +79,14 @@ def application_status():
 
     if name == 'posix':
         return posix.application_status()
+
+    raise NotImplementedError()
+
+
+def smartctl():
+    """Checks SMART values of disks."""
+
+    if name == 'posix':
+        return posix.device_states()
 
     raise NotImplementedError()

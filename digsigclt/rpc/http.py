@@ -1,5 +1,7 @@
 """Wrapper functions to run commands from HTTP requests."""
 
+from json import dumps
+
 from digsigclt.rpc import os
 from digsigclt.rpc.util import ExceptionHandler
 
@@ -60,9 +62,20 @@ def application(state=None):
     return handler
 
 
+def smartctl():
+    """Checks the SMART values of the disks."""
+
+    with ExceptionHandler('Checking SMART status.') as handler:
+        json = os.smartctl()
+        handler.text = dumps(json)
+
+    return handler
+
+
 COMMANDS = {
     'beep': beep,
     'reboot': reboot,
     'unlock-pacman': unlock_pacman,
-    'application': application
+    'application': application,
+    'smartctl': smartctl
 }
