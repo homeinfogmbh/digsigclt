@@ -49,34 +49,34 @@ def reboot(delay=0):
 def unlock_pacman():
     """Unlocks the package manager."""
 
-    if name != 'posix':
-        raise NotImplementedError()
+    if name == 'posix':
+        return posix.unlock_pacman()
 
-    return posix.unlock_pacman()
+    raise NotImplementedError()
 
 
 def enable_application():
     """Enables the digital signage application."""
 
-    if name != 'posix':
-        raise NotImplementedError()
+    if name == 'posix':
+        return posix.enable_application()
 
-    return posix.enable_application()
+    raise NotImplementedError()
 
 
 def disable_application():
     """Disables the digital signage application."""
 
-    if name != 'posix':
-        raise NotImplementedError()
+    if name == 'posix':
+        return posix.disable_application()
 
-    return posix.disable_application()
+    raise NotImplementedError()
 
 
 def application_status():
-    """Enables the digital signage application."""
+    """Checks the status of the digital signage application."""
 
-    if name != 'posix':
-        raise NotImplementedError()
+    if name == 'posix':
+        return posix.application_status()
 
-    return posix.application_status()
+    raise NotImplementedError()
