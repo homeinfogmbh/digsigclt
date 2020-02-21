@@ -1,9 +1,7 @@
 """Wrapper functions to run commands from HTTP requests."""
 
-from json import dumps
-
 from digsigclt.rpc import os
-from digsigclt.rpc.util import ExceptionHandler
+from digsigclt.rpc.util import JSONResponse
 
 
 __all__ = ['COMMANDS']
@@ -14,7 +12,7 @@ def beep(args=None):
     and returns a JSON response and a HTTP status code.
     """
 
-    with ExceptionHandler('System should have beeped.') as handler:
+    with JSONResponse('System should have beeped.') as handler:
         os.beep(args=args)
 
     return handler
@@ -23,7 +21,7 @@ def beep(args=None):
 def reboot(delay=0):
     """Runs a reboot."""
 
-    with ExceptionHandler('System is rebooting.') as handler:
+    with JSONResponse('System is rebooting.') as handler:
         os.reboot(delay=delay)
 
     return handler
@@ -32,7 +30,7 @@ def reboot(delay=0):
 def unlock_pacman():
     """Removes the pacman lockfile."""
 
-    with ExceptionHandler('Lockfile removed.') as handler:
+    with JSONResponse('Lockfile removed.') as handler:
         os.unlock_pacman()
 
     return handler
@@ -42,10 +40,9 @@ def application(state=None):
     """Handles the application state."""
 
     if state is None:
-        with ExceptionHandler(None) as handler:
+        with JSONResponse() as handler:
             state = os.application_status()
-            json = {'enabled': state.enabled, 'running': state.running}
-            return (json, 200)
+            handler.json = state.to_json()
 
         return handler
 
@@ -56,7 +53,7 @@ def application(state=None):
         function = os.disable_application
         text = 'Application disabled.'
 
-    with ExceptionHandler(text) as handler:
+    with JSONResponse(text) as handler:
         function()
 
     return handler
@@ -65,9 +62,8 @@ def application(state=None):
 def smartctl():
     """Checks the SMART values of the disks."""
 
-    with ExceptionHandler('Checking SMART status.') as handler:
-        json = os.smartctl()
-        handler.text = dumps(json)
+    with JSONResponse() as handler:
+        handler.json = os.smartctl()
 
     return handler
 
