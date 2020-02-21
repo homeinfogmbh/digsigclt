@@ -250,4 +250,5 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             return self.send_data('Internal function returned garbage.', 500)
 
         LOGGER.debug('Sending text "%s" with status "%s".', text, status_code)
-        return self.send_data(text, status_code)
+        return self.send_data(
+            text, status_code, content_type='application/json')
