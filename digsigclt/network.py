@@ -3,7 +3,7 @@
 from ipaddress import IPv4Address
 from time import sleep
 
-from netifaces import interfaces, ifaddresses, AF_INET
+from netifaces import interfaces, ifaddresses, AF_INET  # pylint: disable=E0611
 
 from digsigclt.common import LOGGER
 from digsigclt.exceptions import NoAddressFound, AmbiguousAddressesFound
