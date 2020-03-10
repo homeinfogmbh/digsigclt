@@ -43,9 +43,7 @@ def get_checksum():
 def retrieve_update(url):
     """Retrieves a new version of the exe."""
 
-    data = get_checksum().encode()
-
-    with urlopen(url, data=data) as response:
+    with urlopen(url, data=get_checksum()) as response:
         if response.code == 204:
             raise NoUpdateAvailable()
 
