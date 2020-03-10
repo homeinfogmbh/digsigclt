@@ -19,7 +19,7 @@ __all__ = ['UPDATE_URL', 'update']
 
 EXECUTABLE = Path(executable)
 OLD_NAME = 'digsigclt_old.exe'
-UPDATE_URL = 'http://10.8.0.1/appcmd/digsigclt'
+UPDATE_URL = 'http://10.8.0.1/appcmd/update/digsigclt'
 
 
 def get_old_path():
@@ -37,7 +37,7 @@ def get_checksum():
     """Returns the checksum of the running digital signage client exe."""
 
     with EXECUTABLE.open('rb') as file:
-        return sha256(file.read()).hexdigest()
+        return sha256(file.read()).hexdigest().encode()
 
 
 def retrieve_update(url):
