@@ -71,7 +71,11 @@ def strip_files(directory, manifest):
 
         if relpath not in manifest:
             LOGGER.debug('Removing obsolete file "%s".', path)
-            path.unlink()
+
+            try:
+                path.unlink()
+            except PermissionError:
+                LOGGER.warning('Could not delete file "%s".', path)
 
 
 def strip_tree(directory):
