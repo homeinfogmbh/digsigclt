@@ -7,6 +7,7 @@ from json import loads
 from pathlib import Path
 from tarfile import ReadError, open as tar_open
 from tempfile import TemporaryDirectory
+from traceback import format_exc
 
 from digsigclt.common import CHUNK_SIZE, LOGFILE, LOGGER
 from digsigclt.exceptions import ManifestError
@@ -182,6 +183,7 @@ def update(file, directory, *, chunk_size=CHUNK_SIZE):
             copy_directory(tmpd, directory, chunk_size=chunk_size)
         except PermissionError as permission_error:
             LOGGER.error(permission_error)
+            LOGGER.debug(format_exc())
             return False
 
     strip_files(directory, manifest)
