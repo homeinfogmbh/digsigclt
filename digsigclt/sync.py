@@ -7,7 +7,6 @@ from json import loads
 from pathlib import Path
 from tarfile import ReadError, open as tar_open
 from tempfile import TemporaryDirectory
-from traceback import format_exc
 
 from digsigclt.common import CHUNK_SIZE, LOGFILE, LOGGER
 from digsigclt.exceptions import ManifestError
@@ -49,10 +48,18 @@ def copy_directory(src, dst, *, chunk_size=CHUNK_SIZE):
 
         if source_path.is_file():
             LOGGER.info('Updating file "%s".', dest_path)
-            copy_file(source_path, dest_path, chunk_size=chunk_size)
+
+            try:
+                copy_file(source_path, dest_path, chunk_size=chunk_size)
+            except PermissionError:
+                LOGGER.error('Could not override file "%s".', dest_path)
         elif source_path.is_dir():
             if dest_path.is_file():
-                dest_path.unlink()
+                try:
+                    dest_path.unlink()
+                except PermissionError:
+                    LOGGER.error('Could not remove file "%s".', dest_path)
+                    continue
 
             if not dest_path.is_dir():
                 dest_path.mkdir(mode=0o755, parents=True)
@@ -183,7 +190,6 @@ def update(file, directory, *, chunk_size=CHUNK_SIZE):
             copy_directory(tmpd, directory, chunk_size=chunk_size)
         except PermissionError as permission_error:
             LOGGER.error(permission_error)
-            LOGGER.debug(format_exc())
             return False
 
     strip_files(directory, manifest)
