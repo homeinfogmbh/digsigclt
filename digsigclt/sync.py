@@ -74,8 +74,10 @@ def strip_files(directory, manifest):
 
             try:
                 path.unlink()
+            except FileNotFoundError:
+                LOGGER.warning('File "%s" vanished.', path)
             except PermissionError:
-                LOGGER.warning('Could not delete file "%s".', path)
+                LOGGER.error('Could not delete file "%s".', path)
 
 
 def strip_tree(directory):
