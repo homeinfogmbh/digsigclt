@@ -9,8 +9,8 @@ from urllib.error import URLError, HTTPError
 from urllib.request import urlopen
 
 from digsigclt.common import LOGGER
-from digsigclt.exceptions import RunningOldExe
 from digsigclt.exceptions import NoUpdateAvailable
+from digsigclt.exceptions import RunningOldExe
 from digsigclt.exceptions import UpdateProtocolError
 
 
