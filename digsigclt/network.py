@@ -55,10 +55,10 @@ def retry_get_address(network, *, interval=1, retries=60):
         except NoAddressFound:
             tries += 1
             sleep(interval)
-        else:
-            LOGGER.info(
-                'Discovered address %s after %i seconds.', address,
-                interval * tries)
-            return address
+            continue
+
+        time = interval * tries
+        LOGGER.info('Discovered address %s after %i seconds.', address, time)
+        return address
 
     raise NoAddressFound()
