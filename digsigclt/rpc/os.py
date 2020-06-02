@@ -27,7 +27,7 @@ def beep(args=None):
         if args:
             LOGGER.warning('Ignoring beep arguments on NT system.')
 
-        nt.beep()
+        return nt.beep()
 
     raise NotImplementedError()
 
