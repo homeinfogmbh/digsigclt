@@ -10,6 +10,7 @@ from threading import Lock
 
 from digsigclt.common import LOGFILE, LOGGER
 from digsigclt.rpc import COMMANDS
+from digsigclt.rpc.os import uptime
 from digsigclt.sync import gen_manifest, update
 
 
@@ -175,8 +176,26 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
         return self.send_data(text, status_code)
 
-    def do_GET(self):   # pylint: disable=C0103
-        """Returns current status information."""
+    def _send_sysinfo(self):
+        """Returns system information."""
+        if self.last_sync is None:
+            last_sync = None
+        else:
+            last_sync = self.last_sync.isoformat()
+
+        try:
+            uptime_ = uptime()
+        except NotImplementedError:
+            uptime_ = None
+
+        json = {
+            'lastSync': last_sync,
+            'uptime': uptime_
+        }
+        return self.send_data(json, 200)
+
+    def _send_manifest(self):
+        """Sends the manifest."""
         LOGGER.info('Incoming manifest query from %s:%s.',
                     *self.client_address)
         manifest = self.manifest
@@ -193,6 +212,16 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
         LOGGER.debug('Sending manifest.')
         return self.send_data(json, 200)
+
+    def do_GET(self):   # pylint: disable=C0103
+        """Returns current status information."""
+        if self.path in {'', '/'}:
+            return self._send_sysinfo()
+
+        if self.path == '/manifest':
+            return self._send_manifest()
+
+        return self.send_data('Invalid path.', 404)
 
     def do_POST(self):  # pylint: disable=C0103
         """Retrieves and updates digital signage data."""

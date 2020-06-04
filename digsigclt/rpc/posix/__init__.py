@@ -7,6 +7,7 @@ from digsigclt.rpc.posix.beep import beep
 from digsigclt.rpc.posix.pacman import unlock as unlock_pacman
 from digsigclt.rpc.posix.reboot import reboot
 from digsigclt.rpc.posix.smartctl import device_states
+from digsigclt.rpc.posix.uptime import uptime
 
 
 __all__ = [
@@ -16,5 +17,6 @@ __all__ = [
     'disable_application',
     'enable_application',
     'reboot',
-    'unlock_pacman'
+    'unlock_pacman',
+    'uptime'
 ]

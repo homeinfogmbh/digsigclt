@@ -13,7 +13,8 @@ __all__ = [
     'enable_application',
     'disable_application',
     'application_status',
-    'smartctl'
+    'smartctl',
+    'uptime'
 ]
 
 
@@ -88,5 +89,14 @@ def smartctl():
 
     if name == 'posix':
         return posix.device_states()
+
+    raise NotImplementedError()
+
+
+def uptime():
+    """Returns the system uptime."""
+
+    if name == 'posix':
+        return posix.uptime()
 
     raise NotImplementedError()
