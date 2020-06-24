@@ -1,16 +1,14 @@
 """Command line interface."""
 
 from argparse import ArgumentParser
-from ipaddress import IPv4Network
 from logging import DEBUG, INFO, basicConfig
 from pathlib import Path
 from sys import exit    # pylint: disable=W0622
 
 from digsigclt.common import CHUNK_SIZE, LOG_FORMAT, LOGGER
 from digsigclt.exceptions import NoAddressFound
-from digsigclt.exceptions import AmbiguousAddressesFound
 from digsigclt.exceptions import RunningOldExe
-from digsigclt.network import retry_get_address
+from digsigclt.network import discover_address
 from digsigclt.server import spawn
 from digsigclt.update import UPDATE_URL, update
 
@@ -19,7 +17,6 @@ __all__ = ['main']
 
 
 DESCRIPTION = 'HOMEINFO cross-platform digital signage client.'
-DEFAULT_NETWORKS = (IPv4Network('10.10.0.0/16'), IPv4Network('10.8.0.0/16'))
 
 
 def get_args():
@@ -32,10 +29,6 @@ def get_args():
     parser.add_argument(
         '-p', '--port', type=int, default=8000, metavar='port',
         help='port to listen on')
-    parser.add_argument(
-        '-n', '--network', nargs='+', type=IPv4Network,
-        default=DEFAULT_NETWORKS, metavar='network',
-        help='network to search IP address on')
     parser.add_argument(
         '-d', '--directory', type=Path, metavar='dir', default=Path.cwd(),
         help='sets the target directory')
@@ -61,16 +54,10 @@ def get_address(args):
 
     if args.address is None:
         try:
-            return retry_get_address(
-                args.network, interval=args.interval, retries=args.retries)
+            return discover_address(args.interval, args.retries)
         except NoAddressFound:
-            LOGGER.critical('No address found either network.')
+            LOGGER.critical('No private network address found.')
             exit(2)
-        except AmbiguousAddressesFound as error:
-            LOGGER.critical(
-                'Ambiguous addresses found on network %s.', error.network)
-            LOGGER.debug('Addresses found: %s.', error.addresses)
-            exit(3)
 
     return args.address
 

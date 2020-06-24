@@ -1,59 +1,39 @@
-"""Network discovery."""
+"""Private network discovery."""
 
-from ipaddress import IPv4Address
+from ipaddress import ip_address
+from socket import AF_INET, SOCK_DGRAM, socket
 from time import sleep
 
-from netifaces import AF_INET, interfaces, ifaddresses  # pylint: disable=E0611
-
 from digsigclt.common import LOGGER
-from digsigclt.exceptions import NoAddressFound, AmbiguousAddressesFound
+from digsigclt.exceptions import NoAddressFound
 
 
-__all__ = ['retry_get_address']
+__all__ = ['discover_address']
 
 
-def ipv4addresses():
-    """Yields IP addresses of all network interfaces."""
-
-    for interface in interfaces():
-        for ipv4config in ifaddresses(interface).get(AF_INET, ()):
-            yield IPv4Address(ipv4config['addr'])
+IP_ADDRESS = '10.8.0.1'
+PORT = 80
+SOCKET = (IP_ADDRESS, PORT)
 
 
-def get_address(networks):
+def get_address():
     """Returns a configured address that is in the given network."""
 
-    system_addresses = set(ipv4addresses())
+    with socket(AF_INET, SOCK_DGRAM) as sock:
+        sock.connect(SOCKET)
+        address, port = sock.getsockname()
 
-    for network in networks:
-        addresses = {addr for addr in system_addresses if addr in network}
-
-        try:
-            address = addresses.pop()
-        except KeyError:
-            LOGGER.info('No address found on network %s.', network)
-            continue
-
-        if addresses:
-            addresses.add(address)
-            raise AmbiguousAddressesFound(network, addresses)
-
-        LOGGER.debug('Found address %s of network %s.', address, network)
-        return address
-
-    raise NoAddressFound()
+    LOGGER.debug('Got IP address %s on port %i.', address, port)
+    return ip_address(address)
 
 
-def retry_get_address(network, *, interval=1, retries=60):
+def discover_address(interval=1, retries=60):
     """Periodically retry to get an address on the network."""
 
-    tries = 0
-
-    while tries < retries:
+    for tries in range(retries):
         try:
-            address = get_address(network)
+            address = get_address()
         except NoAddressFound:
-            tries += 1
             sleep(interval)
             continue
 

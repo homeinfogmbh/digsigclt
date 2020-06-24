@@ -6,7 +6,6 @@ __all__ = [
     'UnderAdministration',
     'PackageManagerActive',
     'NoAddressFound',
-    'AmbiguousAddressesFound',
     'RunningOldExe',
     'NoUpdateAvailable',
     'UpdateProtocolError'
@@ -31,18 +30,6 @@ class NoAddressFound(Exception):
     """Indicates that no address matching
     the respective network could be found.
     """
-
-
-class AmbiguousAddressesFound(Exception):
-    """indicates that ambiguous addresses
-    have been found on the respective network.
-    """
-
-    def __init__(self, network, addresses):
-        """Sets the respective ambiguous addresses."""
-        super().__init__()
-        self.network = network
-        self.addresses = addresses
 
 
 class RunningOldExe(Exception):
