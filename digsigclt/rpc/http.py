@@ -2,6 +2,8 @@
 
 from digsigclt.os import application_status
 from digsigclt.os import beep
+from digsigclt.os import disable_application
+from digsigclt.os import enable_application
 from digsigclt.os import reboot
 from digsigclt.os import smartctl
 from digsigclt.os import unlock_pacman
@@ -17,7 +19,7 @@ def http_beep(args=None):
     """
 
     with JSONResponse('System should have beeped.') as handler:
-        os.beep(args=args)
+        beep(args=args)
 
     return handler
 
@@ -26,7 +28,7 @@ def http_reboot(delay=0):
     """Runs a reboot."""
 
     with JSONResponse('System is rebooting.') as handler:
-        os.reboot(delay=delay)
+        reboot(delay=delay)
 
     return handler
 
@@ -35,7 +37,7 @@ def http_unlock_pacman():
     """Removes the pacman lockfile."""
 
     with JSONResponse('Lockfile removed.') as handler:
-        os.unlock_pacman()
+        unlock_pacman()
 
     return handler
 
@@ -45,16 +47,16 @@ def http_application(state=None):
 
     if state is None:
         with JSONResponse() as handler:
-            state = os.application_status()
+            state = application_status()
             handler.json = state.to_json()
 
         return handler
 
     if state:
-        function = os.enable_application
+        function = enable_application
         text = 'Application enabled.'
     else:
-        function = os.disable_application
+        function = disable_application
         text = 'Application disabled.'
 
     with JSONResponse(text) as handler:
@@ -67,7 +69,7 @@ def http_smartctl():
     """Checks the SMART values of the disks."""
 
     with JSONResponse() as handler:
-        handler.json = os.smartctl()
+        handler.json = smartctl()
 
     return handler
 
