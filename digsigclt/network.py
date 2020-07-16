@@ -2,6 +2,7 @@
 
 from ipaddress import ip_address
 from socket import AF_INET, SOCK_DGRAM, socket
+from subprocess import CalledProcessError
 from time import sleep
 
 from digsigclt.common import LOGGER
@@ -21,7 +22,9 @@ def get_address():
     """Returns a configured address that is in the given network."""
 
     # Ping address first to determine that a route exists.
-    if not ping(IP_ADDRESS):
+    try:
+        ping(IP_ADDRESS)
+    except CalledProcessError:
         raise NoAddressFound()
 
     # Get local IP address from socket connection.
