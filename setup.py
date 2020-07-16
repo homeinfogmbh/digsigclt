@@ -16,8 +16,9 @@ setup(
     maintainer_email='<r.neumann@homeinfo.de>',
     packages=[
         'digsigclt',
-        'digsigclt.rpc',
-        'digsigclt.rpc.posix'
+        'digsigclt.os',
+        'digsigclt.os.posix',
+        'digsigclt.rpc'
     ],
     scripts=['files/digsigclt'],
     description=('Digital signage data synchronization client.')

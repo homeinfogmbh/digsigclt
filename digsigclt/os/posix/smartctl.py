@@ -3,7 +3,7 @@
 from os import linesep
 from subprocess import check_output
 
-from digsigclt.rpc.posix.common import sudo
+from digsigclt.os.posix.common import sudo
 
 
 __all__ = ['device_states']

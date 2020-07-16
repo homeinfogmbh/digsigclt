@@ -3,7 +3,7 @@
 from subprocess import CalledProcessError, check_call
 
 from digsigclt.common import ServiceState
-from digsigclt.rpc.posix.common import sudo, systemctl
+from digsigclt.os.posix.common import sudo, systemctl
 
 
 __all__ = ['enable', 'disable', 'status']

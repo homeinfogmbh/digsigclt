@@ -6,7 +6,7 @@ from time import sleep
 
 from digsigclt.common import LOGGER
 from digsigclt.exceptions import NoAddressFound
-from digsigclt.rpc.os import ping
+from digsigclt.os import ping
 
 
 __all__ = ['discover_address']

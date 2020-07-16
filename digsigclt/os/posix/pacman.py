@@ -3,7 +3,7 @@
 from subprocess import CalledProcessError, check_call
 
 from digsigclt.exceptions import PackageManagerActive
-from digsigclt.rpc.posix.common import sudo
+from digsigclt.os.posix.common import sudo
 
 
 __all__ = ['is_running', 'unlock']

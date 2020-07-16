@@ -1,13 +1,17 @@
 """Wrapper functions to run commands from HTTP requests."""
 
-from digsigclt.rpc import os
+from digsigclt.os import application_status
+from digsigclt.os import beep
+from digsigclt.os import reboot
+from digsigclt.os import smartctl
+from digsigclt.os import unlock_pacman
 from digsigclt.rpc.util import JSONResponse
 
 
 __all__ = ['COMMANDS']
 
 
-def beep(args=None):
+def http_beep(args=None):
     """Runs the beep function, handles exceptions
     and returns a JSON response and a HTTP status code.
     """
@@ -18,7 +22,7 @@ def beep(args=None):
     return handler
 
 
-def reboot(delay=0):
+def http_reboot(delay=0):
     """Runs a reboot."""
 
     with JSONResponse('System is rebooting.') as handler:
@@ -27,7 +31,7 @@ def reboot(delay=0):
     return handler
 
 
-def unlock_pacman():
+def http_unlock_pacman():
     """Removes the pacman lockfile."""
 
     with JSONResponse('Lockfile removed.') as handler:
@@ -36,7 +40,7 @@ def unlock_pacman():
     return handler
 
 
-def application(state=None):
+def http_application(state=None):
     """Handles the application state."""
 
     if state is None:
@@ -59,7 +63,7 @@ def application(state=None):
     return handler
 
 
-def smartctl():
+def http_smartctl():
     """Checks the SMART values of the disks."""
 
     with JSONResponse() as handler:
@@ -69,9 +73,9 @@ def smartctl():
 
 
 COMMANDS = {
-    'beep': beep,
-    'reboot': reboot,
-    'unlock-pacman': unlock_pacman,
-    'application': application,
-    'smartctl': smartctl
+    'beep': http_beep,
+    'reboot': http_reboot,
+    'unlock-pacman': http_unlock_pacman,
+    'application': http_application,
+    'smartctl': http_smartctl
 }

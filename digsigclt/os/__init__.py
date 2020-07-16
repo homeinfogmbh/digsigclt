@@ -3,7 +3,7 @@
 from os import name
 
 from digsigclt.common import LOGGER
-from digsigclt.rpc import nt, posix
+from digsigclt.os import nt, posix
 
 
 __all__ = [

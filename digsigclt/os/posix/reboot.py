@@ -3,11 +3,11 @@
 from subprocess import check_call
 
 from digsigclt.exceptions import PackageManagerActive, UnderAdministration
-from digsigclt.rpc.posix.common import ADMIN_USERS
-from digsigclt.rpc.posix.common import PACMAN_LOCKFILE
-from digsigclt.rpc.posix.common import logged_in_users
-from digsigclt.rpc.posix.common import sudo
-from digsigclt.rpc.posix.pacman import is_running as pacman_running
+from digsigclt.os.posix.common import ADMIN_USERS
+from digsigclt.os.posix.common import PACMAN_LOCKFILE
+from digsigclt.os.posix.common import logged_in_users
+from digsigclt.os.posix.common import sudo
+from digsigclt.os.posix.pacman import is_running as pacman_running
 
 
 __all__ = ['reboot']

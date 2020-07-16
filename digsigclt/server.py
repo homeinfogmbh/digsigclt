@@ -10,7 +10,7 @@ from threading import Lock
 
 from digsigclt.common import LOGFILE, LOGGER
 from digsigclt.rpc import COMMANDS
-from digsigclt.rpc.os import uptime
+from digsigclt.os import uptime
 from digsigclt.sync import gen_manifest, update
 
 
