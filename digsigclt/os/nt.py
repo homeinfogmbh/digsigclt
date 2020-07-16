@@ -7,7 +7,7 @@ __all__ = ['beep', 'ping', 'reboot']
 
 
 PING = 'C:\\Windows\\System32\\ping.exe'
-REBOOT = ('C:\\Windows\\System32\\shutdown.exe', '/r')
+REBOOT = 'C:\\Windows\\System32\\shutdown.exe'
 
 
 def beep():
@@ -30,9 +30,9 @@ def ping(host, count=4):
 def reboot(delay=0):
     """Reboots the system."""
 
-    command = REBOOT
-
-    if delay is not None:
-        command += ('/t', str(delay))
+    if delay is None:
+        command = (REBOOT, '/r')
+    else:
+        command = (REBOOT, '/r', '/t', str(delay))
 
     return check_call(command)
