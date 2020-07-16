@@ -9,12 +9,15 @@ __all__ = ['ping']
 PING = '/usr/bin/ping'
 
 
-def ping(host, count=4):
+def ping(host, count=4, quiet=True):
     """Pings a host."""
 
     if count is None:
-        command = (PING, str(host))
+        command = [PING, str(host)]
     else:
-        command = (PING, str(host), '-c', str(count))
+        command = [PING, str(host), '-c', str(count)]
+
+    if quiet:
+        command.append('-q')
 
     return check_call(command)
