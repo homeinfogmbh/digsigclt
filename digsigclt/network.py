@@ -26,7 +26,11 @@ def get_address():
 
     # Get local IP address from socket connection.
     with socket(AF_INET, SOCK_DGRAM) as sock:
-        sock.connect(SOCKET)
+        try:
+            sock.connect(SOCKET)
+        except OSError:
+            raise NoAddressFound()
+
         address, port = sock.getsockname()
 
     LOGGER.debug('Got IP address %s on port %i.', address, port)

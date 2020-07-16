@@ -3,13 +3,13 @@
 from subprocess import check_call
 
 
-__all__ = ['beep']
+__all__ = ['ping']
 
 
 PING = '/usr/bin/ping'
 
 
-def beep(host, count=4):
+def ping(host, count=4):
     """Pings a host."""
 
     if count is None:
