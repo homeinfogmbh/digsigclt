@@ -6,6 +6,7 @@ from time import sleep
 
 from digsigclt.common import LOGGER
 from digsigclt.exceptions import NoAddressFound
+from digsigclt.rpc.os import ping
 
 
 __all__ = ['discover_address']
@@ -19,6 +20,11 @@ SOCKET = (IP_ADDRESS, PORT)
 def get_address():
     """Returns a configured address that is in the given network."""
 
+    # Ping address first to determine that a route exists.
+    if not ping(IP_ADDRESS):
+        raise NoAddressFound()
+
+    # Get local IP address from socket connection.
     with socket(AF_INET, SOCK_DGRAM) as sock:
         sock.connect(SOCKET)
         address, port = sock.getsockname()
