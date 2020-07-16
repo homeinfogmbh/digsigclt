@@ -8,6 +8,7 @@ from digsigclt.rpc import nt, posix
 
 __all__ = [
     'beep',
+    'ping',
     'reboot',
     'unlock_pacman',
     'enable_application',
@@ -29,6 +30,18 @@ def beep(args=None):
             LOGGER.warning('Ignoring beep arguments on NT system.')
 
         return nt.beep()
+
+    raise NotImplementedError()
+
+
+def ping(host, count=4):
+    """Pings a host."""
+
+    if name == 'posix':
+        return posix.ping(host, count=count)
+
+    if name == 'nt':
+        return nt.ping(host, count=count)
 
     raise NotImplementedError()
 
