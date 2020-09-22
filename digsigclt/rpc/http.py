@@ -2,6 +2,7 @@
 
 from digsigclt.os import application_status
 from digsigclt.os import beep
+from digsigclt.os import checkupdates
 from digsigclt.os import disable_application
 from digsigclt.os import enable_application
 from digsigclt.os import reboot
@@ -74,10 +75,20 @@ def http_smartctl():
     return handler
 
 
+def http_checkupdates():
+    """Checks the SMART values of the disks."""
+
+    with JSONResponse() as handler:
+        handler.json = checkupdates()
+
+    return handler
+
+
 COMMANDS = {
     'beep': http_beep,
     'reboot': http_reboot,
     'unlock-pacman': http_unlock_pacman,
     'application': http_application,
-    'smartctl': http_smartctl
+    'smartctl': http_smartctl,
+    'checkupdates': http_checkupdates
 }

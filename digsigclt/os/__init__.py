@@ -15,7 +15,8 @@ __all__ = [
     'disable_application',
     'application_status',
     'smartctl',
-    'uptime'
+    'uptime',
+    'checkupdates'
 ]
 
 
@@ -111,5 +112,14 @@ def uptime():
 
     if name == 'posix':
         return posix.uptime()
+
+    raise NotImplementedError()
+
+
+def checkupdates():
+    """Returns available updates."""
+
+    if name == 'posix':
+        return posix.checkupdates()
 
     raise NotImplementedError()
