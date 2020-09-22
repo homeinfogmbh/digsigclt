@@ -7,17 +7,26 @@ from digsigclt.os import nt, posix
 
 
 __all__ = [
+    'application_status',
     'beep',
+    'checkupdates',
+    'disable_application',
+    'enable_application',
     'ping',
     'reboot',
-    'unlock_pacman',
-    'enable_application',
-    'disable_application',
-    'application_status',
     'smartctl',
-    'uptime',
-    'checkupdates'
+    'unlock_pacman',
+    'uptime'
 ]
+
+
+def application_status():
+    """Checks the status of the digital signage application."""
+
+    if name == 'posix':
+        return posix.application_status()
+
+    raise NotImplementedError()
 
 
 def beep(args=None):
@@ -31,6 +40,33 @@ def beep(args=None):
             LOGGER.warning('Ignoring beep arguments on NT system.')
 
         return nt.beep()
+
+    raise NotImplementedError()
+
+
+def checkupdates():
+    """Returns available updates."""
+
+    if name == 'posix':
+        return posix.checkupdates()
+
+    raise NotImplementedError()
+
+
+def disable_application():
+    """Disables the digital signage application."""
+
+    if name == 'posix':
+        return posix.disable_application()
+
+    raise NotImplementedError()
+
+
+def enable_application():
+    """Enables the digital signage application."""
+
+    if name == 'posix':
+        return posix.enable_application()
 
     raise NotImplementedError()
 
@@ -62,42 +98,6 @@ def reboot(delay=0):
     raise NotImplementedError()
 
 
-def unlock_pacman():
-    """Unlocks the package manager."""
-
-    if name == 'posix':
-        return posix.unlock_pacman()
-
-    raise NotImplementedError()
-
-
-def enable_application():
-    """Enables the digital signage application."""
-
-    if name == 'posix':
-        return posix.enable_application()
-
-    raise NotImplementedError()
-
-
-def disable_application():
-    """Disables the digital signage application."""
-
-    if name == 'posix':
-        return posix.disable_application()
-
-    raise NotImplementedError()
-
-
-def application_status():
-    """Checks the status of the digital signage application."""
-
-    if name == 'posix':
-        return posix.application_status()
-
-    raise NotImplementedError()
-
-
 def smartctl():
     """Checks SMART values of disks."""
 
@@ -107,19 +107,19 @@ def smartctl():
     raise NotImplementedError()
 
 
+def unlock_pacman():
+    """Unlocks the package manager."""
+
+    if name == 'posix':
+        return posix.unlock_pacman()
+
+    raise NotImplementedError()
+
+
 def uptime():
     """Returns the system uptime."""
 
     if name == 'posix':
         return posix.uptime()
-
-    raise NotImplementedError()
-
-
-def checkupdates():
-    """Returns available updates."""
-
-    if name == 'posix':
-        return posix.checkupdates()
 
     raise NotImplementedError()

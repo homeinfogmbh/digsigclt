@@ -14,35 +14,6 @@ from digsigclt.rpc.util import JSONResponse
 __all__ = ['COMMANDS']
 
 
-def http_beep(args=None):
-    """Runs the beep function, handles exceptions
-    and returns a JSON response and a HTTP status code.
-    """
-
-    with JSONResponse('System should have beeped.') as handler:
-        beep(args=args)
-
-    return handler
-
-
-def http_reboot(delay=0):
-    """Runs a reboot."""
-
-    with JSONResponse('System is rebooting.') as handler:
-        reboot(delay=delay)
-
-    return handler
-
-
-def http_unlock_pacman():
-    """Removes the pacman lockfile."""
-
-    with JSONResponse('Lockfile removed.') as handler:
-        unlock_pacman()
-
-    return handler
-
-
 def http_application(state=None):
     """Handles the application state."""
 
@@ -66,11 +37,13 @@ def http_application(state=None):
     return handler
 
 
-def http_smartctl():
-    """Checks the SMART values of the disks."""
+def http_beep(args=None):
+    """Runs the beep function, handles exceptions
+    and returns a JSON response and a HTTP status code.
+    """
 
-    with JSONResponse() as handler:
-        handler.json = smartctl()
+    with JSONResponse('System should have beeped.') as handler:
+        beep(args=args)
 
     return handler
 
@@ -84,11 +57,38 @@ def http_checkupdates():
     return handler
 
 
+def http_reboot(delay=0):
+    """Runs a reboot."""
+
+    with JSONResponse('System is rebooting.') as handler:
+        reboot(delay=delay)
+
+    return handler
+
+
+def http_smartctl():
+    """Checks the SMART values of the disks."""
+
+    with JSONResponse() as handler:
+        handler.json = smartctl()
+
+    return handler
+
+
+def http_unlock_pacman():
+    """Removes the pacman lockfile."""
+
+    with JSONResponse('Lockfile removed.') as handler:
+        unlock_pacman()
+
+    return handler
+
+
 COMMANDS = {
-    'beep': http_beep,
-    'reboot': http_reboot,
-    'unlock-pacman': http_unlock_pacman,
     'application': http_application,
+    'beep': http_beep,
+    'checkupdates': http_checkupdates,
+    'reboot': http_reboot,
     'smartctl': http_smartctl,
-    'checkupdates': http_checkupdates
+    'unlock-pacman': http_unlock_pacman
 }
