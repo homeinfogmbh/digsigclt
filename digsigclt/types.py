@@ -1,7 +1,7 @@
 """Custom types for type hints."""
 
 from ipaddress import IPv4Address, IPv6Address
-from typing import NamedTuple, Union
+from typing import NamedTuple, Tuple, Union
 
 
 __all__ = ['BoolNa', 'IPAddress', 'Payload', 'Screenshot', 'ServiceState']
@@ -10,6 +10,7 @@ __all__ = ['BoolNa', 'IPAddress', 'Payload', 'Screenshot', 'ServiceState']
 BoolNa = Union[bool, None]
 IPAddress = Union[IPv4Address, IPv6Address]
 Payload = Union[None, bytes, str, dict, list, int, float]
+Socket = Tuple[str, int]
 
 
 class Screenshot(NamedTuple):

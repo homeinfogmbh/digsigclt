@@ -2,19 +2,22 @@
 
 from http.server import HTTPServer
 from pathlib import Path
-from typing import Callable, Tuple
 
 from digsigclt.common import LOGGER
 from digsigclt.request_handler import HTTPRequestHandler
+from digsigclt.types import Socket
 
 
 __all__ = ['spawn']
 
 
-def run_server(socket: Tuple[str, int], request_handler: Callable) -> int:
-    """Runs the HTTP server."""
+def spawn(socket: Socket, directory: Path, chunk_size: int) -> int:
+    """Spawns a HTTP server."""
 
-    httpd = HTTPServer(socket, request_handler)
+    class _HTTPRequestHandler(HTTPRequestHandler, directory, chunk_size):
+        pass
+
+    httpd = HTTPServer(socket, _HTTPRequestHandler)
     LOGGER.info('Listening on "%s:%i".', *socket)
 
     try:
@@ -23,12 +26,3 @@ def run_server(socket: Tuple[str, int], request_handler: Callable) -> int:
         return 1
 
     return 0
-
-
-def spawn(socket: Tuple[str, int], directory: Path, chunk_size: int):
-    """Spawns a HTTP server."""
-
-    class _HTTPRequestHandler(HTTPRequestHandler, directory, chunk_size):
-        pass
-
-    return run_server(socket, _HTTPRequestHandler)
