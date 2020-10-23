@@ -9,7 +9,7 @@ __all__ = ['beep']
 BEEP = '/usr/bin/beep'
 
 
-def beep(args=None):
+def beep(args: tuple = ()) -> int:
     """Performs a speaker beep to identify the system."""
 
     command = (BEEP, *args) if args else BEEP

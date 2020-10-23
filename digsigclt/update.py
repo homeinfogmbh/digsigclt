@@ -22,7 +22,7 @@ OLD_NAME = 'digsigclt_old.exe'
 UPDATE_URL = 'http://10.8.0.1/appcmd/update/digsigclt'
 
 
-def get_old_path():
+def get_old_path() -> Path:
     """Returns the path for the older,
     to-be deleted Windows executable.
     """
@@ -33,14 +33,14 @@ def get_old_path():
     return EXECUTABLE.parent.joinpath(OLD_NAME)
 
 
-def get_checksum():
+def get_checksum() -> bytes:
     """Returns the checksum of the running digital signage client exe."""
 
     with EXECUTABLE.open('rb') as file:
         return sha256(file.read()).hexdigest().encode()
 
 
-def retrieve_update(url):
+def retrieve_update(url: str) -> bytes:
     """Retrieves a new version of the exe."""
 
     with urlopen(url, data=get_checksum()) as response:
@@ -53,7 +53,7 @@ def retrieve_update(url):
         raise UpdateProtocolError(response.code)
 
 
-def update(url):
+def update(url: str):
     """Updates the Windows executable and restarts it."""
 
     if name != 'nt':

@@ -9,6 +9,7 @@ __all__ = [
     'ADMIN_USERS',
     'LIST_SESSIONS_JSON',
     'PACMAN_LOCKFILE',
+    'SCROT',
     'sudo',
     'systemctl',
     'list_sessions',
@@ -22,9 +23,10 @@ SYSTEMCTL = '/usr/bin/systemctl'
 LOGINCTL = '/usr/bin/loginctl'
 LIST_SESSIONS_JSON = (LOGINCTL, 'list-sessions', '-o', 'json')
 PACMAN_LOCKFILE = Path('/var/lib/pacman/db.lck')
+SCROT = '/usr/bin/scrot'
 
 
-def sudo(command, *args):
+def sudo(command: str, *args: str) -> tuple:
     """Returns the command ran as sudo."""
 
     if args:
@@ -36,20 +38,20 @@ def sudo(command, *args):
     return (SUDO,) + tuple(command)
 
 
-def systemctl(*args):
+def systemctl(*args: str) -> tuple:
     """Runs systemctl with the respective arguments."""
 
     return (SYSTEMCTL,) + args
 
 
-def list_sessions():
+def list_sessions() -> list:
     """Lists the currently active sessions."""
 
     # pylint: disable=E1123
     return loads(check_output(LIST_SESSIONS_JSON, text=True))
 
 
-def logged_in_users():
+def logged_in_users() -> set:
     """Returns a set of users with an active session."""
 
     return {session['user'] for session in list_sessions()}

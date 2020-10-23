@@ -9,7 +9,7 @@ __all__ = ['ping']
 PING = '/usr/bin/ping'
 
 
-def ping(host, count=4, quiet=True):
+def ping(host: str, count: int = 4, quiet: bool = True) -> int:
     """Pings a host."""
 
     if count is None:

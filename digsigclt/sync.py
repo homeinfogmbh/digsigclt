@@ -7,6 +7,7 @@ from json import loads
 from pathlib import Path
 from tarfile import ReadError, open as tar_open
 from tempfile import TemporaryDirectory
+from typing import Generator, IO
 
 from digsigclt.common import CHUNK_SIZE, LOGFILE, LOGGER
 from digsigclt.exceptions import ManifestError
@@ -15,7 +16,7 @@ from digsigclt.exceptions import ManifestError
 __all__ = ['gen_manifest', 'update']
 
 
-def get_files(directory):
+def get_files(directory: Path) -> Generator[Path, None, None]:
     """Recursively lists files in the given
     directory, excluding the LOGFILE.
     """
@@ -27,7 +28,7 @@ def get_files(directory):
             yield inode
 
 
-def copy_file(src, dst, *, chunk_size=CHUNK_SIZE):
+def copy_file(src: Path, dst: Path, *, chunk_size: int = CHUNK_SIZE):
     """Copies a file from src to dst."""
 
     with src.open('rb') as src_file, dst.open('wb') as dst_file:
@@ -35,7 +36,7 @@ def copy_file(src, dst, *, chunk_size=CHUNK_SIZE):
             dst_file.write(chunk)
 
 
-def copy_directory(src, dst, *, chunk_size=CHUNK_SIZE):
+def copy_directory(src: Path, dst: Path, *, chunk_size: int = CHUNK_SIZE):
     """Copies all contents of the source directory src
     into the destination directory dst, overwriting all files.
     """
@@ -69,7 +70,7 @@ def copy_directory(src, dst, *, chunk_size=CHUNK_SIZE):
             LOGGER.warning('Skipping unknown file: "%s".', source_path)
 
 
-def strip_files(directory, manifest):
+def strip_files(directory: Path, manifest: dict):
     """Removes all files from the directory
     tree, which are not in the manifest.
     """
@@ -88,7 +89,7 @@ def strip_files(directory, manifest):
                 LOGGER.error('Could not delete file "%s".', path)
 
 
-def strip_tree(directory):
+def strip_tree(directory: Path):
     """Removes all empty directory sub-trees."""
 
     def strip_subdir(subdir):
@@ -107,7 +108,7 @@ def strip_tree(directory):
             strip_subdir(inode)
 
 
-def load_manifest(directory):
+def load_manifest(directory: Path) -> dict:
     """Reads the manifest from the respective directory."""
 
     path = directory.joinpath('manifest.json')
@@ -118,14 +119,14 @@ def load_manifest(directory):
             text = file.read()
     except FileNotFoundError:
         LOGGER.error('Manifest not found: "%s".', path)
-        raise ManifestError()
+        raise ManifestError() from None
 
     try:
         manifest = loads(text)
     except ValueError:
         LOGGER.error('Manifest is not valid JSON: "%s".', path)
         LOGGER.debug(text)
-        raise ManifestError()
+        raise ManifestError() from None
 
     if not isinstance(manifest, list):
         LOGGER.error('Manifest is not a list: "%s".', path)
@@ -139,7 +140,7 @@ def load_manifest(directory):
     return {Path(*parts) for parts in manifest}
 
 
-def gen_manifest(directory, *, chunk_size=CHUNK_SIZE):
+def gen_manifest(directory: Path, *, chunk_size: int = CHUNK_SIZE) -> list:
     """Generates the manifest of relative
     file paths and their SHA-256 checksums.
     """
@@ -161,7 +162,7 @@ def gen_manifest(directory, *, chunk_size=CHUNK_SIZE):
     return list(manifest.items())   # Need list for JSON serialization.
 
 
-def update(file, directory, *, chunk_size=CHUNK_SIZE):
+def update(file: IO, directory: Path, *, chunk_size: int = CHUNK_SIZE) -> bool:
     """Updates the digital signage data
     from the respective tar.xz archive.
     """

@@ -2,8 +2,8 @@
 
 from subprocess import CalledProcessError, check_call
 
-from digsigclt.common import ServiceState
 from digsigclt.os.posix.common import sudo, systemctl
+from digsigclt.types import ServiceState
 
 
 __all__ = ['enable', 'disable', 'status']
@@ -16,19 +16,19 @@ CHECK_ENABLED = systemctl('is-enabled', SERVICE)
 CHECK_RUNNING = systemctl('is-active', SERVICE)
 
 
-def enable():
+def enable() -> int:
     """Enables the digital signage application."""
 
     return check_call(ENABLE)
 
 
-def disable():
+def disable() -> int:
     """Disables the digital signage application."""
 
     return check_call(DISABLE)
 
 
-def status():
+def status() -> ServiceState:
     """Enables the digital signage application."""
 
     try:

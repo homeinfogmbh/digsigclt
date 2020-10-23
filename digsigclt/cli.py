@@ -1,6 +1,7 @@
 """Command line interface."""
 
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
+from ipaddress import ip_address
 from logging import DEBUG, INFO, basicConfig
 from pathlib import Path
 from sys import exit    # pylint: disable=W0622
@@ -10,6 +11,7 @@ from digsigclt.exceptions import NoAddressFound
 from digsigclt.exceptions import RunningOldExe
 from digsigclt.network import discover_address
 from digsigclt.server import spawn
+from digsigclt.types import IPAddress
 from digsigclt.update import UPDATE_URL, update
 
 
@@ -19,13 +21,13 @@ __all__ = ['main']
 DESCRIPTION = 'HOMEINFO cross-platform digital signage client.'
 
 
-def get_args():
+def get_args() -> Namespace:
     """Returns the command line arguments."""
 
     parser = ArgumentParser(description=DESCRIPTION)
     parser.add_argument(
-        '-a', '--address', metavar='address',
-        help='IPv4 address to listen on')
+        '-a', '--address', metavar='address', type=ip_address,
+        help='IP address to listen on')
     parser.add_argument(
         '-p', '--port', type=int, default=8000, metavar='port',
         help='port to listen on')
@@ -49,7 +51,7 @@ def get_args():
     return parser.parse_args()
 
 
-def get_address(args):
+def get_address(args: Namespace) -> IPAddress:
     """Returns the respective address."""
 
     if args.address is None:

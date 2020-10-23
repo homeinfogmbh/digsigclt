@@ -10,13 +10,13 @@ PING = 'C:\\Windows\\System32\\ping.exe'
 REBOOT = 'C:\\Windows\\System32\\shutdown.exe'
 
 
-def beep():
+def beep() -> int:
     """Performs a speaker beep to identify the system."""
 
     return check_call('@echo \x07', shell=True)
 
 
-def ping(host, count=4):
+def ping(host: str, count: int = 4) -> int:
     """Pings the system count times."""
 
     if count is None:
@@ -27,7 +27,7 @@ def ping(host, count=4):
     return check_call(command)
 
 
-def reboot(delay=0):
+def reboot(delay: int = 0) -> int:
     """Reboots the system."""
 
     if delay is None:

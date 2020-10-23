@@ -12,7 +12,7 @@ __all__ = ['is_running', 'unlock']
 UNLOCK = sudo('/usr/bin/rm', '-f', '/var/lib/pacman/db.lck')
 
 
-def is_running():
+def is_running() -> bool:
     """Checks if pacman is running."""
 
     try:
@@ -23,7 +23,7 @@ def is_running():
     return True
 
 
-def unlock():
+def unlock() -> int:
     """Unlocks the package manager."""
 
     if is_running():

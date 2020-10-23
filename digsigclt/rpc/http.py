@@ -6,23 +6,25 @@ from digsigclt.os import checkupdates
 from digsigclt.os import disable_application
 from digsigclt.os import enable_application
 from digsigclt.os import reboot
+from digsigclt.os import screenshot
 from digsigclt.os import smartctl
 from digsigclt.os import unlock_pacman
-from digsigclt.rpc.util import JSONResponse
+from digsigclt.rpc.response import Response
+from digsigclt.types import BoolNa
 
 
 __all__ = ['COMMANDS']
 
 
-def http_application(state=None):
+def http_application(state: BoolNa = None) -> Response:
     """Handles the application state."""
 
     if state is None:
-        with JSONResponse() as handler:
+        with Response() as response:
             state = application_status()
-            handler.json = state.to_json()
+            response.payload = state.to_json()
 
-        return handler
+        return response
 
     if state:
         function = enable_application
@@ -31,57 +33,66 @@ def http_application(state=None):
         function = disable_application
         text = 'Application disabled.'
 
-    with JSONResponse(text) as handler:
+    with Response(text) as response:
         function()
 
-    return handler
+    return response
 
 
-def http_beep(args=None):
+def http_beep(args: tuple = ()) -> Response:
     """Runs the beep function, handles exceptions
     and returns a JSON response and a HTTP status code.
     """
 
-    with JSONResponse('System should have beeped.') as handler:
+    with Response('System should have beeped.') as response:
         beep(args=args)
 
-    return handler
+    return response
 
 
-def http_checkupdates():
+def http_checkupdates() -> Response:
     """Checks the SMART values of the disks."""
 
-    with JSONResponse() as handler:
-        handler.json = checkupdates()
+    with Response() as response:
+        response.payload = checkupdates()
 
-    return handler
+    return response
 
 
-def http_reboot(delay=0):
+def http_reboot(delay: int = 0) -> Response:
     """Runs a reboot."""
 
-    with JSONResponse('System is rebooting.') as handler:
+    with Response('System is rebooting.') as response:
         reboot(delay=delay)
 
-    return handler
+    return response
 
 
-def http_smartctl():
+def http_screenshot() -> Response:
+    """Returns a screenshot or an error message."""
+
+    with Response() as response:
+        response.payload, response.content_type = screenshot()
+
+    return response
+
+
+def http_smartctl() -> Response:
     """Checks the SMART values of the disks."""
 
-    with JSONResponse() as handler:
-        handler.json = smartctl()
+    with Response() as response:
+        response.payload = smartctl()
 
-    return handler
+    return response
 
 
-def http_unlock_pacman():
+def http_unlock_pacman() -> Response:
     """Removes the pacman lockfile."""
 
-    with JSONResponse('Lockfile removed.') as handler:
+    with Response('Lockfile removed.') as response:
         unlock_pacman()
 
-    return handler
+    return response
 
 
 COMMANDS = {

@@ -8,6 +8,7 @@ from digsigclt.os.posix.checkupdates import checkupdates
 from digsigclt.os.posix.pacman import unlock as unlock_pacman
 from digsigclt.os.posix.ping import ping
 from digsigclt.os.posix.reboot import reboot
+from digsigclt.os.posix.screenshot import screenshot
 from digsigclt.os.posix.smartctl import device_states
 from digsigclt.os.posix.uptime import uptime
 
@@ -21,6 +22,7 @@ __all__ = [
     'enable_application',
     'ping',
     'reboot',
+    'screenshot',
     'unlock_pacman',
     'uptime'
 ]

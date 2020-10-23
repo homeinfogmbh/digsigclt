@@ -4,6 +4,7 @@ from os import name
 
 from digsigclt.common import LOGGER
 from digsigclt.os import nt, posix
+from digsigclt.types import Screenshot, ServiceState
 
 
 __all__ = [
@@ -14,13 +15,14 @@ __all__ = [
     'enable_application',
     'ping',
     'reboot',
+    'screenshot',
     'smartctl',
     'unlock_pacman',
     'uptime'
 ]
 
 
-def application_status():
+def application_status() -> ServiceState:
     """Checks the status of the digital signage application."""
 
     if name == 'posix':
@@ -29,7 +31,7 @@ def application_status():
     raise NotImplementedError()
 
 
-def beep(args=None):
+def beep(args: tuple = ()) -> int:
     """Performs a speaker beep to identify the system."""
 
     if name == 'posix':
@@ -44,7 +46,7 @@ def beep(args=None):
     raise NotImplementedError()
 
 
-def checkupdates():
+def checkupdates() -> dict:
     """Returns available updates."""
 
     if name == 'posix':
@@ -53,7 +55,7 @@ def checkupdates():
     raise NotImplementedError()
 
 
-def disable_application():
+def disable_application() -> int:
     """Disables the digital signage application."""
 
     if name == 'posix':
@@ -62,7 +64,7 @@ def disable_application():
     raise NotImplementedError()
 
 
-def enable_application():
+def enable_application() -> int:
     """Enables the digital signage application."""
 
     if name == 'posix':
@@ -71,7 +73,7 @@ def enable_application():
     raise NotImplementedError()
 
 
-def ping(host, count=4):
+def ping(host: str, count: int = 4) -> int:
     """Pings a host."""
 
     if name == 'posix':
@@ -83,7 +85,7 @@ def ping(host, count=4):
     raise NotImplementedError()
 
 
-def reboot(delay=0):
+def reboot(delay: int = 0) -> int:
     """Reboots the system."""
 
     if name == 'posix':
@@ -98,7 +100,16 @@ def reboot(delay=0):
     raise NotImplementedError()
 
 
-def smartctl():
+def screenshot() -> Screenshot:
+    """Takes a screenshot."""
+
+    if name == 'posix':
+        return posix.screenshot()
+
+    raise NotImplementedError()
+
+
+def smartctl() -> dict:
     """Checks SMART values of disks."""
 
     if name == 'posix':
@@ -107,7 +118,7 @@ def smartctl():
     raise NotImplementedError()
 
 
-def unlock_pacman():
+def unlock_pacman() -> int:
     """Unlocks the package manager."""
 
     if name == 'posix':
@@ -116,7 +127,7 @@ def unlock_pacman():
     raise NotImplementedError()
 
 
-def uptime():
+def uptime() -> str:
     """Returns the system uptime."""
 
     if name == 'posix':
