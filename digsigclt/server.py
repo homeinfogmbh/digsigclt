@@ -17,7 +17,7 @@ def spawn(socket: Socket, directory: Path, chunk_size: int) -> int:
     class _HTTPRequestHandler(HTTPRequestHandler, directory, chunk_size):
         pass
 
-    httpd = HTTPServer(socket, _HTTPRequestHandler)
+    httpd = HTTPServer(socket.compat(), _HTTPRequestHandler)
     LOGGER.info('Listening on "%s:%i".', *socket)
 
     try:

@@ -1,16 +1,22 @@
 """Custom types for type hints."""
 
 from ipaddress import IPv4Address, IPv6Address
-from typing import NamedTuple, Tuple, Union
+from typing import NamedTuple, Union
 
 
-__all__ = ['BoolNa', 'IPAddress', 'Payload', 'Screenshot', 'ServiceState']
+__all__ = [
+    'BoolNa',
+    'IPAddress',
+    'Payload',
+    'Screenshot',
+    'ServiceState',
+    'Socket'
+]
 
 
 BoolNa = Union[bool, None]
 IPAddress = Union[IPv4Address, IPv6Address]
 Payload = Union[None, bytes, str, dict, list, int, float]
-Socket = Tuple[str, int]
 
 
 class Screenshot(NamedTuple):
@@ -29,3 +35,14 @@ class ServiceState(NamedTuple):
     def to_json(self) -> dict:
         """Returns a JSON-ish dict."""
         return {'enabled': self.enabled, 'running': self.running}
+
+
+class Socket(NamedTuple):
+    """An IP socket."""
+
+    ip_address: IPAddress
+    port: int
+
+    def compat(self):
+        """Returns a tuple with the IP address converted into a str."""
+        return (str(self.ip_address), self.port)

@@ -11,7 +11,7 @@ from digsigclt.exceptions import NoAddressFound
 from digsigclt.exceptions import RunningOldExe
 from digsigclt.network import discover_address
 from digsigclt.server import spawn
-from digsigclt.types import IPAddress
+from digsigclt.types import IPAddress, Socket
 from digsigclt.update import UPDATE_URL, update
 
 
@@ -79,7 +79,7 @@ def main():
         exit(5)
 
     if args.directory.is_dir():
-        socket = (str(address), args.port)
+        socket = Socket(address, args.port)
         spawn(socket, args.directory, args.chunk_size)
         exit(4)
 
