@@ -91,8 +91,10 @@ class ExtendedHTTPRequestHandler(BaseHTTPRequestHandler):
 class HTTPRequestHandler(ExtendedHTTPRequestHandler):
     """Handles HTTP requests."""
 
-    def __init_subclass__(cls, directory: Path, chunk_size: int = CHUNK_SIZE):
+    def __init_subclass__(cls, *args, directory: Path,
+                          chunk_size: int = CHUNK_SIZE, **kwargs):
         """Returns a HTTP request handler for the given arguments."""
+        super().__init_subclass__(*args, **kwargs)
         cls.chunk_size = chunk_size
         cls.directory = directory
         cls.last_sync = None
