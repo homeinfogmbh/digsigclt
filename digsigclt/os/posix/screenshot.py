@@ -21,7 +21,8 @@ FORMATS = {
 
 
 def screenshot(filetype: str = 'jpg', display: str = ':0',
-               quality: int = None, multidisp: bool = False) -> Screenshot:
+               quality: int = None, multidisp: bool = False,
+               pointer: bool = False) -> Screenshot:
     """Takes a screenshot."""
 
     try:
@@ -29,13 +30,16 @@ def screenshot(filetype: str = 'jpg', display: str = ':0',
     except KeyError:
         raise ValueError('Invalid image file type.') from None
 
-    command = [SCROT, '--display', display]
+    command = [SCROT, '--silent', '--display', display]
 
     if quality is not None:
         command += ['--quality', str(quality)]
 
     if multidisp:
         command.append('--multidisp')
+
+    if pointer:
+        command.append('--pointer')
 
     with TemporaryDirectory() as tmpd:
         tmpfile = Path(tmpd).joinpath(f'digsigclt-screenshot.{filetype}')
