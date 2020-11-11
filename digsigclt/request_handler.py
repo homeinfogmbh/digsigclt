@@ -51,8 +51,12 @@ def fuzz_response(payload, content_type: str) -> Tuple[bytes, str]:
     return (payload, content_type)
 
 
-class ExtendedHTTPRequestHandler(BaseHTTPRequestHandler):
+class HTTPRequestHandler(BaseHTTPRequestHandler):
     """HTTP request handler with additional properties and functions."""
+
+    chunk_size = None
+    directory = None
+    last_sync = None
 
     @property
     def logfile(self):
@@ -86,18 +90,6 @@ class ExtendedHTTPRequestHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', content_type)
         self.end_headers()
         self.wfile.write(payload)
-
-
-class HTTPRequestHandler(ExtendedHTTPRequestHandler):
-    """Handles HTTP requests."""
-
-    def __init_subclass__(cls, *args, directory: Path,
-                          chunk_size: int = CHUNK_SIZE, **kwargs):
-        """Returns a HTTP request handler for the given arguments."""
-        super().__init_subclass__(*args, **kwargs)
-        cls.chunk_size = chunk_size
-        cls.directory = directory
-        cls.last_sync = None
 
     def send_sysinfo(self):
         """Returns system information."""

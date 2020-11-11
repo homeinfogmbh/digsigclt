@@ -14,8 +14,11 @@ __all__ = ['spawn']
 def spawn(socket: Socket, directory: Path, chunk_size: int) -> int:
     """Spawns a HTTP server."""
 
-    class _HTTPRequestHandler(HTTPRequestHandler, directory, chunk_size):
-        pass
+    class _HTTPRequestHandler(HTTPRequestHandler):
+        """Implementation of the actual request handler."""
+        chunk_size = chunk_size
+        directory = directory
+        last_sync = None
 
     httpd = HTTPServer(socket.compat(), _HTTPRequestHandler)
     LOGGER.info('Listening on "%s:%i".', *socket)
