@@ -19,8 +19,8 @@ FORMATS = {
 }
 
 
-def screenshot(filetype: str = '.jpg', display: str = ':0', quality: int = None,
-               multidisp: bool = False) -> Screenshot:
+def screenshot(filetype: str = '.jpg', display: str = ':0',
+               quality: int = None, multidisp: bool = False) -> Screenshot:
     """Takes a screenshot."""
 
     try:
