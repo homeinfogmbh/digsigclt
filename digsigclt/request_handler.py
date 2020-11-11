@@ -33,7 +33,7 @@ def get_manifest(directory: Path, chunk_size: int = CHUNK_SIZE) -> list:
     return None
 
 
-def fuzz_response(payload, content_type: str) -> Tuple[bytes, str]:
+def format_response(payload, content_type: str) -> Tuple[bytes, str]:
     """Fuzzes the HTTP payload and content type."""
 
     if payload is None:
@@ -85,7 +85,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
     def send_data(self, payload, status_code: int, content_type: str = None):
         """Sends the respective data."""
-        payload, content_type = fuzz_response(payload, content_type)
+        payload, content_type = format_response(payload, content_type)
         self.send_response(status_code)
         self.send_header('Content-Type', content_type)
         self.end_headers()
