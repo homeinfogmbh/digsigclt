@@ -19,12 +19,12 @@ FORMATS = {
 }
 
 
-def screenshot(filetype: str = '.jpg', display: str = ':0',
+def screenshot(suffix: str = '.jpg', display: str = ':0',
                quality: int = None, multidisp: bool = False) -> Screenshot:
     """Takes a screenshot."""
 
     try:
-        content_type = FORMATS[filetype]
+        content_type = FORMATS[suffix]
     except KeyError:
         raise ValueError('Invalid image file type.') from None
 
@@ -36,7 +36,7 @@ def screenshot(filetype: str = '.jpg', display: str = ':0',
     if multidisp:
         command.append('--multidisp')
 
-    with NamedTemporaryFile('w+b') as file:
+    with NamedTemporaryFile('w+b', suffix=suffix) as file:
         command.append(file.name)
         check_call(command)
         file.flush()
