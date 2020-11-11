@@ -7,7 +7,7 @@ from json import dumps, loads
 from os import linesep, name
 from pathlib import Path
 from tempfile import TemporaryFile
-from typing import Tuple
+from typing import NamedTuple
 
 from digsigclt.common import CHUNK_SIZE, LOGFILE, LOGGER
 from digsigclt.io import copy_file
@@ -23,6 +23,13 @@ __all__ = ['HTTPRequestHandler']
 LOCK = Lock()
 
 
+class ResponseContent(NamedTuple):
+    """A HTTP response content."""
+
+    payload: bytes
+    content_type: str
+
+
 def get_manifest(directory: Path, chunk_size: int = CHUNK_SIZE) -> list:
     """Returns the manifest."""
 
@@ -33,7 +40,7 @@ def get_manifest(directory: Path, chunk_size: int = CHUNK_SIZE) -> list:
     return None
 
 
-def format_response(payload, content_type: str) -> Tuple[bytes, str]:
+def format_response(payload, content_type: str) -> ResponseContent:
     """Detects the content type and formats the HTTP payload accordingly."""
 
     if payload is None:
@@ -48,7 +55,7 @@ def format_response(payload, content_type: str) -> Tuple[bytes, str]:
     with suppress(AttributeError):
         payload = payload.encode()
 
-    return (payload, content_type)
+    return ResponseContent(payload, content_type)
 
 
 class HTTPRequestHandler(BaseHTTPRequestHandler):
