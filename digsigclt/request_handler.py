@@ -34,7 +34,7 @@ def get_manifest(directory: Path, chunk_size: int = CHUNK_SIZE) -> list:
 
 
 def format_response(payload, content_type: str) -> Tuple[bytes, str]:
-    """Fuzzes the HTTP payload and content type."""
+    """Detects the content type and formats the HTTP payload accordingly."""
 
     if payload is None:
         payload = dumps(payload)
