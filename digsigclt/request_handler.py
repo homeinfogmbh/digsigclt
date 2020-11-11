@@ -3,7 +3,7 @@
 from contextlib import suppress
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler
-from json import dumps, loads
+from json import dumps, load
 from os import linesep, name
 from pathlib import Path
 from tempfile import TemporaryFile
@@ -67,19 +67,9 @@ class ExtendedHTTPRequestHandler(BaseHTTPRequestHandler):
         return int(self.headers['Content-Length'])
 
     @property
-    def bytes(self):
-        """Returns sent bytes."""
-        return self.rfile.read(self.content_length)
-
-    @property
-    def text(self):
-        """Returns sent text."""
-        return self.bytes.decode()
-
-    @property
     def json(self):
         """Returns sent JSON data."""
-        return loads(self.bytes)
+        return load(self.rfile)
 
     def send_data(self, payload, status_code: int, content_type: str = None):
         """Sends the respective data."""
