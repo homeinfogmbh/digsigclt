@@ -58,17 +58,8 @@ def format_response(payload, content_type: str) -> ResponseContent:
     return ResponseContent(payload, content_type)
 
 
-class HTTPRequestHandler(BaseHTTPRequestHandler):
-    """HTTP request handler with additional properties and functions."""
-
-    chunk_size = None
-    directory = None
-    last_sync = None
-
-    @property
-    def logfile(self):
-        """Returns the log file."""
-        return self.directory.joinpath(LOGFILE)     # pylint: disable=E1101
+class ExtendedHTTPRequestHandler(BaseHTTPRequestHandler):
+    """Extension of the BaseHTTPRequestHandler with convenience methods."""
 
     @property
     def content_length(self):
@@ -97,6 +88,21 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', content_type)
         self.end_headers()
         self.wfile.write(payload)
+
+
+class HTTPRequestHandler(ExtendedHTTPRequestHandler):
+    """HTTP request handler with additional properties and functions."""
+
+    def __init_subclass__(cls, *, chunk_size: int, directory: Path):
+        """Initializes the subclass."""
+        cls.chunk_size = chunk_size
+        cls.directory = directory
+        cls.last_sync = None
+
+    @property
+    def logfile(self):
+        """Returns the log file."""
+        return self.directory.joinpath(LOGFILE)     # pylint: disable=E1101
 
     def send_sysinfo(self):
         """Returns system information."""

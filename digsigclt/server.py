@@ -11,16 +11,14 @@ from digsigclt.types import Socket
 __all__ = ['spawn']
 
 
+# pylint: disable=W0613
 def spawn(socket: Socket, directory: Path, chunk_size: int) -> int:
     """Spawns a HTTP server."""
 
-    class _HTTPRequestHandler(HTTPRequestHandler):
+    class _RH(HTTPRequestHandler, chunk_size=chunk_size, directory=directory):
         """Implementation of the actual request handler."""
-        chunk_size = chunk_size
-        directory = directory
-        last_sync = None
 
-    httpd = HTTPServer(socket.compat(), _HTTPRequestHandler)
+    httpd = HTTPServer(socket.compat(), _RH)
     LOGGER.info('Listening on "%s:%i".', *socket)
 
     try:
