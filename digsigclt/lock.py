@@ -14,16 +14,13 @@ class Lock:
     """A custom thread lock context manager."""
 
     def __init__(self):
-        self.lock = _Lock()
-
-    def __getattr__(self, attr):
-        return getattr(self.lock, attr)
+        self._lock = _Lock()
 
     def __enter__(self):
-        if not self.acquire(blocking=False):
+        if not self._lock.acquire(blocking=False):
             raise Locked()
 
         return self
 
     def __exit__(self, *_):
-        self.lock.release()
+        self._lock.release()

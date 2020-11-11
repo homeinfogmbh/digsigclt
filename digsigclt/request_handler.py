@@ -34,7 +34,7 @@ def get_manifest(directory: Path, chunk_size: int = CHUNK_SIZE) -> list:
     """Returns the manifest."""
 
     with suppress(Locked):
-        with LOCK.acquire:
+        with LOCK:
             return gen_manifest(directory, chunk_size=chunk_size)
 
     return None
