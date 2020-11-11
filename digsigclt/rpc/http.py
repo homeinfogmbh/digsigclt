@@ -100,6 +100,7 @@ COMMANDS = {
     'beep': http_beep,
     'checkupdates': http_checkupdates,
     'reboot': http_reboot,
+    'screenshot': http_screenshot,
     'smartctl': http_smartctl,
     'unlock-pacman': http_unlock_pacman
 }
