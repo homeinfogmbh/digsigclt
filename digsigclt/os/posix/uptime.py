@@ -17,11 +17,13 @@ def parse_float(string: str) -> float:
     return float(string.replace(',', '.'))
 
 
-def parse_timedelta(days, time_):
+def parse_timedelta(days: str, time_: str) -> timedelta:
     """Parses a timedelta from the given days and time."""
 
     if days:
         days, _ = days.split()
+    else:
+        days = 0
 
     if time_.endswith('min'):
         hours = 0
@@ -78,7 +80,7 @@ class Uptime(NamedTuple):
         timestamp = datetime.strptime(timestamp, '%H:%M:%S').time()
 
         if time_ is None:
-            uptime_ = parse_timedelta(0, secondary)
+            uptime_ = parse_timedelta(None, secondary)
         else:
             uptime_ = parse_timedelta(secondary, time_)
 
