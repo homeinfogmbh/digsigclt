@@ -127,7 +127,7 @@ def unlock_pacman() -> int:
     raise NotImplementedError()
 
 
-def uptime() -> str:
+def uptime() -> dict:
     """Returns the system uptime."""
 
     if name == 'posix':
