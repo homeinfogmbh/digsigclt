@@ -32,15 +32,35 @@ def parse_timedelta(days, time_):
     return timedelta(days=int(days), hours=int(hours), minutes=int(minutes))
 
 
+class Load(NamedTuple):
+    """System load information."""
+
+    max: float
+    avg: float
+    min: float
+
+    @classmethod
+    def from_string(cls, string: str):
+        """Parses load from a substring of uptime."""
+        _, load = string.split(': ')
+        return cls(map(parse_float, load.split(', ')))
+
+    def to_json(self):
+        """Returns a JSON-ish dict."""
+        return {
+            'max': self.max,
+            'avg': self.avg,
+            'min': self.min
+        }
+
+
 class Uptime(NamedTuple):
     """Reprensents uptime data."""
 
     timestamp: time
     uptime: timedelta
     users: int
-    load_max: float
-    load_avg: float
-    load_min: float
+    load: Load
 
     @classmethod
     def from_string(cls, string: str):
@@ -64,9 +84,8 @@ class Uptime(NamedTuple):
 
         users, _ = users.split()
         users = int(users)
-        _, load = load.split(': ')
-        load_max, load_avg, load_min = map(parse_float, load.split(', '))
-        return cls(timestamp, uptime_, users, load_max, load_avg, load_min)
+        load = Load.from_string(load)
+        return cls(timestamp, uptime_, users, load)
 
     @classmethod
     def get(cls):
@@ -79,11 +98,7 @@ class Uptime(NamedTuple):
             'timestamp': self.timestamp.isoformat(),
             'uptime': self.uptime.total_seconds(),
             'users': self.users,
-            'load': {
-                'max': self.load_max,
-                'avg': self.load_avg,
-                'min': self.load_min
-            }
+            'load': self.load.to_json()
         }
 
 
