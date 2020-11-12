@@ -83,9 +83,7 @@ class Uptime(NamedTuple):
             uptime_ = parse_timedelta(secondary, time_)
 
         users, _ = users.split()
-        users = int(users)
-        load = Load.from_string(load)
-        return cls(timestamp, uptime_, users, load)
+        return cls(timestamp, uptime_, int(users), Load.from_string(load))
 
     @classmethod
     def get(cls):
