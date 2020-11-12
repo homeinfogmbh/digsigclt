@@ -37,9 +37,9 @@ def parse_timedelta(days: str, time_: str) -> timedelta:
 class Load(NamedTuple):
     """System load information."""
 
-    max: float
-    avg: float
-    min: float
+    past1: float
+    past5: float
+    past15: float
 
     @classmethod
     def from_string(cls, string: str):
@@ -50,9 +50,9 @@ class Load(NamedTuple):
     def to_json(self) -> dict:
         """Returns a JSON-ish dict."""
         return {
-            'max': self.max,
-            'avg': self.avg,
-            'min': self.min
+            'past1': self.past1,
+            'past5': self.past5,
+            'past15': self.past15
         }
 
 
