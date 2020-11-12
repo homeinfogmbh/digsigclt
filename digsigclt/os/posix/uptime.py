@@ -45,7 +45,7 @@ class Load(NamedTuple):
     def from_string(cls, string: str):
         """Parses load from a substring of uptime."""
         _, load = string.split(': ')
-        return cls(map(parse_float, load.split(', ')))
+        return cls(*map(parse_float, load.split(', ')))
 
     def to_json(self) -> dict:
         """Returns a JSON-ish dict."""
