@@ -27,9 +27,10 @@ def get_addresses() -> IPAddresses:
 def discover_address() -> IPAddress:
     """Periodically retry to get an address on the network."""
 
-    for network in NETWORKS:
-        for address in get_addresses():
-            if address in network:
-                return address
+    if addresses := list(get_addresses()):
+        for network in NETWORKS:
+            for address in addresses:
+                if address in network:
+                    return address
 
     raise NoAddressFound()
