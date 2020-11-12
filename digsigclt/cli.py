@@ -11,7 +11,7 @@ from digsigclt.exceptions import NoAddressFound
 from digsigclt.exceptions import RunningOldExe
 from digsigclt.network import discover_address
 from digsigclt.server import spawn
-from digsigclt.types import IPAddress, Socket
+from digsigclt.types import Socket
 from digsigclt.update import UPDATE_URL, update
 
 
@@ -41,27 +41,8 @@ def get_args() -> Namespace:
         '-c', '--chunk-size', type=int, default=CHUNK_SIZE, metavar='bytes',
         help='chunk size to use on file operations')
     parser.add_argument(
-        '-i', '--interval', type=int, default=1, metavar='seconds',
-        help='interval to wait for network address discovery')
-    parser.add_argument(
-        '-r', '--retries', type=int, default=60, metavar='amount',
-        help='amount of retries of network address discovery')
-    parser.add_argument(
         '-v', '--verbose', action='store_true', help='turn on verbose logging')
     return parser.parse_args()
-
-
-def get_address(args: Namespace) -> IPAddress:
-    """Returns the respective address."""
-
-    if args.address is None:
-        try:
-            return discover_address(args.interval, args.retries)
-        except NoAddressFound:
-            LOGGER.critical('No private network address found.')
-            exit(2)
-
-    return args.address
 
 
 def main():
@@ -70,7 +51,12 @@ def main():
     args = get_args()
     basicConfig(level=DEBUG if args.verbose else INFO, format=LOG_FORMAT)
     LOGGER.debug('Target directory set to "%s".', args.directory)
-    address = get_address(args)
+
+    try:
+        address = discover_address()
+    except NoAddressFound:
+        LOGGER.critical('No private network address found.')
+        exit(2)
 
     try:
         update(args.update_server)

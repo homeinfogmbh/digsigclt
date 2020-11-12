@@ -1,56 +1,35 @@
 """Private network discovery."""
 
-from ipaddress import ip_address
-from socket import AF_INET, SOCK_DGRAM, socket
-from subprocess import CalledProcessError
-from time import sleep
+from ipaddress import IPv4Network, ip_address
 
-from digsigclt.common import LOGGER
+from netifaces import AF_INET, ifaddresses, interfaces  # pylint: disable=E0611
+
 from digsigclt.exceptions import NoAddressFound
-from digsigclt.os import ping
-from digsigclt.types import IPAddress
+from digsigclt.types import IPAddress, IPAddresses
 
 
 __all__ = ['discover_address']
 
 
-IP_ADDRESS = '10.8.0.1'
-PORT = 80
-SOCKET = (IP_ADDRESS, PORT)
+OPENVPN = IPv4Network('10.8.0.0/16')
+WIREGUARD = IPv4Network('10.10.0.0/16')
+NETWORKS = [OPENVPN, WIREGUARD]
 
 
-def get_address() -> IPAddress:
-    """Returns a configured address that is in the given network."""
+def get_addresses() -> IPAddresses:
+    """Yields available IP networks."""
 
-    # Ping address first to determine that a route exists.
-    try:
-        ping(IP_ADDRESS)
-    except CalledProcessError:
-        raise NoAddressFound() from None
-
-    # Get local IP address from socket connection.
-    with socket(AF_INET, SOCK_DGRAM) as sock:
-        try:
-            sock.connect(SOCKET)
-        except OSError:
-            raise NoAddressFound() from None
-
-        address, port = sock.getsockname()
-
-    LOGGER.debug('Got IP address %s on port %i.', address, port)
-    return ip_address(address)
+    for interface in interfaces():
+        for address in ifaddresses(interface).get(AF_INET, []):
+            yield ip_address(address['addr'])
 
 
-def discover_address(interval: int = 1, retries: int = 60) -> IPAddress:
+def discover_address() -> IPAddress:
     """Periodically retry to get an address on the network."""
 
-    for tries in range(retries):
-        try:
-            return get_address()
-        except NoAddressFound:
-            sleep(interval)
-
-        if time := interval * tries:
-            LOGGER.warning('No address discovered after %i seconds.', time)
+    for network in NETWORKS:
+        for address in get_addresses():
+            if address in network:
+                return address
 
     raise NoAddressFound()
