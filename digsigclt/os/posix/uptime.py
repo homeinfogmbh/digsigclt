@@ -45,7 +45,7 @@ class Load(NamedTuple):
         _, load = string.split(': ')
         return cls(map(parse_float, load.split(', ')))
 
-    def to_json(self):
+    def to_json(self) -> dict:
         """Returns a JSON-ish dict."""
         return {
             'max': self.max,
@@ -90,7 +90,7 @@ class Uptime(NamedTuple):
         """Reads the uptime from the system."""
         return cls.from_string(check_output(UPTIME, text=True).strip())
 
-    def to_json(self):
+    def to_json(self) -> dict:
         """Returns a JSON-ish dict."""
         return {
             'timestamp': self.timestamp.isoformat(),
