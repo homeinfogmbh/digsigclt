@@ -1,0 +1,2 @@
+Name	Gruppe	Profil	Aktiviert	Aktion	Auﬂer Kraft setzen	Programm	Lokale Adresse	Remoteadresse	Protokoll	Lokaler Port	Remoteport	Autorisierte Benutzer	Autorisierte Computer	Autorisierte lokale Prinzipale	Besitzer des lokalen Benutzers	Anwendungspaket	
+digsigclt		Alle	Ja	Zulassen	Nein	%SystemDrive%\HOMEINFOGmbH\digsigclt.exe	10.8.0.0/16, 10.10.0.0/16	10.8.0.1, 10.10.255.254	TCP	8000	Beliebig	Beliebig	Beliebig	Beliebig	Beliebig	Beliebig	
