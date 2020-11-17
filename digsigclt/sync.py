@@ -6,7 +6,7 @@ from json import loads
 from pathlib import Path
 from tarfile import ReadError, open as tar_open
 from tempfile import TemporaryDirectory
-from typing import Generator, IO
+from typing import IO, Iterable
 
 from digsigclt.common import CHUNK_SIZE, LOGFILE, LOGGER
 from digsigclt.exceptions import ManifestError
@@ -15,7 +15,7 @@ from digsigclt.exceptions import ManifestError
 __all__ = ['gen_manifest', 'update']
 
 
-def get_files(directory: Path) -> Generator[Path, None, None]:
+def get_files(directory: Path) -> Iterable[Path]:
     """Recursively lists files in the given
     directory, excluding the LOGFILE.
     """
@@ -25,6 +25,14 @@ def get_files(directory: Path) -> Generator[Path, None, None]:
             yield from get_files(inode)
         elif inode.is_file() and inode.relative_to(directory) != LOGFILE:
             yield inode
+
+
+def get_orphans(directory: Path, manifest: dict) -> Iterable[Path]:
+    """Yields files within directory, that are not listed in manifest."""
+
+    for path in get_files(directory):
+        if path.relative_to(directory) not in manifest:
+            yield path
 
 
 def copy_file(src: Path, dst: Path, *, chunk_size: int = CHUNK_SIZE):
@@ -74,18 +82,15 @@ def strip_files(directory: Path, manifest: dict):
     tree, which are not in the manifest.
     """
 
-    for path in get_files(directory):
-        relpath = path.relative_to(directory)
+    for path in get_orphans(directory, manifest):
+        LOGGER.debug('Removing obsolete file: %s', path)
 
-        if relpath not in manifest:
-            LOGGER.debug('Removing obsolete file: %s', path)
-
-            try:
-                path.unlink()
-            except FileNotFoundError:
-                LOGGER.warning('File vanished: %s', path)
-            except PermissionError:
-                LOGGER.error('Could not delete file: %s', path)
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            LOGGER.warning('File vanished: %s', path)
+        except PermissionError:
+            LOGGER.error('Could not delete file: %s', path)
 
 
 def strip_tree(directory: Path, *, basedir: bool = True):
