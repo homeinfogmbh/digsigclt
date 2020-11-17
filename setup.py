@@ -9,7 +9,7 @@ setup(
     name='digsigclt',
     version_format='{tag}',
     setup_requires=['setuptools-git-version'],
-    python_requires='>=3.4',
+    python_requires='>=3.8',
     author='HOMEINFO - Digitale Informationssysteme GmbH',
     author_email='<info@homeinfo.de>',
     maintainer='Richard Neumann',
