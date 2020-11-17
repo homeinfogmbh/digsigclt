@@ -18,9 +18,9 @@ from digsigclt.exceptions import UpdateProtocolError
 __all__ = ['UPDATE_URL', 'update']
 
 
+APPCMD = 'http://appcmd.homeinfo.intra/appcmd/'
 EXECUTABLE = Path(executable)
 OLD_NAME = 'digsigclt_old.exe'
-APPCMD = 'http://appcmd.homeinfo.intra/appcmd/'
 UPDATE_URL = urljoin(APPCMD, 'update/digsigclt')
 
 
