@@ -6,6 +6,7 @@ from os import execv, name, rename
 from pathlib import Path
 from sys import argv, executable
 from urllib.error import URLError, HTTPError
+from urllib.parse import urljoin
 from urllib.request import urlopen
 
 from digsigclt.common import LOGGER
@@ -19,7 +20,8 @@ __all__ = ['UPDATE_URL', 'update']
 
 EXECUTABLE = Path(executable)
 OLD_NAME = 'digsigclt_old.exe'
-UPDATE_URL = 'http://10.8.0.1/appcmd/update/digsigclt'
+APPCMD = 'http://appcmd.homeinfo.intra/appcmd/'
+UPDATE_URL = urljoin(APPCMD, 'update/digsigclt')
 
 
 def get_old_path() -> Path:
