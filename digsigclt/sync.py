@@ -41,7 +41,7 @@ def copy_directory(src: Path, dst: Path, *, chunk_size: int = CHUNK_SIZE):
     into the destination directory dst, overwriting all files.
     """
 
-    LOGGER.debug('Copying "%s" to "%s".', src, dst)
+    LOGGER.debug('%s -> %s', src, dst)
 
     for source_path in src.iterdir():
         relpath = source_path.relative_to(src)
@@ -53,13 +53,13 @@ def copy_directory(src: Path, dst: Path, *, chunk_size: int = CHUNK_SIZE):
             try:
                 copy_file(source_path, dest_path, chunk_size=chunk_size)
             except PermissionError:
-                LOGGER.error('Could not override file "%s".', dest_path)
+                LOGGER.error('Could not override file: %s', dest_path)
         elif source_path.is_dir():
             if dest_path.is_file():
                 try:
                     dest_path.unlink()
                 except PermissionError:
-                    LOGGER.error('Could not remove file "%s".', dest_path)
+                    LOGGER.error('Could not remove file: %s', dest_path)
                     continue
 
             if not dest_path.is_dir():
@@ -67,7 +67,7 @@ def copy_directory(src: Path, dst: Path, *, chunk_size: int = CHUNK_SIZE):
 
             copy_directory(source_path, dest_path, chunk_size=chunk_size)
         else:
-            LOGGER.warning('Skipping unknown file: "%s".', source_path)
+            LOGGER.warning('Skipping unknown file: %s', source_path)
 
 
 def strip_files(directory: Path, manifest: dict):
@@ -79,14 +79,14 @@ def strip_files(directory: Path, manifest: dict):
         relpath = path.relative_to(directory)
 
         if relpath not in manifest:
-            LOGGER.debug('Removing obsolete file "%s".', path)
+            LOGGER.debug('Removing obsolete file: %s', path)
 
             try:
                 path.unlink()
             except FileNotFoundError:
-                LOGGER.warning('File "%s" vanished.', path)
+                LOGGER.warning('File vanished: %s', path)
             except PermissionError:
-                LOGGER.error('Could not delete file "%s".', path)
+                LOGGER.error('Could not delete file: %s', path)
 
 
 def strip_tree(directory: Path):
@@ -101,7 +101,7 @@ def strip_tree(directory: Path):
         if not set(subdir.iterdir()):   # Directory is probably empty.
             with suppress(OSError):
                 subdir.rmdir()
-                LOGGER.debug('Removed empty directory "%s".', subdir)
+                LOGGER.debug('Removed empty directory: %s', subdir)
 
     for inode in directory.iterdir():
         if inode.is_dir():
@@ -112,24 +112,24 @@ def load_manifest(directory: Path) -> dict:
     """Reads the manifest from the respective directory."""
 
     path = directory.joinpath('manifest.json')
-    LOGGER.debug('Reading manifest from "%s".', path)
+    LOGGER.debug('Reading manifest from: %s', path)
 
     try:
         with path.open('r') as file:
             text = file.read()
     except FileNotFoundError:
-        LOGGER.error('Manifest not found: "%s".', path)
+        LOGGER.error('Manifest not found: %s', path)
         raise ManifestError() from None
 
     try:
         manifest = loads(text)
     except ValueError:
-        LOGGER.error('Manifest is not valid JSON: "%s".', path)
+        LOGGER.error('Manifest is not valid JSON: %s', path)
         LOGGER.debug(text)
         raise ManifestError() from None
 
     if not isinstance(manifest, list):
-        LOGGER.error('Manifest is not a list: "%s".', path)
+        LOGGER.error('Manifest is not a list: %s', path)
         LOGGER.debug(type(manifest))
         LOGGER.debug(manifest)
         raise ManifestError()
@@ -155,7 +155,7 @@ def gen_manifest(directory: Path, *, chunk_size: int = CHUNK_SIZE) -> list:
                 sha256sum.update(chunk)
 
         sha256sum = sha256sum.hexdigest()
-        LOGGER.debug('SHA-256 sum of "%s" is "%s".', filename, sha256sum)
+        LOGGER.debug('%s  %s', sha256sum, filename)
         relpath = filename.relative_to(directory)
         manifest[relpath.parts] = sha256sum
 
@@ -168,7 +168,7 @@ def update(file: IO, directory: Path, *, chunk_size: int = CHUNK_SIZE) -> bool:
     """
 
     with TemporaryDirectory() as tmpd:
-        LOGGER.debug('Extracting archive to "%s".', tmpd)
+        LOGGER.debug('Extracting archive to: %s', tmpd)
 
         with tar_open(mode='r:xz', fileobj=file, bufsize=chunk_size) as tar:
             try:
