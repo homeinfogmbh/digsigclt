@@ -35,7 +35,7 @@ def get_manifest(directory: Path, chunk_size: int = CHUNK_SIZE) -> list:
 
     with suppress(Locked):
         with LOCK:
-            return gen_manifest(directory, chunk_size=chunk_size)
+            return list(gen_manifest(directory, chunk_size=chunk_size))
 
     return None
 

@@ -1,13 +1,14 @@
 """Custom types for type hints."""
 
 from ipaddress import IPv4Address, IPv6Address
-from typing import Iterable, NamedTuple, Union
+from typing import Iterable, List, NamedTuple, Tuple, Union
 
 
 __all__ = [
     'BoolNa',
     'IPAddress',
     'IPAddresses',
+    'Manifest',
     'Payload',
     'Screenshot',
     'ServiceState',
@@ -18,6 +19,7 @@ __all__ = [
 BoolNa = Union[bool, None]
 IPAddress = Union[IPv4Address, IPv6Address]
 IPAddresses = Iterable[IPAddress]
+Manifest = Iterable[Tuple[List[str], str]]
 Payload = Union[None, bytes, str, dict, list, int, float]
 
 

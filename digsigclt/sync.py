@@ -10,6 +10,7 @@ from typing import IO, Iterable
 
 from digsigclt.common import CHUNK_SIZE, LOGFILE, LOGGER
 from digsigclt.exceptions import ManifestError
+from digsigclt.types import Manifest
 
 
 __all__ = ['gen_manifest', 'update']
@@ -143,12 +144,10 @@ def load_manifest(directory: Path) -> dict:
     return {Path(*parts) for parts in manifest}
 
 
-def gen_manifest(directory: Path, *, chunk_size: int = CHUNK_SIZE) -> list:
+def gen_manifest(directory: Path, *, chunk_size: int = CHUNK_SIZE) -> Manifest:
     """Generates the manifest of relative
     file paths and their SHA-256 checksums.
     """
-
-    manifest = {}
 
     for filename in get_files(directory):
         sha256sum = sha256()
@@ -160,9 +159,7 @@ def gen_manifest(directory: Path, *, chunk_size: int = CHUNK_SIZE) -> list:
         sha256sum = sha256sum.hexdigest()
         LOGGER.debug('%s  %s', sha256sum, filename)
         relpath = filename.relative_to(directory)
-        manifest[relpath.parts] = sha256sum
-
-    return list(manifest.items())   # Need list for JSON serialization.
+        yield (relpath.parts, sha256sum)
 
 
 def update(file: IO, directory: Path, *, chunk_size: int = CHUNK_SIZE) -> bool:
