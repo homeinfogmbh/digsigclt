@@ -1,6 +1,5 @@
 """Digital signage data synchronization."""
 
-from contextlib import suppress
 from functools import partial
 from hashlib import sha256
 from json import loads
@@ -89,23 +88,22 @@ def strip_files(directory: Path, manifest: dict):
                 LOGGER.error('Could not delete file: %s', path)
 
 
-def strip_tree(directory: Path):
+def strip_tree(directory: Path, *, basedir: bool = True):
     """Removes all empty directory sub-trees."""
-
-    def strip_subdir(subdir):
-        """Recursively removes empty directory trees."""
-        for inode in subdir.iterdir():
-            if inode.is_dir():
-                strip_subdir(inode)
-
-        if not set(subdir.iterdir()):   # Directory is probably empty.
-            with suppress(OSError):
-                subdir.rmdir()
-                LOGGER.debug('Removed empty directory: %s', subdir)
 
     for inode in directory.iterdir():
         if inode.is_dir():
-            strip_subdir(inode)
+            strip_tree(inode, basedir=False)
+
+    if basedir or any(directory.iterdir()):
+        return  # Do not attempt to remove base directory or non-empty dirs.
+
+    try:
+        directory.rmdir()
+    except OSError:
+        LOGGER.warning('Could not remove directory: %s', directory)
+    else:
+        LOGGER.debug('Removed empty directory: %s', directory)
 
 
 def load_manifest(directory: Path) -> dict:
