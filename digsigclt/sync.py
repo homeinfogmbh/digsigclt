@@ -16,6 +16,9 @@ from digsigclt.types import Manifest
 __all__ = ['gen_manifest', 'update']
 
 
+MANIFEST = 'manifest.json'
+
+
 def get_files(directory: Path) -> Iterable[Path]:
     """Recursively lists files in the given
     directory, excluding the LOGFILE.
@@ -115,7 +118,7 @@ def strip_tree(directory: Path, *, basedir: bool = True):
 def load_manifest(directory: Path) -> dict:
     """Reads the manifest from the respective directory."""
 
-    path = directory.joinpath('manifest.json')
+    path = directory.joinpath(MANIFEST)
     LOGGER.debug('Reading manifest from: %s', path)
 
     try:
