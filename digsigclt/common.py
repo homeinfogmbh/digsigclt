@@ -1,4 +1,4 @@
-"""Common stuff facility."""
+"""Common constants, data structures and functions."""
 
 from __future__ import annotations
 from hashlib import sha256
@@ -7,7 +7,7 @@ from logging import getLogger
 from os.path import getctime
 from pathlib import Path
 from sys import argv
-from typing import NamedTuple, Union
+from typing import IO, NamedTuple, Union
 
 
 __all__ = [
@@ -16,6 +16,8 @@ __all__ = [
     'LOGFILE',
     'LOGGER',
     'LOGGER',
+    'FileInfo',
+    'copy_file',
     'sha256sum'
 ]
 
@@ -48,6 +50,14 @@ class FileInfo(NamedTuple):
     def to_json(self) -> dict:
         """Returns JSON-ish dict."""
         return {'sha256sum': self.sha256sum, 'ctime': self.ctime}
+
+
+def copy_file(src: IO, dst: IO, size: int, chunk_size: int = CHUNK_SIZE):
+    """Copies two files."""
+
+    while size > 0:
+        size -= (bytes := min(size, chunk_size))    # pylint: disable=W0622
+        dst.write(src.read(bytes))
 
 
 def sha256sum(filename: Union[Path, str]) -> str:

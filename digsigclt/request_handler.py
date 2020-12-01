@@ -9,8 +9,7 @@ from pathlib import Path
 from tempfile import TemporaryFile
 from typing import NamedTuple
 
-from digsigclt.common import CHUNK_SIZE, LOGFILE, LOGGER
-from digsigclt.io import copy_file
+from digsigclt.common import CHUNK_SIZE, LOGFILE, LOGGER, copy_file
 from digsigclt.lock import Locked, Lock
 from digsigclt.rpc import COMMANDS
 from digsigclt.os import uptime
