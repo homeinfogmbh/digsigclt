@@ -40,9 +40,9 @@ def retrieve_update(url: str) -> bytes:
 
     request = Request(url)
     request.add_header('Content-Type', 'application/json')
-    json = dumps(fileinfo(executable))
+    payload = dumps(fileinfo(executable)).encode()
 
-    with urlopen(request, data=json) as response:
+    with urlopen(request, data=payload) as response:
         if response.code == 204:
             raise NoUpdateAvailable()
 
