@@ -1,25 +1,25 @@
 """Updating process for Windows systems."""
 
 from contextlib import suppress
-from hashlib import sha256
+from json import dumps
 from os import execv, name, rename
 from pathlib import Path
 from sys import argv, executable
 from urllib.error import URLError, HTTPError
 from urllib.parse import urljoin
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 from digsigclt.common import LOGGER
 from digsigclt.exceptions import NoUpdateAvailable
 from digsigclt.exceptions import RunningOldExe
 from digsigclt.exceptions import UpdateProtocolError
+from digsigclt.functions import fileinfo
 
 
 __all__ = ['UPDATE_URL', 'update']
 
 
 APPCMD = 'http://appcmd.homeinfo.intra/appcmd/'
-EXECUTABLE = Path(executable)
 OLD_NAME = 'digsigclt_old.exe'
 UPDATE_URL = urljoin(APPCMD, 'update/digsigclt')
 
@@ -29,23 +29,20 @@ def get_old_path() -> Path:
     to-be deleted Windows executable.
     """
 
-    if EXECUTABLE.name == OLD_NAME:
+    if (exe := Path(executable)).name == OLD_NAME:
         raise RunningOldExe()
 
-    return EXECUTABLE.parent.joinpath(OLD_NAME)
-
-
-def get_checksum() -> bytes:
-    """Returns the checksum of the running digital signage client exe."""
-
-    with EXECUTABLE.open('rb') as file:
-        return sha256(file.read()).hexdigest().encode()
+    return exe.parent.joinpath(OLD_NAME)
 
 
 def retrieve_update(url: str) -> bytes:
     """Retrieves a new version of the exe."""
 
-    with urlopen(url, data=get_checksum()) as response:
+    request = Request(url)
+    request.add_header('Content-Type', 'application/json')
+    json = dumps(fileinfo(executable))
+
+    with urlopen(request, data=json) as response:
         if response.code == 204:
             raise NoUpdateAvailable()
 
@@ -53,6 +50,24 @@ def retrieve_update(url: str) -> bytes:
             return response.read()
 
         raise UpdateProtocolError(response.code)
+
+
+def update_exe(exe_file: bytes):
+    """Updates the *.exe file."""
+
+    LOGGER.debug('Removing old exe.')
+    old_path = get_old_path()
+
+    with suppress(FileNotFoundError):
+        old_path.unlink()
+
+    LOGGER.debug('Renaming current exe to old exe.')
+    rename(executable, str(old_path))
+    LOGGER.debug('Writing new exe file.')
+
+    with open(executable, 'wb') as exe:
+        exe.write(exe_file)
+        exe.flush()
 
 
 def update(url: str):
@@ -63,14 +78,9 @@ def update(url: str):
         return
 
     LOGGER.info('Checking for update.')
-    old_path = get_old_path()
-
-    LOGGER.debug('Removing old exe.')
-    with suppress(FileNotFoundError):
-        old_path.unlink()
 
     try:
-        new_exe = retrieve_update(url)
+        exe_file = retrieve_update(url)
     except HTTPError as error:
         LOGGER.error('Could not query update server.')
         LOGGER.debug('Status: %i, reason: %s.', error.code, error.reason)
@@ -87,13 +97,6 @@ def update(url: str):
         LOGGER.info('No update available.')
         return
 
-    LOGGER.debug('Renaming current exe to old exe.')
-    rename(executable, str(old_path))
-    LOGGER.debug('Writing new exe file.')
-
-    with EXECUTABLE.open('wb') as exe:
-        exe.write(new_exe)
-        exe.flush()
-
+    update_exe(exe_file)
     LOGGER.debug('Substituting running process with new executable.')
     execv(executable, argv)
