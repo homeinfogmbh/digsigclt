@@ -47,6 +47,6 @@ class Socket(NamedTuple):
     ip_address: IPAddress
     port: int
 
-    def compat(self):
+    def compat(self) -> Tuple[str, int]:
         """Returns a tuple with the IP address converted into a str."""
         return (str(self.ip_address), self.port)
