@@ -100,9 +100,7 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
 
     def send_sysinfo(self):
         """Returns system information."""
-        if (last_sync := type(self).last_sync) is None:
-            last_sync = None
-        else:
+        if (last_sync := type(self).last_sync) is not None:
             last_sync = last_sync.isoformat()
 
         json = {'lastSync': last_sync}
@@ -144,8 +142,7 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
 
     def send_manifest(self):
         """Sends the manifest."""
-        LOGGER.info('Incoming manifest query from %s:%s.',
-                    *self.client_address)
+        LOGGER.info('Manifest queried from %s:%s.', *self.client_address)
 
         if (manifest := get_manifest(self.directory, self.chunk_size)) is None:
             text = 'System is currently locked.'
