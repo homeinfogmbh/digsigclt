@@ -1,7 +1,6 @@
 """Updating process for Windows systems."""
 
 from contextlib import suppress
-from json import dumps
 from os import execv, name, rename
 from pathlib import Path
 from sys import argv, executable
@@ -9,11 +8,10 @@ from urllib.error import URLError, HTTPError
 from urllib.parse import urljoin
 from urllib.request import Request, urlopen
 
-from digsigclt.common import LOGGER
+from digsigclt.common import LOGGER, FileInfo
 from digsigclt.exceptions import NoUpdateAvailable
 from digsigclt.exceptions import RunningOldExe
 from digsigclt.exceptions import UpdateProtocolError
-from digsigclt.functions import fileinfo
 
 
 __all__ = ['UPDATE_URL', 'update']
@@ -40,9 +38,9 @@ def retrieve_update(url: str) -> bytes:
 
     request = Request(url)
     request.add_header('Content-Type', 'application/json')
-    payload = dumps(fileinfo(executable)).encode()
+    file_info = FileInfo.from_file(executable)
 
-    with urlopen(request, data=payload) as response:
+    with urlopen(request, data=bytes(file_info)) as response:
         if response.code == 204:
             raise NoUpdateAvailable()
 
