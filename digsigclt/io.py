@@ -12,6 +12,5 @@ def copy_file(src: IO, dst: IO, size: int, chunk_size: int = CHUNK_SIZE):
     """Copies two files."""
 
     while size > 0:
-        bytes = min(size, chunk_size)   # pylint: disable=W0622
-        size -= bytes
+        size -= (bytes := min(size, chunk_size))   # pylint: disable=W0622
         dst.write(src.read(bytes))
