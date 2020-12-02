@@ -9,6 +9,7 @@ __all__ = [
     'IPAddress',
     'IPAddresses',
     'Manifest',
+    'ManifestEntry',
     'Payload',
     'Screenshot',
     'ServiceState',
@@ -19,7 +20,8 @@ __all__ = [
 BoolNa = Union[bool, None]
 IPAddress = Union[IPv4Address, IPv6Address]
 IPAddresses = Generator[IPAddress, None, None]
-Manifest = Generator[Tuple[List[str], str], None, None]
+ManifestEntry = Tuple[List[str], str]
+Manifest = Generator[ManifestEntry, None, None]
 Payload = Union[None, bytes, str, dict, list, int, float]
 
 
