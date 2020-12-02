@@ -20,8 +20,9 @@ def get_addresses() -> IPAddresses:
     """Yields available IP networks."""
 
     for interface in interfaces():
-        for address in ifaddresses(interface).get(AF_INET, []):
-            yield ip_address(address['addr'])
+        if addresses := ifaddresses(interface).get(AF_INET):
+            for address in addresses:
+                yield ip_address(address['addr'])
 
 
 def discover_address() -> IPAddress:
