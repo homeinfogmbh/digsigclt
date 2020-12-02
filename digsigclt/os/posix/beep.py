@@ -12,5 +12,4 @@ BEEP = '/usr/bin/beep'
 def beep(args: tuple = ()) -> int:
     """Performs a speaker beep to identify the system."""
 
-    command = (BEEP, *args) if args else BEEP
-    return check_call(command)
+    return check_call((BEEP, *args))
