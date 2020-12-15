@@ -1,7 +1,7 @@
 """Custom types for type hints."""
 
 from ipaddress import IPv4Address, IPv6Address
-from typing import Iterable, List, NamedTuple, Tuple, Union
+from typing import Generator, List, NamedTuple, Tuple, Union
 
 
 __all__ = [
@@ -9,6 +9,7 @@ __all__ = [
     'IPAddress',
     'IPAddresses',
     'Manifest',
+    'ManifestEntry',
     'Payload',
     'Screenshot',
     'ServiceState',
@@ -18,8 +19,9 @@ __all__ = [
 
 BoolNa = Union[bool, None]
 IPAddress = Union[IPv4Address, IPv6Address]
-IPAddresses = Iterable[IPAddress]
-Manifest = Iterable[Tuple[List[str], str]]
+IPAddresses = Generator[IPAddress, None, None]
+ManifestEntry = Tuple[List[str], str]
+Manifest = Generator[ManifestEntry, None, None]
 Payload = Union[None, bytes, str, dict, list, int, float]
 
 
@@ -47,6 +49,6 @@ class Socket(NamedTuple):
     ip_address: IPAddress
     port: int
 
-    def compat(self):
+    def compat(self) -> Tuple[str, int]:
         """Returns a tuple with the IP address converted into a str."""
         return (str(self.ip_address), self.port)
