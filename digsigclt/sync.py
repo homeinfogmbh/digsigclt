@@ -19,14 +19,17 @@ __all__ = ['gen_manifest', 'update']
 MANIFEST = 'manifest.json'
 
 
-def get_files(directory: Path) -> Iterable[Path]:
+def get_files(directory: Path, *, basedir: bool = True) -> Iterable[Path]:
     """Recursively lists files in the given
     directory, excluding the LOGFILE.
     """
 
     for inode in directory.iterdir():
+        if basedir and inode.stem.startswith('.'):
+            continue    # Ignore dotfiles in the base directory.
+
         if inode.is_dir():
-            yield from get_files(inode)
+            yield from get_files(inode, basedir=False)
         elif inode.is_file() and inode.relative_to(directory) != LOGFILE:
             yield inode
 
@@ -101,6 +104,9 @@ def strip_tree(directory: Path, *, basedir: bool = True):
     """Removes all empty directory sub-trees."""
 
     for inode in directory.iterdir():
+        if basedir and inode.stem.startswith('.'):
+            continue    # Do not remove dotfiles in the base directory.
+
         if inode.is_dir():
             strip_tree(inode, basedir=False)
 
