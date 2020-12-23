@@ -1,7 +1,6 @@
 """RPC related utilities."""
 
 from subprocess import CalledProcessError
-from typing import NamedTuple
 
 from digsigclt.exceptions import UnderAdministration, PackageManagerActive
 from digsigclt.types import Payload
@@ -22,12 +21,18 @@ ERRORS = {
 }
 
 
-class Response(NamedTuple):
+class Response:
     """Handles common exceptions and returns a JSON response."""
 
-    payload: Payload = None
-    content_type: str = 'application/json'
-    status_code: int = 200
+    __slots__ = ('payload', 'content_type', 'status_code')
+
+    def __init__(self, payload: Payload = None,
+                 content_type: str = 'application/json',
+                 status_code: int = 200):
+        """Sets the default values."""
+        self.payload = payload
+        self.content_type = content_type
+        self.status_code = status_code
 
     def __enter__(self):
         """Enters a context and returns itself."""
