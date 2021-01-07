@@ -50,6 +50,33 @@ def copy_file(src: Path, dst: Path, *, chunk_size: int = CHUNK_SIZE):
             dst_file.write(chunk)
 
 
+def copy_subfile(src: Path, dst: Path, *, chunk_size: int = CHUNK_SIZE):
+    """Copies a sub-file."""
+
+    LOGGER.info('Updating file "%s".', dst)
+
+    try:
+        copy_file(src, dst, chunk_size=chunk_size)
+    except PermissionError:
+        LOGGER.error('Could not override file: %s', dst)
+
+
+def copy_subdir(src: Path, dst: Path, *, chunk_size: int = CHUNK_SIZE):
+    """Copies a sub-directory."""
+
+    if dst.is_file():
+        try:
+            dst.unlink()
+        except PermissionError:
+            LOGGER.error('Could not remove file: %s', dst)
+            return
+
+    if not dst.is_dir():
+        dst.mkdir(mode=0o755, parents=True)
+
+    copy_directory(src, dst, chunk_size=chunk_size)
+
+
 def copy_directory(src: Path, dst: Path, *, chunk_size: int = CHUNK_SIZE):
     """Copies all contents of the source directory src
     into the destination directory dst, overwriting all files.
@@ -62,24 +89,9 @@ def copy_directory(src: Path, dst: Path, *, chunk_size: int = CHUNK_SIZE):
         dest_path = dst.joinpath(relpath)
 
         if source_path.is_file():
-            LOGGER.info('Updating file "%s".', dest_path)
-
-            try:
-                copy_file(source_path, dest_path, chunk_size=chunk_size)
-            except PermissionError:
-                LOGGER.error('Could not override file: %s', dest_path)
+            copy_subfile(source_path, dest_path, chunk_size=chunk_size)
         elif source_path.is_dir():
-            if dest_path.is_file():
-                try:
-                    dest_path.unlink()
-                except PermissionError:
-                    LOGGER.error('Could not remove file: %s', dest_path)
-                    continue
-
-            if not dest_path.is_dir():
-                dest_path.mkdir(mode=0o755, parents=True)
-
-            copy_directory(source_path, dest_path, chunk_size=chunk_size)
+            copy_subdir(source_path, dest_path, chunk_size=chunk_size)
         else:
             LOGGER.warning('Skipping unknown file: %s', source_path)
 
