@@ -1,6 +1,7 @@
 */__pycache__/*
 .eggs
 .idea
+.scannerwork
 build
 dist
 *.egg-info
