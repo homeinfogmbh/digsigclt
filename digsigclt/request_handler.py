@@ -43,10 +43,7 @@ def get_manifest(directory: Path, chunk_size: int = CHUNK_SIZE) \
 def format_response(payload, content_type: str) -> ResponseContent:
     """Detects the content type and formats the HTTP payload accordingly."""
 
-    if payload is None:
-        payload = dumps(payload)
-        content_type = content_type or 'application/json'
-    elif isinstance(payload, (dict, list)):
+    if payload is None or isinstance(payload, (dict, list)):
         payload = dumps(payload)
         content_type = content_type or 'application/json'
     elif isinstance(payload, str):
