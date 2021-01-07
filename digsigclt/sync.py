@@ -6,7 +6,7 @@ from json import loads
 from pathlib import Path
 from tarfile import ReadError, open as tar_open
 from tempfile import TemporaryDirectory
-from typing import IO, Iterable
+from typing import IO, Iterable, Set
 
 from digsigclt.common import CHUNK_SIZE, LOGFILE, LOGGER
 from digsigclt.exceptions import ManifestError
@@ -133,7 +133,7 @@ def strip_tree(directory: Path, *, basedir: bool = True):
         LOGGER.debug('Removed empty directory: %s', directory)
 
 
-def load_manifest(directory: Path) -> dict:
+def load_manifest(directory: Path) -> Set[Path]:
     """Reads the manifest from the respective directory."""
 
     path = directory.joinpath(MANIFEST)
