@@ -11,10 +11,11 @@ from digsigclt.types import Screenshot
 __all__ = ['screenshot']
 
 
+JPEG = 'image/jpeg'
 FORMATS = {
-    'jpe': 'image/jpeg',
-    'jpeg': 'image/jpeg',
-    'jpg': 'image/jpeg',
+    'jpe': JPEG,
+    'jpeg': JPEG,
+    'jpg': JPEG,
     'png': 'image/png',
     'gif': 'image/gif'
 }
