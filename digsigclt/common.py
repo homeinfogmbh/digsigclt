@@ -56,8 +56,8 @@ def copy_file(src: IO, dst: IO, size: int, chunk_size: int = CHUNK_SIZE):
     """Copies two files."""
 
     while size > 0:
-        size -= (bytes := min(size, chunk_size))    # pylint: disable=W0622
-        dst.write(src.read(bytes))
+        size -= (bytes_ := min(size, chunk_size))
+        dst.write(src.read(bytes_))
 
 
 def sha256sum(filename: Union[Path, str]) -> str:
