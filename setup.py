@@ -19,6 +19,6 @@ setup(
         'digsigclt.os.posix',
         'digsigclt.rpc'
     ],
-    scripts=['files/digsigclt'],
+    entry_points={'console_scripts': ['digsigclt = digsigclt:main']},
     description=('Digital signage data synchronization client.')
 )
