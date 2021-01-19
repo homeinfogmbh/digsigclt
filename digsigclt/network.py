@@ -1,11 +1,12 @@
 """Private network discovery."""
 
 from ipaddress import IPv4Network, ip_address
+from typing import Iterator
 
 from netifaces import AF_INET, ifaddresses, interfaces  # pylint: disable=E0611
 
 from digsigclt.exceptions import NoAddressFound
-from digsigclt.types import IPAddress, IPAddresses
+from digsigclt.types import IPAddress
 
 
 __all__ = ['discover_address']
@@ -16,7 +17,7 @@ WIREGUARD = IPv4Network('10.10.0.0/16')
 NETWORKS = [OPENVPN, WIREGUARD]
 
 
-def get_addresses() -> IPAddresses:
+def get_addresses() -> Iterator[IPAddress]:
     """Yields available IP networks."""
 
     for interface in interfaces():
