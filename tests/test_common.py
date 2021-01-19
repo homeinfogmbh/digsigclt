@@ -5,7 +5,7 @@ from pathlib import Path
 from tempfile import TemporaryFile
 from unittest import TestCase
 
-from digsigclt.common import FileInfo, copy_file
+from digsigclt.common import FileInfo, copy_file, sha256sum
 
 
 CONTENT = 'Hello, world.\n'
@@ -28,18 +28,10 @@ class TestFileInfo(TestCase):
         self.assertEqual(str(file_info), dumps(JSON))
         self.assertEqual(bytes(file_info), dumps(JSON).encode())
 
-    def _test_from_file_str(self):
-        """Tests with a file created from a str."""
-        self._test_file_info(FileInfo.from_file(str(PATH)))
-
-    def _test_from_file_path(self):
-        """Tests with a file created from a Path."""
-        self._test_file_info(FileInfo.from_file(PATH))
-
     def test_from_file(self):
         """Tests the FileInfo.from_file classmethod."""
-        self._test_from_file_str()
-        self._test_from_file_path()
+        self._test_file_info(FileInfo.from_file(PATH))
+        self._test_file_info(FileInfo.from_file(str(PATH)))
 
 
 class TestCopyFile(TestCase):
@@ -54,3 +46,12 @@ class TestCopyFile(TestCase):
             size = len(dst.read())
 
         self.assertEqual(size, SIZE)
+
+
+class TestSHA256SUM(TestCase):
+    """Tests the sha256sum() function."""
+
+    def test_sha256sum(self):
+        """Tests the sha256sum() function."""
+        self.assertEqual(sha256sum(PATH), SHA256)
+        self.assertEqual(sha256sum(str(PATH)), SHA256)
