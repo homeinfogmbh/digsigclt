@@ -207,18 +207,11 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
         LOGGER.debug('Executing function "%s" with args "%s".', function, json)
 
         try:
-            result = function(**json)
+            response = function(**json)
         except TypeError:
             LOGGER.warning('Invalid arguments specified: "%s".', json)
             return self.send_data('Invalid arguments specified.', 400)
 
-        LOGGER.debug('Function returned: "%s".', result)
-
-        try:
-            payload, content_type, status_code = result
-        except (TypeError, ValueError):
-            LOGGER.warning('Internal function returned garbage: "%s".', result)
-            return self.send_data('Internal function returned garbage.', 500)
-
-        LOGGER.debug('Sending "%s" with status "%s".', payload, status_code)
-        return self.send_data(payload, status_code, content_type=content_type)
+        LOGGER.debug('Function returned: "%s".', response)
+        return self.send_data(response.payload, response.status_code,
+                              content_type=response.content_type)

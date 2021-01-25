@@ -1,5 +1,6 @@
 """RPC related utilities."""
 
+from dataclasses import dataclass
 from subprocess import CalledProcessError
 
 from digsigclt.exceptions import UnderAdministration, PackageManagerActive
@@ -21,18 +22,13 @@ ERRORS = {
 }
 
 
+@dataclass
 class Response:
-    """Handles common exceptions and returns a JSON response."""
+    """Represents response data with error handling capability."""
 
-    __slots__ = ('payload', 'content_type', 'status_code')
-
-    def __init__(self, payload: Payload = None,
-                 content_type: str = 'application/json',
-                 status_code: int = 200):
-        """Sets the default values."""
-        self.payload = payload
-        self.content_type = content_type
-        self.status_code = status_code
+    payload: Payload = None
+    content_type: str = 'application/json'
+    status_code: int = 200
 
     def __enter__(self):
         """Enters a context and returns itself."""
@@ -45,7 +41,21 @@ class Response:
         except KeyError:
             return False
 
-        message, self.status_code = function(value)
+        self.message, self.status_code = function(value)
+        return True
+
+    @property
+    def message(self):
+        """Returns the JSON message if set."""
+        try:
+            return self.payload.get('message')
+        except AttributeError:
+            return None
+
+    @message.setter
+    def message(self, message: str):
+        """Sets the payload to a JSON message
+        and the content type to JSON.
+        """
         self.payload = {'message': message}
         self.content_type = 'application/json'
-        return True
