@@ -11,7 +11,7 @@ from typing import NamedTuple, Optional
 
 from digsigclt.common import CHUNK_SIZE, LOGFILE, LOGGER, copy_file
 from digsigclt.lock import Locked, Lock
-from digsigclt.rpc import COMMANDS
+from digsigclt.rpc import COMMANDS, http_screenshot
 from digsigclt.os import uptime
 from digsigclt.sync import gen_manifest, update
 
@@ -155,6 +155,18 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
         LOGGER.debug('Sending manifest.')
         return self.send_data(json, 200)
 
+    def send_screenshot(self):
+        """Sends an HTTP screenshot."""
+        LOGGER.info('Screenshot queried from %s:%s.', *self.client_address)
+
+        try:
+            payload, content_type, status_code = http_screenshot()
+        except Exception as error:  # pylint: disable=W0703
+            json = {'message': str(error), 'type': str(type(error))}
+            return self.send_data(json, 500)
+
+        return self.send_data(payload, status_code, content_type)
+
     def do_GET(self):   # pylint: disable=C0103
         """Returns current status information."""
         if self.path in {'', '/'}:
@@ -162,6 +174,9 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
 
         if self.path == '/manifest':
             return self.send_manifest()
+
+        if self.path == '/screenshot':
+            return self.send_screenshot()
 
         return self.send_data('Invalid path.', 404)
 
