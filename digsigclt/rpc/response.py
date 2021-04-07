@@ -44,6 +44,12 @@ class Response:
         self.message, self.status_code = function(value)
         return True
 
+    def __iter__(self):
+        """Yields the properties."""
+        yield self.payload
+        yield self.content_type
+        yield self.status_code
+
     @property
     def message(self):
         """Returns the JSON message if set."""
