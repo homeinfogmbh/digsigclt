@@ -1,8 +1,7 @@
 """Takes screenshots."""
 
-from pathlib import Path
 from subprocess import check_call
-from tempfile import TemporaryDirectory
+from tempfile import NamedTemporaryFile
 
 from digsigclt.os.posix.common import SCROT
 from digsigclt.types import Screenshot
@@ -31,7 +30,7 @@ def screenshot(filetype: str = 'jpg', display: str = ':0',
     except KeyError:
         raise ValueError('Invalid image file type.') from None
 
-    command = [SCROT, '--silent', '--display', display]
+    command = [SCROT, '--silent', '--overwrite', '--display', display]
 
     if quality is not None:
         command += ['--quality', str(quality)]
@@ -42,10 +41,7 @@ def screenshot(filetype: str = 'jpg', display: str = ':0',
     if pointer:
         command.append('--pointer')
 
-    with TemporaryDirectory() as tmpd:
-        tmpfile = Path(tmpd).joinpath(f'digsigclt-screenshot.{filetype}')
-        command.append(str(tmpfile))
+    with NamedTemporaryFile(suffix=f'.{filetype}') as file:
+        command.append(file.name)
         check_call(command)
-
-        with tmpfile.open('rb') as file:
-            return Screenshot(file.read(), content_type)
+        return Screenshot(file.read(), content_type)
