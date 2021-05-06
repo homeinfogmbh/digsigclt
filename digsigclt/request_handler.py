@@ -9,7 +9,7 @@ from pathlib import Path
 from tempfile import TemporaryFile
 from typing import NamedTuple, Optional
 
-from digsigclt.common import CHUNK_SIZE, LOGFILE, LOGGER, copy_file
+from digsigclt.common import LOGFILE, LOGGER, copy_file
 from digsigclt.lock import Locked, Lock
 from digsigclt.rpc import COMMANDS, http_screenshot
 from digsigclt.os import uptime
@@ -29,8 +29,7 @@ class ResponseContent(NamedTuple):
     content_type: str
 
 
-def get_manifest(directory: Path, chunk_size: int = CHUNK_SIZE) \
-        -> Optional[list]:
+def get_manifest(directory: Path, chunk_size: int) -> Optional[list]:
     """Returns the manifest."""
 
     with suppress(Locked):
