@@ -3,7 +3,7 @@
 from json import loads
 from pathlib import Path
 from subprocess import check_output
-from typing import Iterable, Set, Tuple, Union
+from typing import Iterable, Union
 
 
 __all__ = [
@@ -27,7 +27,7 @@ PACMAN_LOCKFILE = Path('/var/lib/pacman/db.lck')
 SCROT = '/usr/bin/scrot'
 
 
-def sudo(command: Union[str, Tuple[str]], *args: str) -> Iterable[str]:
+def sudo(command: Union[str, tuple[str]], *args: str) -> Iterable[str]:
     """Returns the command ran as sudo."""
 
     if isinstance(command, str):
@@ -49,7 +49,7 @@ def list_sessions() -> list:
     return loads(check_output(LIST_SESSIONS_JSON, text=True))
 
 
-def logged_in_users() -> Set[str]:
+def logged_in_users() -> set[str]:
     """Returns a set of users with an active session."""
 
     return {session['user'] for session in list_sessions()}
