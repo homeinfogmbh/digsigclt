@@ -39,9 +39,7 @@ def check_device(device: str) -> str:
     text = check_output(smartctl('-H', device), text=True)
 
     for line in text.split(linesep):
-        line = line.strip()
-
-        if line.startswith(SEARCH_STRING):
+        if (line := line.strip()).startswith(SEARCH_STRING):
             _, result = line.split(':')
             return result
 
