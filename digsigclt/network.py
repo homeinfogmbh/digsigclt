@@ -1,6 +1,6 @@
 """Private network discovery."""
 
-from ipaddress import IPv4Network, ip_address
+from ipaddress import IPv4Network, IPv6Network, ip_address
 from typing import Iterator
 
 from netifaces import AF_INET, ifaddresses, interfaces  # pylint: disable=E0611
@@ -13,7 +13,7 @@ __all__ = ['discover_address']
 
 
 OPENVPN = IPv4Network('10.8.0.0/16')
-WIREGUARD = IPv4Network('10.10.0.0/16')
+WIREGUARD = IPv6Network('fd56:1dda:8794:cb90::/64')
 NETWORKS = [OPENVPN, WIREGUARD]
 
 
