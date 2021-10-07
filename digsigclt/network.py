@@ -3,7 +3,7 @@
 from ipaddress import IPv4Network, IPv6Network, ip_address
 from typing import Iterator
 
-from netifaces import AF_INET, ifaddresses, interfaces  # pylint: disable=E0611
+from netifaces import AF_INET, AF_INET6, ifaddresses, interfaces
 
 from digsigclt.exceptions import NoAddressFound
 from digsigclt.types import IPAddress
@@ -21,9 +21,12 @@ def get_addresses() -> Iterator[IPAddress]:
     """Yields available IP networks."""
 
     for interface in interfaces():
-        if addresses := ifaddresses(interface).get(AF_INET):
-            for address in addresses:
-                yield ip_address(address['addr'])
+        if addresses := ifaddresses(interface):
+            for ipv4addr in addresses.get(AF_INET, []):
+                yield ip_address(ipv4addr['addr'])
+
+            for ipv6addr in addresses.get(AF_INET6, []):
+                yield ip_address(ipv6addr['addr'])
 
 
 def discover_address() -> IPAddress:
