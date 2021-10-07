@@ -18,7 +18,7 @@ NETWORKS = [OPENVPN, WIREGUARD]
 
 
 def get_addresses() -> Iterator[IPAddress]:
-    """Yields available IP networks."""
+    """Yields available IP addresses."""
 
     for interface in interfaces():
         if addresses := ifaddresses(interface):
