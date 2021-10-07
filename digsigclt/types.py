@@ -44,10 +44,3 @@ class Socket(NamedTuple):
 
     ip_address: IPAddress
     port: int
-
-    def compat(self) -> tuple[str, int]:
-        """Returns a tuple with the IP address converted into a str."""
-        if isinstance(self.ip_address, IPv6Address):
-            return (f'[{self.ip_address}]', self.port)
-
-        return (str(self.ip_address), self.port)
