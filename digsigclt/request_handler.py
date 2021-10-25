@@ -72,6 +72,11 @@ class ExtendedHTTPRequestHandler(BaseHTTPRequestHandler):
         """Returns sent JSON data."""
         return loads(self.bytes)
 
+    @property
+    def remote_socket(self):
+        """Returns the remote socket."""
+        return self.client_address[:2]
+
     def send_data(self, payload, status_code: int, content_type: str = None):
         """Sends the respective data."""
         payload, content_type = format_response(payload, content_type)
@@ -139,7 +144,7 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
 
     def send_manifest(self):
         """Sends the manifest."""
-        LOGGER.info('Manifest queried from %s:%s.', *self.client_address)
+        LOGGER.info('Manifest queried from %s:%s.', *self.remote_socket)
 
         if (manifest := get_manifest(self.directory, self.chunk_size)) is None:
             text = 'System is currently locked.'
@@ -156,7 +161,7 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
 
     def send_screenshot(self):
         """Sends an HTTP screenshot."""
-        LOGGER.info('Screenshot queried from %s:%s.', *self.client_address)
+        LOGGER.info('Screenshot queried from %s:%s.', *self.remote_socket)
 
         try:
             payload, content_type, status_code = http_screenshot()
@@ -181,7 +186,7 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
 
     def do_POST(self):  # pylint: disable=C0103
         """Retrieves and updates digital signage data."""
-        LOGGER.info('Incoming sync from %s:%s.', *self.client_address)
+        LOGGER.info('Incoming sync from %s:%s.', *self.remote_socket)
 
         try:
             with LOCK:
@@ -193,7 +198,7 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
 
     def do_PUT(self):  # pylint: disable=C0103,R0911
         """Handles special commands."""
-        LOGGER.info('Incoming command from %s:%s.', *self.client_address)
+        LOGGER.info('Incoming command from %s:%s.', *self.remote_socket)
 
         try:
             json = self.json
