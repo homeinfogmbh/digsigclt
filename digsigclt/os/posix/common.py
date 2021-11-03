@@ -3,7 +3,7 @@
 from json import loads
 from pathlib import Path
 from subprocess import check_output
-from typing import Iterable, Optional, Union
+from typing import Optional, Union
 
 
 __all__ = [
@@ -29,19 +29,19 @@ PACMAN_LOCKFILE = Path('/var/lib/pacman/db.lck')
 SCROT = '/usr/bin/scrot'
 
 
-def sudo(command: Union[str, tuple[str]], *args: str) -> Iterable[str]:
+def sudo(command: Union[str, tuple[str]], *args: str) -> list[str]:
     """Returns the command ran as sudo."""
 
     if isinstance(command, str):
-        return (SUDO, command, *args)
+        return [SUDO, command, *args]
 
-    return (SUDO, *command, *args)
+    return [SUDO, *command, *args]
 
 
-def systemctl(command: str, *args: str) -> Iterable[str]:
+def systemctl(command: str, *args: str) -> list[str]:
     """Runs systemctl with the respective arguments."""
 
-    return (SYSTEMCTL, command, *args)
+    return [SYSTEMCTL, command, *args]
 
 
 def journalctl(unit: str, boot: Optional[int] = None) -> list[str]:
