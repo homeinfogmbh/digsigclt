@@ -126,10 +126,6 @@ def sysinfo() -> dict:
         raise NotImplementedError()
 
     return {
-        'journal': {
-            posix.SERVICE_AIR: list(posix.list_journal(posix.SERVICE_AIR)),
-            posix.SERVICE_HTML: list(posix.list_journal(posix.SERVICE_HTML))
-        },
         'baytrail': posix.is_baytrail(),
         'cpuinfo': list(posix.cpuinfo()),
         'smartctl': posix.device_states(),
