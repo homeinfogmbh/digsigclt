@@ -39,7 +39,7 @@ def check_device(device: str) -> str:
     for line in text.split(linesep):
         if (line := line.strip()).startswith(SEARCH_STRING):
             _, result = line.split(':')
-            return result
+            return result.strip()
 
     return 'UNKNOWN'
 
