@@ -12,7 +12,7 @@ from typing import NamedTuple, Optional
 from digsigclt.common import LOGFILE, LOGGER, copy_file
 from digsigclt.lock import Locked, Lock
 from digsigclt.rpc import COMMANDS, http_screenshot
-from digsigclt.os import uptime
+from digsigclt.os import sysinfo
 from digsigclt.sync import gen_manifest, update
 
 
@@ -108,7 +108,7 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
         json = {'lastSync': last_sync}
 
         with suppress(NotImplementedError):
-            json['uptime'] = uptime()
+            json.update(sysinfo())
 
         self.send_data(json, 200)
 
