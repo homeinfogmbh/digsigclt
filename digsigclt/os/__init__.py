@@ -122,20 +122,20 @@ def smartctl() -> dict:
 def sysinfo() -> dict:
     """Returns miscellaneous system information."""
 
-    if name == 'posix':
-        return {
-            'journal': {
-                posix.SERVICE_AIR: posix.list_journal(posix.SERVICE_AIR),
-                posix.SERVICE_HTML: posix.list_journal(posix.SERVICE_HTML)
-            },
-            'baytrail': posix.is_baytrail(),
-            'cpuinfo': list(posix.cpuinfo()),
-            'smartctl': posix.device_states(),
-            'updates': posix.checkupdates(),
-            'uptime': posix.uptime()
-        }
+    if name != 'posix':
+        raise NotImplementedError()
 
-    raise NotImplementedError()
+    return {
+        'journal': {
+            posix.SERVICE_AIR: list(posix.list_journal(posix.SERVICE_AIR)),
+            posix.SERVICE_HTML: list(posix.list_journal(posix.SERVICE_HTML))
+        },
+        'baytrail': posix.is_baytrail(),
+        'cpuinfo': list(posix.cpuinfo()),
+        'smartctl': posix.device_states(),
+        'updates': posix.checkupdates(),
+        'uptime': posix.uptime()
+    }
 
 
 def unlock_pacman() -> int:
