@@ -6,7 +6,7 @@ from digsigclt.os.posix.common import sudo, systemctl
 from digsigclt.types import ServiceState
 
 
-__all__ = ['enable', 'disable', 'status']
+__all__ = ['SERVICE_AIR', 'SERVICE_HTML', 'enable', 'disable', 'status']
 
 
 SERVICE_AIR = 'application.service'
