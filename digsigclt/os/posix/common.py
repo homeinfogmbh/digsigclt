@@ -65,7 +65,6 @@ def list_journal(unit: str, boot: Optional[int] = None) -> dict[str, Any]:
 def list_sessions() -> list[dict[str, Union[str, int]]]:
     """Lists the currently active sessions."""
 
-    # pylint: disable=E1123
     return loads(check_output(LIST_SESSIONS_JSON, text=True))
 
 
