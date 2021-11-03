@@ -17,6 +17,7 @@ __all__ = [
     'reboot',
     'screenshot',
     'smartctl',
+    'sysinfo',
     'unlock_pacman',
     'uptime'
 ]
@@ -114,6 +115,20 @@ def smartctl() -> dict:
 
     if name == 'posix':
         return posix.device_states()
+
+    raise NotImplementedError()
+
+
+def sysinfo() -> dict:
+    """Returns miscellaneous system information."""
+
+    if name == 'posix':
+        return {
+            'baytrail': posix.is_baytrail(),
+            'cpuinfo': list(posix.cpuinfo()),
+            'smartctl': posix.device_states(),
+            'uptime': posix.uptime()
+        }
 
     raise NotImplementedError()
 
