@@ -1,13 +1,12 @@
 """Application-related commands."""
 
 from subprocess import CalledProcessError, check_call
-from typing import Optional
 
-from digsigclt.os.posix.common import sudo, systemctl, list_journal
+from digsigclt.os.posix.common import sudo, systemctl
 from digsigclt.types import ServiceState
 
 
-__all__ = ['enable', 'disable', 'status', 'get_log']
+__all__ = ['enable', 'disable', 'status']
 
 
 SERVICE_AIR = 'application.service'
@@ -58,9 +57,3 @@ def status() -> ServiceState:
         running = True
 
     return ServiceState(enabled, running)
-
-
-def get_log(boot: Optional[int] = None) -> dict:
-    """Returns the journal for the application."""
-
-    return list_journal(get_service(), boot)
