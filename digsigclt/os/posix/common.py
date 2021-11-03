@@ -3,7 +3,7 @@
 from json import loads
 from pathlib import Path
 from subprocess import check_output
-from typing import Iterable, Union
+from typing import Iterable, Optional, Union
 
 
 __all__ = [
@@ -13,6 +13,7 @@ __all__ = [
     'SCROT',
     'sudo',
     'systemctl',
+    'journalctl',
     'list_sessions',
     'logged_in_users'
 ]
@@ -21,6 +22,7 @@ __all__ = [
 ADMIN_USERS = {'homeinfo'}
 SUDO = '/usr/bin/sudo'
 SYSTEMCTL = '/usr/bin/systemctl'
+JOURNALCTL = '/usr/bin/journalctl'
 LOGINCTL = '/usr/bin/loginctl'
 LIST_SESSIONS_JSON = (LOGINCTL, 'list-sessions', '-o', 'json')
 PACMAN_LOCKFILE = Path('/var/lib/pacman/db.lck')
@@ -40,6 +42,17 @@ def systemctl(command: str, *args: str) -> Iterable[str]:
     """Runs systemctl with the respective arguments."""
 
     return (SYSTEMCTL, command, *args)
+
+
+def journalctl(unit: str, boot: Optional[int] = None) -> list[str]:
+    """Returns a journalctl command."""
+
+    command = (JOURNALCTL, '-u', unit, '--output=json')
+
+    if boot is None:
+        return [*command, '-a']
+
+    return [*command, '-b', str(boot)]
 
 
 def list_sessions() -> list:
