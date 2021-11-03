@@ -5,6 +5,7 @@ from digsigclt.os.posix.application import disable as disable_application
 from digsigclt.os.posix.application import status as application_status
 from digsigclt.os.posix.beep import beep
 from digsigclt.os.posix.checkupdates import checkupdates
+from digsigclt.os.posix.cpu import cpuinfo, is_baytrail
 from digsigclt.os.posix.pacman import unlock as unlock_pacman
 from digsigclt.os.posix.ping import ping
 from digsigclt.os.posix.reboot import reboot
@@ -17,9 +18,11 @@ __all__ = [
     'application_status',
     'beep',
     'checkupdates',
+    'cpuinfo',
     'device_states',
     'disable_application',
     'enable_application',
+    'is_baytrail',
     'ping',
     'reboot',
     'screenshot',
