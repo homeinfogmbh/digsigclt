@@ -23,7 +23,6 @@ def smartctl(*args: str) -> tuple:
 def get_devices() -> Generator[str, None, None]:
     """Yields SMART capable devices."""
 
-    # pylint: disable=E1123
     text = check_output(smartctl('--scan-open'), text=True)
 
     for line in text.split(linesep):
@@ -35,7 +34,6 @@ def get_devices() -> Generator[str, None, None]:
 def check_device(device: str) -> str:
     """Checks the SMART status of the given device."""
 
-    # pylint: disable=E1123
     text = check_output(smartctl('-H', device), text=True)
 
     for line in text.split(linesep):
