@@ -55,6 +55,7 @@ def is_baytrail() -> bool:
     """Checks whether this system is a baytrail system."""
 
     return any(
-        any(bt in cpu.get('model name') for bt in BAYTRAIL_CPUS)
+        baytrail in cpu.get('model name')
+        for baytrail in BAYTRAIL_CPUS
         for cpu in cpuinfo()
     )
