@@ -1,5 +1,7 @@
 """POSIX system commands."""
 
+from digsigclt.os.posix.application import SERVICE_AIR
+from digsigclt.os.posix.application import SERVICE_HTML
 from digsigclt.os.posix.application import enable as enable_application
 from digsigclt.os.posix.application import disable as disable_application
 from digsigclt.os.posix.application import status as application_status
@@ -15,6 +17,8 @@ from digsigclt.os.posix.uptime import uptime
 
 
 __all__ = [
+    'SERVICE_AIR',
+    'SERVICE_HTML',
     'application_status',
     'beep',
     'checkupdates',
