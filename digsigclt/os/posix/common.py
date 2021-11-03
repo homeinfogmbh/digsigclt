@@ -1,9 +1,10 @@
 """POSIX system commands."""
 
 from json import loads
+from os import linesep
 from pathlib import Path
 from subprocess import check_output
-from typing import Optional, Union
+from typing import Iterator, Optional, Union
 
 
 __all__ = [
@@ -56,13 +57,14 @@ def journalctl(unit: str, boot: Optional[str] = None) -> list[str]:
     return [*command, boot]
 
 
-def list_journal(unit: str, boot: Optional[str] = None) -> Optional[dict]:
+def list_journal(unit: str, boot: Optional[str] = None) -> Iterator[dict]:
     """Lists the journal of the given unit."""
 
-    if json := check_output(journalctl(unit, boot), text=True):
-        return loads(json)
+    if not (lines := check_output(journalctl(unit, boot), text=True)):
+        return
 
-    return None
+    for line in filter(None, lines.split(linesep)):
+        yield loads(line)
 
 
 def list_sessions() -> list[dict[str, Union[str, int]]]:
