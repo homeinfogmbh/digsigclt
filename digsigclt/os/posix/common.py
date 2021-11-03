@@ -3,7 +3,7 @@
 from json import loads
 from pathlib import Path
 from subprocess import check_output
-from typing import Any, Optional, Union
+from typing import Optional, Union
 
 
 __all__ = [
@@ -56,10 +56,13 @@ def journalctl(unit: str, boot: Optional[int] = None) -> list[str]:
     return [*command, '-b', str(boot)]
 
 
-def list_journal(unit: str, boot: Optional[int] = None) -> dict[str, Any]:
+def list_journal(unit: str, boot: Optional[int] = None) -> Optional[dict]:
     """Lists the journal of the given unit."""
 
-    return loads(check_output(journalctl(unit, boot), text=True))
+    if json := check_output(journalctl(unit, boot), text=True):
+        return loads(json)
+
+    return None
 
 
 def list_sessions() -> list[dict[str, Union[str, int]]]:
