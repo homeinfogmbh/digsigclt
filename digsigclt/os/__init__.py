@@ -127,6 +127,7 @@ def sysinfo() -> dict:
             'baytrail': posix.is_baytrail(),
             'cpuinfo': list(posix.cpuinfo()),
             'smartctl': posix.device_states(),
+            'updates': posix.checkupdates(),
             'uptime': posix.uptime()
         }
 
