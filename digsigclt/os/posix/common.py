@@ -45,18 +45,18 @@ def systemctl(command: str, *args: str) -> list[str]:
     return [SYSTEMCTL, command, *args]
 
 
-def journalctl(unit: str, boot: Optional[int] = None) -> list[str]:
+def journalctl(unit: str, boot: Optional[str] = None) -> list[str]:
     """Returns a journalctl command."""
 
-    command = (JOURNALCTL, '-u', unit, '--output=json')
+    command = [JOURNALCTL, '-u', unit, '--output=json', '-b']
 
     if boot is None:
-        return [*command, '-a']
+        return command
 
-    return [*command, '-b', str(boot)]
+    return [*command, boot]
 
 
-def list_journal(unit: str, boot: Optional[int] = None) -> Optional[dict]:
+def list_journal(unit: str, boot: Optional[str] = None) -> Optional[dict]:
     """Lists the journal of the given unit."""
 
     if json := check_output(journalctl(unit, boot), text=True):
