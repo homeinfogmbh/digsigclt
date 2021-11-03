@@ -55,7 +55,7 @@ def journalctl(unit: str, boot: Optional[int] = None) -> list[str]:
     return [*command, '-b', str(boot)]
 
 
-def list_sessions() -> list:
+def list_sessions() -> list[dict[str, Union[str, int]]]:
     """Lists the currently active sessions."""
 
     # pylint: disable=E1123
