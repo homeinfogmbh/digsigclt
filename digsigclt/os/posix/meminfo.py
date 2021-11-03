@@ -1,7 +1,7 @@
 """Information about system memory."""
 
 from pathlib import Path
-from typing import Union
+from typing import Iterator, Union
 
 
 __all__ = ['meminfo']
@@ -10,10 +10,8 @@ __all__ = ['meminfo']
 MEMINFO = Path('/proc/meminfo')
 
 
-def meminfo() -> dict[str, Union[int, dict[str, Union[str, int]]]]:
+def meminfo() -> Iterator[tuple[str, Union[int, dict[str, Union[str, int]]]]]:
     """Returns memory information."""
-
-    result = {}
 
     with MEMINFO.open('r', encoding='ascii') as file:
         for line in file:
@@ -24,8 +22,6 @@ def meminfo() -> dict[str, Union[int, dict[str, Union[str, int]]]]:
                 try:
                     value, unit = value.split()
                 except ValueError:
-                    result[key] = int(value)
+                    yield (key, int(value))
                 else:
-                    result[key] = {'value': int(value), 'unit': unit}
-
-    return result
+                    yield (key, {'value': int(value), 'unit': unit})
