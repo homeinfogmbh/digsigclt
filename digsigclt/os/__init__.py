@@ -124,6 +124,10 @@ def sysinfo() -> dict:
 
     if name == 'posix':
         return {
+            'journal': {
+                posix.SERVICE_AIR: posix.list_journal(posix.SERVICE_AIR, 1),
+                posix.SERVICE_HTML: posix.list_journal(posix.SERVICE_HTML, 1)
+            },
             'baytrail': posix.is_baytrail(),
             'cpuinfo': list(posix.cpuinfo()),
             'smartctl': posix.device_states(),
