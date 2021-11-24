@@ -127,6 +127,7 @@ def sysinfo() -> dict:
 
     return {
         'baytrail': posix.is_baytrail(),
+        'cmdline': dict(posix.cmdline()),
         'cpuinfo': list(posix.cpuinfo()),
         'meminfo': dict(posix.meminfo()),
         'smartctl': posix.device_states(),

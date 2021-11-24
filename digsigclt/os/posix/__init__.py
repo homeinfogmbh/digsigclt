@@ -7,6 +7,7 @@ from digsigclt.os.posix.application import disable as disable_application
 from digsigclt.os.posix.application import status as application_status
 from digsigclt.os.posix.beep import beep
 from digsigclt.os.posix.checkupdates import checkupdates
+from digsigclt.os.posix.cmdline import cmdline
 from digsigclt.os.posix.common import list_journal
 from digsigclt.os.posix.cpuinfo import cpuinfo, is_baytrail
 from digsigclt.os.posix.meminfo import meminfo
