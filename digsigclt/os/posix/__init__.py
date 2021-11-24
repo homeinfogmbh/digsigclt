@@ -25,6 +25,7 @@ __all__ = [
     'application_status',
     'beep',
     'checkupdates',
+    'cmdline',
     'cpuinfo',
     'device_states',
     'disable_application',
