@@ -28,14 +28,13 @@ def http_application(state: Optional[bool] = None) -> Response:
         return response
 
     if state:
-        function = enable_application
-        text = 'Application enabled.'
-    else:
-        function = disable_application
-        text = 'Application disabled.'
+        with Response('Application enabled.') as response:
+            enable_application()
 
-    with Response(text) as response:
-        function()
+        return response
+
+    with Response('Application disabled.') as response:
+        disable_application()
 
     return response
 
