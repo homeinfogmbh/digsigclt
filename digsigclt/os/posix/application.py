@@ -6,54 +6,57 @@ from digsigclt.os.posix.common import sudo, systemctl
 from digsigclt.types import ServiceState
 
 
-__all__ = ['SERVICE_AIR', 'SERVICE_HTML', 'enable', 'disable', 'status']
+__all__ = ['enable', 'disable', 'status']
 
 
 SERVICE_AIR = 'application.service'
 SERVICE_HTML = 'html5ds.service'
+SERVICES = {SERVICE_AIR, SERVICE_HTML}
 
 
-def get_service() -> str:
-    """Returns the service."""
-
-    try:
-        check_call(systemctl('status', SERVICE_HTML))
-    except CalledProcessError as cpe:
-        if cpe.returncode == 4:     # HTML version not installed.
-            return SERVICE_AIR
-
-    return SERVICE_HTML
-
-
-def enable() -> int:
+def enable(service: str) -> int:
     """Enables the digital signage application."""
 
-    return check_call(sudo(systemctl('enable', '--now', get_service())))
+    if service not in SERVICES:
+        raise ValueError('Invalid service.')
+
+    return check_call(sudo(systemctl('enable', '--now', service)))
 
 
-def disable() -> int:
+def disable(service: str) -> int:
     """Disables the digital signage application."""
 
-    return check_call(sudo(systemctl('disable', '--now', get_service())))
+    if service not in SERVICES:
+        raise ValueError('Invalid service.')
+
+    return check_call(sudo(systemctl('disable', '--now', service)))
+
+
+def is_enabled(service: str) -> bool:
+    """Checks whether the respective service is enabled."""
+
+    try:
+        check_call(systemctl('is-enabled', service))
+    except CalledProcessError:
+        return  False
+
+    return True
+
+
+def is_running(service: str) -> bool:
+    """Checks whether the respective service is running."""
+
+    try:
+        check_call(systemctl('is-active', service))
+    except CalledProcessError:
+        return False
+
+    return True
 
 
 def status() -> ServiceState:
     """Enables the digital signage application."""
 
-    service = get_service()
-
-    try:
-        check_call(systemctl('is-enabled', service))
-    except CalledProcessError:
-        enabled = False
-    else:
-        enabled = True
-
-    try:
-        check_call(systemctl('is-active', service))
-    except CalledProcessError:
-        running = False
-    else:
-        running = True
-
+    enabled = {service for service in SERVICES if is_enabled(service)}
+    running = {service for service in SERVICES if is_running(service)}
     return ServiceState(enabled, running)

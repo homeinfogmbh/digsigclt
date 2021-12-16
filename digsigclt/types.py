@@ -31,12 +31,15 @@ class Screenshot(NamedTuple):
 class ServiceState(NamedTuple):
     """System service state."""
 
-    running: bool
-    enabled: bool
+    running: set[str]
+    enabled: set[str]
 
     def to_json(self) -> dict:
         """Returns a JSON-ish dict."""
-        return {'enabled': self.enabled, 'running': self.running}
+        return {
+            'enabled': sorted(self.enabled),
+            'running': sorted(self.running)
+        }
 
 
 class Socket(NamedTuple):
