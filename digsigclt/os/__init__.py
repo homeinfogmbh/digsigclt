@@ -1,6 +1,7 @@
 """OS-independent commands."""
 
 from os import name
+from typing import Optional
 
 from digsigclt.common import LOGGER
 from digsigclt.os import nt, posix
@@ -56,7 +57,7 @@ def checkupdates() -> dict:
     raise NotImplementedError()
 
 
-def disable_application(service: str) -> int:
+def disable_application(service: Optional[str] = None) -> int:
     """Disables the digital signage application."""
 
     if name == 'posix':
@@ -65,7 +66,7 @@ def disable_application(service: str) -> int:
     raise NotImplementedError()
 
 
-def enable_application(service: str) -> int:
+def enable_application(service: Optional[str] = None) -> int:
     """Enables the digital signage application."""
 
     if name == 'posix':

@@ -1,5 +1,7 @@
 """Wrapper functions to run commands from HTTP requests."""
 
+from typing import Optional
+
 from digsigclt.os import application_status
 from digsigclt.os import beep
 from digsigclt.os import checkupdates
@@ -10,13 +12,12 @@ from digsigclt.os import screenshot
 from digsigclt.os import smartctl
 from digsigclt.os import unlock_pacman
 from digsigclt.rpc.response import Response
-from digsigclt.types import BoolNa
 
 
 __all__ = ['COMMANDS']
 
 
-def http_application(state: BoolNa = None) -> Response:
+def http_application(state: Optional[bool] = None) -> Response:
     """Handles the application state."""
 
     if state is None:
