@@ -56,20 +56,20 @@ def checkupdates() -> dict:
     raise NotImplementedError()
 
 
-def disable_application() -> int:
+def disable_application(service: str) -> int:
     """Disables the digital signage application."""
 
     if name == 'posix':
-        return posix.disable_application()
+        return posix.disable_application(service)
 
     raise NotImplementedError()
 
 
-def enable_application() -> int:
+def enable_application(service: str) -> int:
     """Enables the digital signage application."""
 
     if name == 'posix':
-        return posix.enable_application()
+        return posix.enable_application(service)
 
     raise NotImplementedError()
 
