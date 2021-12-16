@@ -5,7 +5,6 @@ from typing import Iterator, NamedTuple, Union
 
 
 __all__ = [
-    'BoolNa',
     'IPAddress',
     'Manifest',
     'Payload',
@@ -15,7 +14,6 @@ __all__ = [
 ]
 
 
-BoolNa = Union[bool, None]
 IPAddress = Union[IPv4Address, IPv6Address]
 Manifest = Iterator[tuple[list[str], str]]
 Payload = Union[None, bytes, str, dict, list, int, float]
