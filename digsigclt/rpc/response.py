@@ -13,7 +13,7 @@ __all__ = ['Response']
 ERRORS = {
     ValueError: lambda error: (', '.join(error.args), 400),
     NotImplementedError:
-        lambda error: ('Beeping is not implemented on this platform.', 501),
+        lambda error: ('Action is not implemented on this platform.', 501),
     CalledProcessError: lambda error: (str(error), 500),
     UnderAdministration:
         lambda error: ('The system is currently under administration.', 503),
