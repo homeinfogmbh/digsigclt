@@ -22,8 +22,7 @@ def http_application(state: Optional[bool] = None) -> Response:
 
     if state is None:
         with Response() as response:
-            state = application_status()
-            response.payload = state.to_json()
+            response.payload = application_status().to_json()
 
         return response
 
