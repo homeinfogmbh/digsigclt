@@ -10,19 +10,14 @@ class Locked(Exception):
     """Indicates that the lock is currently acquired."""
 
 
-class Lock:
+class Lock(_Lock):
     """A custom thread lock context manager."""
 
-    __slots__ = ('_lock',)
-
-    def __init__(self):
-        self._lock = _Lock()
-
     def __enter__(self):
-        if not self._lock.acquire(blocking=False):
+        if not self.acquire(blocking=False):
             raise Locked()
 
         return self
 
     def __exit__(self, *_):
-        self._lock.release()
+        self.release()
