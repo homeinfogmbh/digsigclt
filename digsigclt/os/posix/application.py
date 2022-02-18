@@ -1,7 +1,6 @@
 """Application-related commands."""
 
 from pathlib import Path
-from typing import Optional
 
 from digsigclt.os.common import command
 from digsigclt.os.posix.common import sudo, systemctl
@@ -27,7 +26,7 @@ def get_preferred_service() -> str:
     raise ValueError('No service installed.')
 
 
-def get_service(service: Optional[str] = None) -> str:
+def get_service(service: str | None = None) -> str:
     """Returns the respective service."""
 
     if service is None:
@@ -40,14 +39,14 @@ def get_service(service: Optional[str] = None) -> str:
 
 
 @command()
-def enable(service: Optional[str] = None) -> list[str]:
+def enable(service: str | None = None) -> list[str]:
     """Enables the digital signage application."""
 
     return sudo(systemctl('enable', '--now', get_service(service)))
 
 
 @command()
-def disable(service: Optional[str] = None) -> list[str]:
+def disable(service: str | None = None) -> list[str]:
     """Disables the digital signage application."""
 
     return sudo(systemctl('disable', '--now', get_service(service)))

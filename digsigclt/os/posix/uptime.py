@@ -2,7 +2,7 @@
 
 from datetime import datetime, time, timedelta
 from subprocess import check_output
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 
 
 __all__ = ['uptime']
@@ -17,7 +17,7 @@ def parse_float(string: str) -> float:
     return float(string.replace(',', '.'))
 
 
-def parse_timedelta(days: Optional[str], time_: str) -> timedelta:
+def parse_timedelta(days: str | None, time_: str) -> timedelta:
     """Parses a timedelta from the given days and time."""
 
     if days:
