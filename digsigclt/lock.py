@@ -13,11 +13,14 @@ class Locked(Exception):
 class Lock(_Lock):
     """A custom thread lock context manager."""
 
+    def __init__(self):
+        self._lock = _Lock()    # _Lock() is a function!
+
     def __enter__(self):
-        if not self.acquire(blocking=False):
+        if not self._lock.acquire(blocking=False):
             raise Locked()
 
         return self
 
     def __exit__(self, *_):
-        self.release()
+        self._lock.release()
