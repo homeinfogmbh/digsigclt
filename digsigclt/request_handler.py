@@ -12,7 +12,7 @@ from typing import NamedTuple
 from digsigclt.common import LOGFILE, LOGGER, copy_file
 from digsigclt.lock import Locked, Lock
 from digsigclt.rpc import COMMANDS, http_screenshot
-from digsigclt.os import get_service, sysinfo
+from digsigclt.os import application_status, sysinfo
 from digsigclt.sync import gen_manifest, update
 
 
@@ -155,7 +155,7 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
         json = {'manifest': manifest}
 
         with suppress(NotImplementedError):
-            json['service'] = get_service()
+            json['application'] = application_status().to_json()
 
         if (last_sync := type(self).last_sync) is not None:
             json['last_sync'] = last_sync.isoformat()

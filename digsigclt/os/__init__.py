@@ -13,7 +13,6 @@ __all__ = [
     'checkupdates',
     'disable_application',
     'enable_application',
-    'get_service',
     'ping',
     'reboot',
     'screenshot',
@@ -71,15 +70,6 @@ def enable_application(service: str | None = None) -> int:
 
     if name == 'posix':
         return posix.enable_application(service)
-
-    raise NotImplementedError()
-
-
-def get_service() -> str:
-    """Returns the running service."""
-
-    if name == 'posix':
-        return posix.get_service()
 
     raise NotImplementedError()
 
