@@ -10,7 +10,7 @@ class Locked(Exception):
     """Indicates that the lock is currently acquired."""
 
 
-class Lock(_Lock):
+class Lock:
     """A custom thread lock context manager."""
 
     def __init__(self):
