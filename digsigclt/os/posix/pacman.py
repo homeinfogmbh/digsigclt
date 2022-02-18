@@ -1,32 +1,25 @@
 """Pacman related commands."""
 
-from subprocess import CalledProcessError, check_call
-
 from digsigclt.exceptions import PackageManagerActive
+from digsigclt.os.common import command
 from digsigclt.os.posix.common import sudo
 
 
 __all__ = ['is_running', 'unlock']
 
 
-UNLOCK = sudo('/usr/bin/rm', '-f', '/var/lib/pacman/db.lck')
-
-
-def is_running() -> bool:
+@command(as_bool=True)
+def is_running() -> list[str]:
     """Checks if pacman is running."""
 
-    try:
-        check_call(('/usr/bin/pidof', 'pacman'))
-    except CalledProcessError:
-        return False
-
-    return True
+    return ['/usr/bin/pidof', 'pacman']
 
 
-def unlock() -> int:
+@command()
+def unlock() -> list[str]:
     """Unlocks the package manager."""
 
     if is_running():
         raise PackageManagerActive()
 
-    return check_call(UNLOCK)
+    return sudo('/usr/bin/rm', '-f', '/var/lib/pacman/db.lck')

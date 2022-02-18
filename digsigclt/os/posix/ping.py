@@ -1,6 +1,6 @@
 """Implementation of ping command."""
 
-from subprocess import check_call
+from digsigclt.os.common import command
 
 
 __all__ = ['ping']
@@ -9,15 +9,11 @@ __all__ = ['ping']
 PING = '/usr/bin/ping'
 
 
-def ping(host: str, count: int = 4, quiet: bool = True) -> int:
+@command()
+def ping(host: str, count: int = 4, quiet: bool = True) -> list[str]:
     """Pings a host."""
 
     if count is None:
-        command = [PING, str(host)]
-    else:
-        command = [PING, str(host), '-c', str(count)]
+        return [PING, str(host)] + ['-q'] * quiet
 
-    if quiet:
-        command.append('-q')
-
-    return check_call(command)
+    return [PING, str(host), '-c', str(count)] + ['-q'] * quiet
