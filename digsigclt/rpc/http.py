@@ -12,7 +12,7 @@ from digsigclt.os import unlock_pacman
 from digsigclt.rpc.response import Response
 
 
-__all__ = ['COMMANDS']
+__all__ = ['COMMANDS', 'http_screenshot']
 
 
 def http_application(state: bool | None = None) -> Response:
