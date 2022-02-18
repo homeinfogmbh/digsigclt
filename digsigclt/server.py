@@ -16,8 +16,13 @@ __all__ = ['spawn']
 class ImprovedHTTPServer(HTTPServer):
     """A better HTTP server."""
 
-    def __init__(self, address: IPAddress, port: int, request_handler: type,
-                 bind_and_activate: bool = True):
+    def __init__(
+            self,
+            address: IPAddress,
+            port: int,
+            request_handler: type,
+            bind_and_activate: bool = True
+    ):
         """Initializes the HTTP server with an IP address,
         port and request handler.
         """
@@ -28,7 +33,6 @@ class ImprovedHTTPServer(HTTPServer):
         super().__init__(socket, request_handler, bind_and_activate)
 
 
-# pylint: disable=W0613
 def spawn(socket: Socket, directory: Path, chunk_size: int) -> int:
     """Spawns a HTTP server."""
 

@@ -45,7 +45,7 @@ class NoUpdateAvailable(Exception):
 class UpdateProtocolError(Exception):
     """Indicates an error within the update protocol."""
 
-    def __init__(self, code):
+    def __init__(self, code: int):
         """Sets the HTTP status code."""
         super().__init__()
         self.code = code
