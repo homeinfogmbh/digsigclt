@@ -8,7 +8,7 @@ from digsigclt.os.posix.common import sudo, systemctl
 from digsigclt.types import ServiceState
 
 
-__all__ = ['enable', 'disable', 'status']
+__all__ = ['enable', 'disable', 'get_service', 'status']
 
 
 SERVICES_DIR = Path('/usr/lib/systemd/system')
@@ -27,7 +27,7 @@ def get_preferred_service() -> str:
     raise ValueError('No service installed.')
 
 
-def get_service(service: Optional[str]) -> str:
+def get_service(service: Optional[str] = None) -> str:
     """Returns the respective service."""
 
     if service is None:

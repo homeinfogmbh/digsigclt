@@ -2,6 +2,7 @@
 
 from digsigclt.os.posix.application import enable as enable_application
 from digsigclt.os.posix.application import disable as disable_application
+from digsigclt.os.posix.application import get_service
 from digsigclt.os.posix.application import status as application_status
 from digsigclt.os.posix.beep import beep
 from digsigclt.os.posix.checkupdates import checkupdates
@@ -26,6 +27,7 @@ __all__ = [
     'device_states',
     'disable_application',
     'enable_application',
+    'get_service',
     'is_baytrail',
     'list_journal',
     'meminfo',

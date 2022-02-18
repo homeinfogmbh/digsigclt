@@ -12,7 +12,7 @@ from typing import NamedTuple, Optional
 from digsigclt.common import LOGFILE, LOGGER, copy_file
 from digsigclt.lock import Locked, Lock
 from digsigclt.rpc import COMMANDS, http_screenshot
-from digsigclt.os import sysinfo
+from digsigclt.os import get_service, sysinfo
 from digsigclt.sync import gen_manifest, update
 
 
@@ -89,11 +89,12 @@ class ExtendedHTTPRequestHandler(BaseHTTPRequestHandler):
 class HTTPRequestHandler(ExtendedHTTPRequestHandler):
     """HTTP request handler with additional properties and functions."""
 
+    last_sync = None
+
     def __init_subclass__(cls, *, chunk_size: int, directory: Path):
         """Initializes the subclass."""
         cls.chunk_size = chunk_size
         cls.directory = directory
-        cls.last_sync = None
 
     @property
     def logfile(self):
@@ -151,10 +152,10 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
             LOGGER.error(text)
             return self.send_data(text, 503)
 
-        json = {
-            'manifest': manifest,
-            'application_version': get_application_version()
-        }
+        json = {'manifest': manifest}
+
+        with suppress(NotImplementedError):
+            json['service'] = get_service()
 
         if (last_sync := type(self).last_sync) is not None:
             json['last_sync'] = last_sync.isoformat()
@@ -174,7 +175,7 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
 
         return self.send_data(payload, status_code, content_type)
 
-    def do_GET(self):   # pylint: disable=C0103
+    def do_GET(self):
         """Returns current status information."""
         if self.path in {'', '/'}:
             return self.send_sysinfo()
@@ -187,7 +188,7 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
 
         return self.send_data('Invalid path.', 404)
 
-    def do_POST(self):  # pylint: disable=C0103
+    def do_POST(self):
         """Retrieves and updates digital signage data."""
         LOGGER.info('Incoming sync from %s:%s.', *self.remote_socket)
 
@@ -199,7 +200,7 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
             LOGGER.error(text)
             self.send_data(text, 503)
 
-    def do_PUT(self):  # pylint: disable=C0103,R0911
+    def do_PUT(self):
         """Handles special commands."""
         LOGGER.info('Incoming command from %s:%s.', *self.remote_socket)
 
@@ -235,5 +236,8 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
             return self.send_data('Invalid arguments specified.', 400)
 
         LOGGER.debug('Function returned: "%s".', response)
-        return self.send_data(response.payload, response.status_code,
-                              content_type=response.content_type)
+        return self.send_data(
+            response.payload,
+            response.status_code,
+            content_type=response.content_type
+        )
