@@ -4,7 +4,6 @@ from argparse import ArgumentParser, Namespace
 from ipaddress import ip_address
 from logging import DEBUG, INFO, basicConfig
 from pathlib import Path
-from sys import exit    # pylint: disable=W0622
 
 from digsigclt.common import CHUNK_SIZE, LOG_FORMAT, LOGGER
 from digsigclt.exceptions import NoAddressFound
@@ -45,7 +44,7 @@ def get_args() -> Namespace:
     return parser.parse_args()
 
 
-def main():
+def main() -> int:
     """Main method to run."""
 
     args = get_args()
@@ -56,18 +55,18 @@ def main():
         address = discover_address()
     except NoAddressFound:
         LOGGER.critical('No private network address found.')
-        exit(2)
+        return 2
 
     try:
         update(args.update_server)
     except RunningOldExe:
         LOGGER.critical('Refusing to run old exe version.')
-        exit(5)
+        return 5
 
     if args.directory.is_dir():
-        socket = Socket(address, args.port)
-        spawn(socket, args.directory, args.chunk_size)
-        exit(4)
+        return spawn(
+            Socket(address, args.port), args.directory, args.chunk_size
+        )
 
     LOGGER.critical('Target directory "%s" does not exist.', args.directory)
-    exit(3)
+    return 3
