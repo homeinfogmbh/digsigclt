@@ -4,7 +4,7 @@ from json import loads
 from os import linesep
 from pathlib import Path
 from subprocess import check_output
-from typing import Iterator, Optional, Union
+from typing import Iterable, Iterator, Optional, Union
 
 
 __all__ = [
@@ -31,7 +31,7 @@ PACMAN_LOCKFILE = Path('/var/lib/pacman/db.lck')
 SCROT = '/usr/bin/scrot'
 
 
-def sudo(command: Union[str, tuple[str]], *args: str) -> list[str]:
+def sudo(command: Union[str, Iterable[str]], *args: str) -> list[str]:
     """Returns the command ran as sudo."""
 
     if isinstance(command, str):

@@ -151,7 +151,10 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
             LOGGER.error(text)
             return self.send_data(text, 503)
 
-        json = {'manifest': manifest}
+        json = {
+            'manifest': manifest,
+            'application_version': get_application_version()
+        }
 
         if (last_sync := type(self).last_sync) is not None:
             json['last_sync'] = last_sync.isoformat()
