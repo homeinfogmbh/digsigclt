@@ -5,6 +5,7 @@ from typing import Iterator, NamedTuple
 
 
 __all__ = [
+    'ApplicationVersion',
     'IPAddress',
     'Manifest',
     'Payload',
@@ -17,6 +18,13 @@ __all__ = [
 IPAddress = IPv4Address | IPv6Address
 Manifest = Iterator[tuple[list[str], str]]
 Payload = None | bytes | str | dict | list | int | float
+
+
+class ApplicationVersion(NamedTuple):
+    """Application version."""
+
+    name: str
+    service: str
 
 
 class Screenshot(NamedTuple):
