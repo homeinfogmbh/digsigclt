@@ -1,9 +1,9 @@
 """Application-related commands."""
 
 from pathlib import Path
-from subprocess import CalledProcessError, check_call
 from typing import Optional
 
+from digsigclt.os.common import command
 from digsigclt.os.posix.common import sudo, systemctl
 from digsigclt.types import ServiceState
 
@@ -39,40 +39,32 @@ def get_service(service: Optional[str] = None) -> str:
     return service
 
 
-def enable(service: Optional[str] = None) -> int:
+@command()
+def enable(service: Optional[str] = None) -> list[str]:
     """Enables the digital signage application."""
 
-    return check_call(sudo(systemctl('enable', '--now', get_service(service))))
+    return sudo(systemctl('enable', '--now', get_service(service)))
 
 
-def disable(service: Optional[str] = None) -> int:
+@command()
+def disable(service: Optional[str] = None) -> list[str]:
     """Disables the digital signage application."""
 
-    return check_call(
-        sudo(systemctl('disable', '--now', get_service(service)))
-    )
+    return sudo(systemctl('disable', '--now', get_service(service)))
 
 
-def is_enabled(service: str) -> bool:
+@command(as_bool=True)
+def is_enabled(service: str) -> list[str]:
     """Checks whether the respective service is enabled."""
 
-    try:
-        check_call(systemctl('is-enabled', service))
-    except CalledProcessError:
-        return  False
-
-    return True
+    return systemctl('is-enabled', service)
 
 
-def is_running(service: str) -> bool:
+@command(as_bool=True)
+def is_running(service: str) -> list[str]:
     """Checks whether the respective service is running."""
 
-    try:
-        check_call(systemctl('is-active', service))
-    except CalledProcessError:
-        return False
-
-    return True
+    return systemctl('is-active', service)
 
 
 def status() -> ServiceState:

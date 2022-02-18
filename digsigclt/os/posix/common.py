@@ -4,7 +4,7 @@ from json import loads
 from os import linesep
 from pathlib import Path
 from subprocess import check_output
-from typing import Iterable, Iterator, Optional, Union
+from typing import Iterable, Iterator, Optional
 
 
 __all__ = [
@@ -31,7 +31,7 @@ PACMAN_LOCKFILE = Path('/var/lib/pacman/db.lck')
 SCROT = '/usr/bin/scrot'
 
 
-def sudo(command: Union[str, Iterable[str]], *args: str) -> list[str]:
+def sudo(command: str | Iterable[str], *args: str) -> list[str]:
     """Returns the command ran as sudo."""
 
     if isinstance(command, str):
@@ -67,7 +67,7 @@ def list_journal(unit: str, boot: Optional[str] = None) -> Iterator[dict]:
         yield loads(line)
 
 
-def list_sessions() -> list[dict[str, Union[str, int]]]:
+def list_sessions() -> list[dict[str, str | int]]:
     """Lists the currently active sessions."""
 
     return loads(check_output(LIST_SESSIONS_JSON, text=True))

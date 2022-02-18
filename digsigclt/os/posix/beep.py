@@ -1,6 +1,6 @@
 """System identification via beep."""
 
-from subprocess import check_call
+from digsigclt.os.common import command
 
 
 __all__ = ['beep']
@@ -9,7 +9,8 @@ __all__ = ['beep']
 BEEP = '/usr/bin/beep'
 
 
-def beep(args: tuple = ()) -> int:
+@command()
+def beep(args: tuple = ()) -> list[str]:
     """Performs a speaker beep to identify the system."""
 
-    return check_call((BEEP, *args))
+    return [BEEP, *args]
