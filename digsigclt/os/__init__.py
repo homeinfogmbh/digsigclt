@@ -136,6 +136,10 @@ def sysinfo() -> dict:
         raise NotImplementedError()
 
     return {
+        'application': {
+            'status': posix.application_status().to_json(),
+            'version': posix.application_version()
+        },
         'baytrail': posix.is_baytrail(),
         'cmdline': dict(posix.cmdline()),
         'cpuinfo': list(posix.cpuinfo()),
