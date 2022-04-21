@@ -3,6 +3,7 @@
 from digsigclt.os.posix.application import enable as enable_application
 from digsigclt.os.posix.application import disable as disable_application
 from digsigclt.os.posix.application import status as application_status
+from digsigclt.os.posix.application import version as application_version
 from digsigclt.os.posix.beep import beep
 from digsigclt.os.posix.checkupdates import checkupdates
 from digsigclt.os.posix.cmdline import cmdline
@@ -19,6 +20,7 @@ from digsigclt.os.posix.uptime import uptime
 
 __all__ = [
     'application_status',
+    'application_version',
     'beep',
     'checkupdates',
     'cmdline',

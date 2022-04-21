@@ -4,13 +4,15 @@ from __future__ import annotations
 from contextlib import suppress
 from enum import Enum
 from pathlib import Path
+from subprocess import CalledProcessError
 
 from digsigclt.os.common import command
 from digsigclt.os.posix.common import sudo, systemctl
+from digsigclt.os.posix.pacman import pacman
 from digsigclt.types import ApplicationVersion, ServiceState
 
 
-__all__ = ['enable', 'disable', 'status']
+__all__ = ['enable', 'disable', 'status', 'version']
 
 
 SERVICES_DIR = Path('/usr/lib/systemd/system')
@@ -96,3 +98,15 @@ def status() -> ServiceState:
         {typ.name for typ in Application if is_enabled(typ)},
         {typ.name for typ in Application if is_running(typ)}
     )
+
+
+def version() -> str | None:
+    """Returns the application version."""
+
+    try:
+        result = pacman('-Q', f'application-html')
+    except CalledProcessError:
+        return None
+
+    _, version_ = result.stdout.strip().split()
+    return version_

@@ -9,6 +9,7 @@ from digsigclt.types import Screenshot, ServiceState
 
 __all__ = [
     'application_status',
+    'application_version',
     'beep',
     'checkupdates',
     'disable_application',
@@ -28,6 +29,15 @@ def application_status() -> ServiceState:
 
     if name == 'posix':
         return posix.application_status()
+
+    raise NotImplementedError()
+
+
+def application_version() -> str | None:
+    """Returns the version of the digital signage application."""
+
+    if name == 'posix':
+        return posix.application_version()
 
     raise NotImplementedError()
 
