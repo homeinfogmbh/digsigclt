@@ -129,3 +129,6 @@ dmypy.json
 .pyre/
 
 .idea/
+*.exe
+*/.sonar_lock
+*/report-task.txt
