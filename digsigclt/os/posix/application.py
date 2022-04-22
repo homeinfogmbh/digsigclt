@@ -104,7 +104,7 @@ def version() -> str | None:
     """Returns the application version."""
 
     try:
-        result = pacman('-Q', f'application-html')
+        result = pacman('-Q', 'application-html')
     except CalledProcessError:
         return None
 
