@@ -138,7 +138,7 @@ def sysinfo() -> dict:
     return {
         'application': {
             'status': posix.application_status().to_json(),
-            'version': posix.application_version()
+            'version': posix.application_version(posix.Application.HTML)
         },
         'baytrail': posix.is_baytrail(),
         'cmdline': dict(posix.cmdline()),

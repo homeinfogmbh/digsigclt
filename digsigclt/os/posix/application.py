@@ -12,7 +12,7 @@ from digsigclt.os.posix.pacman import pacman
 from digsigclt.types import ApplicationVersion, ServiceState
 
 
-__all__ = ['enable', 'disable', 'status', 'version']
+__all__ = ['Application', 'enable', 'disable', 'status', 'version']
 
 
 SERVICES_DIR = Path('/usr/lib/systemd/system')
@@ -100,11 +100,11 @@ def status() -> ServiceState:
     )
 
 
-def version() -> str | None:
+def version(application: Application) -> str | None:
     """Returns the application version."""
 
     try:
-        result = pacman('-Q', 'application-html')
+        result = pacman('-Q', f'application-{application.name}')
     except CalledProcessError:
         return None
 
