@@ -7,7 +7,7 @@ from digsigclt.os.posix.checkupdates import checkupdates
 from digsigclt.os.posix.cmdline import cmdline
 from digsigclt.os.posix.cpuinfo import cpuinfo, is_baytrail
 from digsigclt.os.posix.meminfo import meminfo
-from digsigclt.os.posix.mount import boot_mounted
+from digsigclt.os.posix.mount import efi_mounted_as_boot
 from digsigclt.os.posix.smartctl import device_states
 from digsigclt.os.posix.uptime import uptime
 
@@ -24,8 +24,8 @@ def sysinfo() -> dict[str, Any]:
             'version': version(Application.HTML)
         },
         'baytrail': is_baytrail(),
-        'boot': {
-            'mounted': boot_mounted()
+        'efi': {
+            'mounted': efi_mounted_as_boot()
         },
         'cmdline': dict(cmdline()),
         'cpuinfo': list(cpuinfo()),

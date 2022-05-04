@@ -3,15 +3,15 @@
 from pathlib import Path
 
 
-__all__ = ['boot_mounted']
+__all__ = ['efi_mounted_as_boot']
 
 
 EFI_PARTITION = Path('/dev/disk/by-label/EFI')
 BOOT = Path('/boot')
 
 
-def boot_mounted() -> bool:
-    """Checks whether the boot partition is mounted.
+def efi_mounted_as_boot() -> bool:
+    """Checks whether the EFI partition is mounted on /boot.
     Also return True if not applicable.
     """
 
