@@ -50,7 +50,7 @@ def retrieve_update(url: str) -> bytes:
         raise UpdateProtocolError(response.code)
 
 
-def update_exe(exe_file: bytes):
+def update_exe(exe_file: bytes) -> None:
     """Updates the *.exe file."""
 
     LOGGER.debug('Removing old exe.')
@@ -68,7 +68,7 @@ def update_exe(exe_file: bytes):
         exe.flush()
 
 
-def update(url: str):
+def update(url: str) -> None:
     """Updates the Windows executable and restarts it."""
 
     if name != 'nt':
