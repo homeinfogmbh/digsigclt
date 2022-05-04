@@ -17,6 +17,7 @@ from digsigclt.os.posix.ping import ping
 from digsigclt.os.posix.reboot import reboot
 from digsigclt.os.posix.screenshot import screenshot
 from digsigclt.os.posix.smartctl import device_states
+from digsigclt.os.posix.sysinfo import sysinfo
 from digsigclt.os.posix.uptime import uptime
 
 
@@ -38,6 +39,7 @@ __all__ = [
     'ping',
     'reboot',
     'screenshot',
+    'sysinfo',
     'unlock_pacman',
     'uptime'
 ]

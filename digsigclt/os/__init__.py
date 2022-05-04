@@ -135,22 +135,7 @@ def sysinfo() -> dict:
     if name != 'posix':
         raise NotImplementedError()
 
-    return {
-        'application': {
-            'status': posix.application_status().to_json(),
-            'version': posix.application_version(posix.Application.HTML)
-        },
-        'baytrail': posix.is_baytrail(),
-        'boot': {
-            'mounted': posix.boot_mounted()
-        },
-        'cmdline': dict(posix.cmdline()),
-        'cpuinfo': list(posix.cpuinfo()),
-        'meminfo': dict(posix.meminfo()),
-        'smartctl': posix.device_states(),
-        'updates': posix.checkupdates(),
-        'uptime': posix.uptime()
-    }
+    return posix.sysinfo()
 
 
 def unlock_pacman() -> int:
