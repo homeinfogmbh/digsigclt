@@ -99,7 +99,7 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
     @property
     def logfile(self):
         """Returns the log file."""
-        return self.directory.joinpath(LOGFILE)     # pylint: disable=E1101
+        return self.directory / LOGFILE
 
     def send_sysinfo(self):
         """Returns system information."""
@@ -169,7 +169,7 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
 
         try:
             payload, content_type, status_code = http_screenshot()
-        except Exception as error:  # pylint: disable=W0703
+        except Exception as error:
             json = {'message': str(error), 'type': str(type(error))}
             return self.send_data(json, 500)
 
