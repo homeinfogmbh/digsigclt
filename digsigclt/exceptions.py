@@ -6,8 +6,6 @@ __all__ = [
     'UnderAdministration',
     'PackageManagerActive',
     'NoAddressFound',
-    'RunningOldExe',
-    'NoUpdateAvailable',
     'UpdateProtocolError'
 ]
 
@@ -30,16 +28,6 @@ class NoAddressFound(Exception):
     """Indicates that no address matching
     the respective network could be found.
     """
-
-
-class RunningOldExe(Exception):
-    """Indicates the attempt to run an old
-    version of the exe unter Windows.
-    """
-
-
-class NoUpdateAvailable(Exception):
-    """Indicates that no update is available on the server."""
 
 
 class UpdateProtocolError(Exception):

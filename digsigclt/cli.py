@@ -7,11 +7,9 @@ from pathlib import Path
 
 from digsigclt.common import CHUNK_SIZE, LOG_FORMAT, LOGGER
 from digsigclt.exceptions import NoAddressFound
-from digsigclt.exceptions import RunningOldExe
 from digsigclt.network import discover_address
 from digsigclt.server import spawn
 from digsigclt.types import Socket
-from digsigclt.update import UPDATE_URL, update
 
 
 __all__ = ['main']
@@ -34,9 +32,6 @@ def get_args() -> Namespace:
         '-d', '--directory', type=Path, metavar='dir', default=Path.cwd(),
         help='sets the target directory')
     parser.add_argument(
-        '-s', '--update-server', metavar='url', default=UPDATE_URL,
-        help='URL of the update server')
-    parser.add_argument(
         '-c', '--chunk-size', type=int, default=CHUNK_SIZE, metavar='bytes',
         help='chunk size to use on file operations')
     parser.add_argument(
@@ -56,12 +51,6 @@ def main() -> int:
     except NoAddressFound:
         LOGGER.critical('No private network address found.')
         return 2
-
-    try:
-        update(args.update_server)
-    except RunningOldExe:
-        LOGGER.critical('Refusing to run old exe version.')
-        return 5
 
     if args.directory.is_dir():
         return spawn(
