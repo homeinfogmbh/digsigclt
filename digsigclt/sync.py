@@ -86,7 +86,7 @@ def copy_directory(src: Path, dst: Path, *, chunk_size: int = CHUNK_SIZE):
 
     for src_path in src.iterdir():
         relpath = src_path.relative_to(src)
-        dst_path = dst.joinpath(relpath)
+        dst_path = dst / relpath
 
         if src_path.is_file():
             copy_subfile(src_path, dst_path, chunk_size=chunk_size)
@@ -136,7 +136,7 @@ def strip_tree(directory: Path, *, basedir: bool = True):
 def load_manifest(directory: Path) -> set[Path]:
     """Reads the manifest from the respective directory."""
 
-    path = directory.joinpath(MANIFEST)
+    path = directory / MANIFEST
     LOGGER.debug('Reading manifest from: %s', path)
 
     try:
