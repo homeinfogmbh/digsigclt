@@ -141,6 +141,9 @@ def sysinfo() -> dict:
             'version': posix.application_version(posix.Application.HTML)
         },
         'baytrail': posix.is_baytrail(),
+        'boot': {
+            'mounted': posix.boot_mounted()
+        },
         'cmdline': dict(posix.cmdline()),
         'cpuinfo': list(posix.cpuinfo()),
         'meminfo': dict(posix.meminfo()),
