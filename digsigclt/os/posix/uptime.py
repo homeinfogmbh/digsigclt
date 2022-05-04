@@ -57,7 +57,7 @@ class Load(NamedTuple):
 
 
 class Uptime(NamedTuple):
-    """Reprensents uptime data."""
+    """System uptime."""
 
     timestamp: time
     uptime: timedelta
