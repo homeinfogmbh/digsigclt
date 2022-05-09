@@ -1,6 +1,5 @@
 """Digital signage data synchronization."""
 
-from functools import partial
 from hashlib import sha256
 from json import loads
 from pathlib import Path
@@ -46,7 +45,7 @@ def copy_file(src: Path, dst: Path, *, chunk_size: int = CHUNK_SIZE):
     """Copies a file from src to dst."""
 
     with src.open('rb') as src_file, dst.open('wb') as dst_file:
-        for chunk in iter(partial(src_file.read, chunk_size), b''):
+        while (chunk := src_file.read(chunk_size)) != b'':
             dst_file.write(chunk)
 
 
@@ -174,7 +173,7 @@ def gen_manifest(directory: Path, *, chunk_size: int = CHUNK_SIZE) -> Manifest:
         sha256sum = sha256()
 
         with filename.open('rb') as file:
-            for chunk in iter(partial(file.read, chunk_size), b''):
+            while (chunk := file.read(chunk_size)) != b'':
                 sha256sum.update(chunk)
 
         sha256sum = sha256sum.hexdigest()
