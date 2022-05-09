@@ -4,7 +4,7 @@ from json import loads
 from os import linesep
 from pathlib import Path
 from subprocess import check_output
-from typing import Iterator, Optional, Union
+from typing import Iterable, Iterator
 
 
 __all__ = [
@@ -31,7 +31,7 @@ PACMAN_LOCKFILE = Path('/var/lib/pacman/db.lck')
 SCROT = '/usr/bin/scrot'
 
 
-def sudo(command: Union[str, tuple[str]], *args: str) -> list[str]:
+def sudo(command: str | Iterable[str], *args: str) -> list[str]:
     """Returns the command ran as sudo."""
 
     if isinstance(command, str):
@@ -46,7 +46,7 @@ def systemctl(command: str, *args: str) -> list[str]:
     return [SYSTEMCTL, command, *args]
 
 
-def journalctl(unit: str, boot: Optional[str] = None) -> list[str]:
+def journalctl(unit: str, boot: str | None = None) -> list[str]:
     """Returns a journalctl command."""
 
     command = [JOURNALCTL, '-u', unit, '--output=json', '-b']
@@ -57,7 +57,7 @@ def journalctl(unit: str, boot: Optional[str] = None) -> list[str]:
     return [*command, boot]
 
 
-def list_journal(unit: str, boot: Optional[str] = None) -> Iterator[dict]:
+def list_journal(unit: str, boot: str | None = None) -> Iterator[dict]:
     """Lists the journal of the given unit."""
 
     if not (lines := check_output(journalctl(unit, boot), text=True)):
@@ -67,7 +67,7 @@ def list_journal(unit: str, boot: Optional[str] = None) -> Iterator[dict]:
         yield loads(line)
 
 
-def list_sessions() -> list[dict[str, Union[str, int]]]:
+def list_sessions() -> list[dict[str, str | int]]:
     """Lists the currently active sessions."""
 
     return loads(check_output(LIST_SESSIONS_JSON, text=True))

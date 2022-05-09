@@ -20,6 +20,6 @@ setup(
         'digsigclt.rpc'
     ],
     install_requires=['netifaces'],
-    entry_points={'console_scripts': ['digsigclt = digsigclt:main']},
-    description=('Digital signage data synchronization client.')
+    entry_points={'console_scripts': ['digsigclt = digsigclt.cli:main']},
+    description='Digital signage data synchronization client.'
 )

@@ -1,10 +1,11 @@
 """Custom types for type hints."""
 
 from ipaddress import IPv4Address, IPv6Address
-from typing import Iterator, NamedTuple, Union
+from typing import Iterator, NamedTuple
 
 
 __all__ = [
+    'ApplicationVersion',
     'IPAddress',
     'Manifest',
     'Payload',
@@ -14,9 +15,16 @@ __all__ = [
 ]
 
 
-IPAddress = Union[IPv4Address, IPv6Address]
+IPAddress = IPv4Address | IPv6Address
 Manifest = Iterator[tuple[list[str], str]]
-Payload = Union[None, bytes, str, dict, list, int, float]
+Payload = None | bytes | str | dict | list | int | float
+
+
+class ApplicationVersion(NamedTuple):
+    """Application version."""
+
+    name: str
+    service: str
 
 
 class Screenshot(NamedTuple):

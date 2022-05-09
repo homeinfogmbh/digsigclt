@@ -7,12 +7,12 @@ from json import dumps, loads
 from os import linesep, name
 from pathlib import Path
 from tempfile import TemporaryFile
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 
 from digsigclt.common import LOGFILE, LOGGER, copy_file
 from digsigclt.lock import Locked, Lock
 from digsigclt.rpc import COMMANDS, http_screenshot
-from digsigclt.os import sysinfo
+from digsigclt.os import application_status, sysinfo
 from digsigclt.sync import gen_manifest, update
 
 
@@ -29,7 +29,7 @@ class ResponseContent(NamedTuple):
     content_type: str
 
 
-def get_manifest(directory: Path, chunk_size: int) -> Optional[list]:
+def get_manifest(directory: Path, chunk_size: int) -> list | None:
     """Returns the manifest."""
 
     with suppress(Locked):
@@ -89,16 +89,17 @@ class ExtendedHTTPRequestHandler(BaseHTTPRequestHandler):
 class HTTPRequestHandler(ExtendedHTTPRequestHandler):
     """HTTP request handler with additional properties and functions."""
 
+    last_sync = None
+
     def __init_subclass__(cls, *, chunk_size: int, directory: Path):
         """Initializes the subclass."""
         cls.chunk_size = chunk_size
         cls.directory = directory
-        cls.last_sync = None
 
     @property
     def logfile(self):
         """Returns the log file."""
-        return self.directory.joinpath(LOGFILE)     # pylint: disable=E1101
+        return self.directory / LOGFILE
 
     def send_sysinfo(self):
         """Returns system information."""
@@ -153,6 +154,9 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
 
         json = {'manifest': manifest}
 
+        with suppress(NotImplementedError):
+            json['application'] = application_status().to_json()
+
         if (last_sync := type(self).last_sync) is not None:
             json['last_sync'] = last_sync.isoformat()
 
@@ -165,13 +169,13 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
 
         try:
             payload, content_type, status_code = http_screenshot()
-        except Exception as error:  # pylint: disable=W0703
+        except Exception as error:
             json = {'message': str(error), 'type': str(type(error))}
             return self.send_data(json, 500)
 
         return self.send_data(payload, status_code, content_type)
 
-    def do_GET(self):   # pylint: disable=C0103
+    def do_GET(self):
         """Returns current status information."""
         if self.path in {'', '/'}:
             return self.send_sysinfo()
@@ -184,7 +188,7 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
 
         return self.send_data('Invalid path.', 404)
 
-    def do_POST(self):  # pylint: disable=C0103
+    def do_POST(self):
         """Retrieves and updates digital signage data."""
         LOGGER.info('Incoming sync from %s:%s.', *self.remote_socket)
 
@@ -196,7 +200,7 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
             LOGGER.error(text)
             self.send_data(text, 503)
 
-    def do_PUT(self):  # pylint: disable=C0103,R0911
+    def do_PUT(self):
         """Handles special commands."""
         LOGGER.info('Incoming command from %s:%s.', *self.remote_socket)
 
@@ -232,5 +236,8 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
             return self.send_data('Invalid arguments specified.', 400)
 
         LOGGER.debug('Function returned: "%s".', response)
-        return self.send_data(response.payload, response.status_code,
-                              content_type=response.content_type)
+        return self.send_data(
+            response.payload,
+            response.status_code,
+            content_type=response.content_type
+        )

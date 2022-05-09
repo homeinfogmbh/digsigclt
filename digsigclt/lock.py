@@ -13,10 +13,8 @@ class Locked(Exception):
 class Lock:
     """A custom thread lock context manager."""
 
-    __slots__ = ('_lock',)
-
     def __init__(self):
-        self._lock = _Lock()
+        self._lock = _Lock()    # _Lock() is a function!
 
     def __enter__(self):
         if not self._lock.acquire(blocking=False):

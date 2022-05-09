@@ -10,9 +10,14 @@ __all__ = ['cmdline']
 CMDLINE = Path('/proc/cmdline')
 
 
-def cmdline() -> Iterator[tuple[str, str]]:
+def cmdline() -> Iterator[tuple[str, str | None]]:
     """Parse /proc/cmdline into key-value pairs."""
 
     with CMDLINE.open('r', encoding='ascii') as file:
         for parameter in file.read().strip().split():
-            yield parameter.split('=', maxsplit=1)
+            try:
+                key, value = parameter.split('=', maxsplit=1)
+            except ValueError:
+                yield parameter, None
+            else:
+                yield key, value

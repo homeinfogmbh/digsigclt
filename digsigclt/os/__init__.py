@@ -1,7 +1,6 @@
 """OS-independent commands."""
 
 from os import name
-from typing import Optional
 
 from digsigclt.common import LOGGER
 from digsigclt.os import nt, posix
@@ -57,7 +56,7 @@ def checkupdates() -> dict:
     raise NotImplementedError()
 
 
-def disable_application(service: Optional[str] = None) -> int:
+def disable_application(service: str | None = None) -> int:
     """Disables the digital signage application."""
 
     if name == 'posix':
@@ -66,7 +65,7 @@ def disable_application(service: Optional[str] = None) -> int:
     raise NotImplementedError()
 
 
-def enable_application(service: Optional[str] = None) -> int:
+def enable_application(service: str | None = None) -> int:
     """Enables the digital signage application."""
 
     if name == 'posix':
@@ -126,15 +125,7 @@ def sysinfo() -> dict:
     if name != 'posix':
         raise NotImplementedError()
 
-    return {
-        'baytrail': posix.is_baytrail(),
-        'cmdline': dict(posix.cmdline()),
-        'cpuinfo': list(posix.cpuinfo()),
-        'meminfo': dict(posix.meminfo()),
-        'smartctl': posix.device_states(),
-        'updates': posix.checkupdates(),
-        'uptime': posix.uptime()
-    }
+    return posix.sysinfo()
 
 
 def unlock_pacman() -> int:

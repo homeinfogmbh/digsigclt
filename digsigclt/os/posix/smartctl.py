@@ -14,7 +14,7 @@ SMARTCTL = '/usr/bin/smartctl'
 SEARCH_STRING = 'SMART overall-health self-assessment test result:'
 
 
-def smartctl(*args: str) -> tuple:
+def smartctl(*args: str) -> list[str]:
     """Runs smartctl."""
 
     return sudo(SMARTCTL, *args)

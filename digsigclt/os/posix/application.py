@@ -1,83 +1,112 @@
 """Application-related commands."""
 
+from __future__ import annotations
+from contextlib import suppress
+from enum import Enum
 from pathlib import Path
-from subprocess import CalledProcessError, check_call
-from typing import Optional
+from subprocess import CalledProcessError
 
+from digsigclt.os.common import command
 from digsigclt.os.posix.common import sudo, systemctl
-from digsigclt.types import ServiceState
+from digsigclt.os.posix.pacman import pacman
+from digsigclt.types import ApplicationVersion, ServiceState
 
 
-__all__ = ['enable', 'disable', 'status']
+__all__ = ['Application', 'enable', 'disable', 'status', 'version']
 
 
 SERVICES_DIR = Path('/usr/lib/systemd/system')
-SERVICE_AIR = 'application.service'
-SERVICE_HTML = 'html5ds.service'
-SERVICES = {SERVICE_AIR, SERVICE_HTML}
 
 
-def get_preferred_service() -> str:
+class Application(ApplicationVersion, Enum):
+    """Application types."""
+
+    HTML = ApplicationVersion('html', 'html5ds.service')
+    AIR = ApplicationVersion('air', 'application.service')
+
+    @classmethod
+    def get(cls, identifier: str) -> Application:
+        """Returns the respective Application type."""
+        with suppress(ValueError):
+            return cls(identifier)
+
+        with suppress(KeyError):
+            return cls[identifier]
+
+        for typ in cls:
+            if typ.name == identifier or typ.service == identifier:
+                return typ
+
+        raise ValueError('Invalid service.')
+
+
+def get_preferred_application() -> Application:
     """Returns the preferred service on the system."""
 
-    for service in [SERVICE_HTML, SERVICE_AIR]:
-        if SERVICES_DIR.joinpath(service).is_file():
-            return service
+    for application in Application:
+        if SERVICES_DIR.joinpath(application.service).is_file():
+            return application
 
     raise ValueError('No service installed.')
 
 
-def get_service(service: Optional[str]) -> str:
-    """Returns the respective service."""
+def get_application(identifier: str | None = None) -> Application:
+    """Returns the respective application type."""
 
-    if service is None:
-        return get_preferred_service()
+    if identifier is None:
+        return get_preferred_application()
 
-    if service not in SERVICES:
-        raise ValueError('Invalid service.')
-
-    return service
+    return Application.get(identifier)
 
 
-def enable(service: Optional[str] = None) -> int:
+@command()
+def enable(identifier: str | None = None) -> list[str]:
     """Enables the digital signage application."""
 
-    return check_call(sudo(systemctl('enable', '--now', get_service(service))))
-
-
-def disable(service: Optional[str] = None) -> int:
-    """Disables the digital signage application."""
-
-    return check_call(
-        sudo(systemctl('disable', '--now', get_service(service)))
+    return sudo(
+        systemctl('enable', '--now', get_application(identifier).service)
     )
 
 
-def is_enabled(service: str) -> bool:
+@command()
+def disable(identifier: str | None = None) -> list[str]:
+    """Disables the digital signage application."""
+
+    return sudo(
+        systemctl('disable', '--now', get_application(identifier).service)
+    )
+
+
+@command(as_bool=True)
+def is_enabled(application: Application) -> list[str]:
     """Checks whether the respective service is enabled."""
 
-    try:
-        check_call(systemctl('is-enabled', service))
-    except CalledProcessError:
-        return  False
-
-    return True
+    return systemctl('is-enabled', application.service)
 
 
-def is_running(service: str) -> bool:
+@command(as_bool=True)
+def is_running(application: Application) -> list[str]:
     """Checks whether the respective service is running."""
 
-    try:
-        check_call(systemctl('is-active', service))
-    except CalledProcessError:
-        return False
-
-    return True
+    return systemctl('is-active', application.service)
 
 
 def status() -> ServiceState:
     """Enables the digital signage application."""
 
-    enabled = {service for service in SERVICES if is_enabled(service)}
-    running = {service for service in SERVICES if is_running(service)}
-    return ServiceState(enabled, running)
+    return ServiceState(
+        {typ.name for typ in Application if is_enabled(typ)},
+        {typ.name for typ in Application if is_running(typ)}
+    )
+
+
+def version(application: Application) -> str | None:
+    """Returns the application version."""
+
+    try:
+        result = pacman('-Q', f'application-{application.name}')
+    except CalledProcessError:
+        return None
+
+    _, version_ = result.stdout.strip().split()
+    return version_

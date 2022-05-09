@@ -33,7 +33,7 @@ def get_files(directory: Path, *, basedir: bool = True) -> Iterable[Path]:
             yield inode
 
 
-def get_orphans(directory: Path, manifest: dict) -> Iterable[Path]:
+def get_orphans(directory: Path, manifest: set[Path]) -> Iterable[Path]:
     """Yields files within directory, that are not listed in manifest."""
 
     for path in get_files(directory):
@@ -61,7 +61,7 @@ def copy_subfile(src: Path, dst: Path, *, chunk_size: int = CHUNK_SIZE):
 
 
 def copy_subdir(src: Path, dst: Path, *, chunk_size: int = CHUNK_SIZE):
-    """Copies a sub-directory."""
+    """Copies a subdirectory."""
 
     if dst.is_file():
         try:
@@ -83,19 +83,19 @@ def copy_directory(src: Path, dst: Path, *, chunk_size: int = CHUNK_SIZE):
 
     LOGGER.debug('%s -> %s', src, dst)
 
-    for source_path in src.iterdir():
-        relpath = source_path.relative_to(src)
-        dest_path = dst.joinpath(relpath)
+    for src_path in src.iterdir():
+        relpath = src_path.relative_to(src)
+        dst_path = dst / relpath
 
-        if source_path.is_file():
-            copy_subfile(source_path, dest_path, chunk_size=chunk_size)
-        elif source_path.is_dir():
-            copy_subdir(source_path, dest_path, chunk_size=chunk_size)
+        if src_path.is_file():
+            copy_subfile(src_path, dst_path, chunk_size=chunk_size)
+        elif src_path.is_dir():
+            copy_subdir(src_path, dst_path, chunk_size=chunk_size)
         else:
-            LOGGER.warning('Skipping unknown file: %s', source_path)
+            LOGGER.warning('Skipping unknown file: %s', src_path)
 
 
-def strip_files(directory: Path, manifest: dict):
+def strip_files(directory: Path, manifest: set[Path]):
     """Removes all files from the directory
     tree, which are not in the manifest.
     """
@@ -135,7 +135,7 @@ def strip_tree(directory: Path, *, basedir: bool = True):
 def load_manifest(directory: Path) -> set[Path]:
     """Reads the manifest from the respective directory."""
 
-    path = directory.joinpath(MANIFEST)
+    path = directory / MANIFEST
     LOGGER.debug('Reading manifest from: %s', path)
 
     try:
@@ -187,12 +187,12 @@ def update(file: IO, directory: Path, *, chunk_size: int = CHUNK_SIZE) -> bool:
     from the respective tar.xz archive.
     """
 
-    with TemporaryDirectory() as tmpd:
-        LOGGER.debug('Extracting archive to: %s', tmpd)
+    with TemporaryDirectory() as temp_dir:
+        LOGGER.debug('Extracting archive to: %s', temp_dir := Path(temp_dir))
 
         with tar_open(mode='r:xz', fileobj=file, bufsize=chunk_size) as tar:
             try:
-                tar.extractall(path=tmpd)
+                tar.extractall(path=temp_dir)
             except EOFError as eof_error:
                 LOGGER.critical(eof_error)
                 return False
@@ -200,15 +200,13 @@ def update(file: IO, directory: Path, *, chunk_size: int = CHUNK_SIZE) -> bool:
                 LOGGER.critical(read_error)
                 return False
 
-        tmpd = Path(tmpd)
-
         try:
-            manifest = load_manifest(tmpd)
+            manifest = load_manifest(temp_dir)
         except ManifestError:
             return False
 
         try:
-            copy_directory(tmpd, directory, chunk_size=chunk_size)
+            copy_directory(temp_dir, directory, chunk_size=chunk_size)
         except PermissionError as permission_error:
             LOGGER.error(permission_error)
             return False

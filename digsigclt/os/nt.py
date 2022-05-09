@@ -2,6 +2,8 @@
 
 from subprocess import check_call
 
+from digsigclt.os.common import command
+
 
 __all__ = ['beep', 'ping', 'reboot']
 
@@ -16,23 +18,21 @@ def beep() -> int:
     return check_call('@echo \x07', shell=True)
 
 
-def ping(host: str, count: int = 4) -> int:
+@command()
+def ping(host: str, count: int = 4) -> list[str]:
     """Pings the system count times."""
 
     if count is None:
-        command = (PING, str(host), '/t')
-    else:
-        command = (PING, str(host), '/n', str(count))
+        return [PING, str(host), '/t']
 
-    return check_call(command)
+    return [PING, str(host), '/n', str(count)]
 
 
-def reboot(delay: int = 0) -> int:
+@command()
+def reboot(delay: int = 0) -> list[str]:
     """Reboots the system."""
 
     if delay is None:
-        command = (REBOOT, '/r')
-    else:
-        command = (REBOOT, '/r', '/t', str(delay))
+        return [REBOOT, '/r']
 
-    return check_call(command)
+    return [REBOOT, '/r', '/t', str(delay)]

@@ -7,7 +7,7 @@ from logging import getLogger
 from os.path import getctime
 from pathlib import Path
 from sys import argv
-from typing import IO, NamedTuple, Union
+from typing import IO, NamedTuple
 
 
 __all__ = [
@@ -43,7 +43,7 @@ class FileInfo(NamedTuple):
         return dumps(self.to_json())
 
     @classmethod
-    def from_file(cls, filename: Union[Path, str]) -> FileInfo:
+    def from_file(cls, filename: Path | str) -> FileInfo:
         """Creates the file info from a file path."""
         return cls(sha256sum(filename), getctime(filename))
 
@@ -60,7 +60,7 @@ def copy_file(src: IO, dst: IO, size: int, chunk_size: int = CHUNK_SIZE):
         dst.write(src.read(bytes_))
 
 
-def sha256sum(filename: Union[Path, str]) -> str:
+def sha256sum(filename: Path | str) -> str:
     """Returns a SHA-256 sum of the specified file."""
 
     with open(filename, 'rb') as file:
