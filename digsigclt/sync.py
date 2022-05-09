@@ -179,7 +179,7 @@ def gen_manifest(directory: Path, *, chunk_size: int = CHUNK_SIZE) -> Manifest:
         sha256sum = sha256sum.hexdigest()
         LOGGER.debug('%s  %s', sha256sum, filename)
         relpath = filename.relative_to(directory)
-        yield (relpath.parts, sha256sum)
+        yield relpath.parts, sha256sum
 
 
 def update(file: IO, directory: Path, *, chunk_size: int = CHUNK_SIZE) -> bool:
