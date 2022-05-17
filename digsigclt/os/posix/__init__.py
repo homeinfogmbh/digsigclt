@@ -11,7 +11,7 @@ from digsigclt.os.posix.cmdline import cmdline
 from digsigclt.os.posix.common import list_journal
 from digsigclt.os.posix.cpuinfo import cpuinfo, is_baytrail
 from digsigclt.os.posix.meminfo import meminfo
-from digsigclt.os.posix.mount import boot_mounted
+from digsigclt.os.posix.mount import efi_mounted_as_boot
 from digsigclt.os.posix.pacman import unlock as unlock_pacman
 from digsigclt.os.posix.ping import ping
 from digsigclt.os.posix.reboot import reboot
@@ -26,12 +26,12 @@ __all__ = [
     'application_status',
     'application_version',
     'beep',
-    'boot_mounted',
     'checkupdates',
     'cmdline',
     'cpuinfo',
     'device_states',
     'disable_application',
+    'efi_mounted_as_boot',
     'enable_application',
     'is_baytrail',
     'list_journal',
