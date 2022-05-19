@@ -105,8 +105,8 @@ def status() -> ServiceState:
     """Enables the digital signage application."""
 
     return ServiceState(
-        {typ.name for typ in Application if is_enabled(typ)},
-        {typ.name for typ in Application if is_running(typ)}
+        {typ.name for typ in Application if is_running(typ)},
+        {typ.name for typ in Application if is_enabled(typ)}
     )
 
 
