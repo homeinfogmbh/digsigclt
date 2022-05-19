@@ -3,7 +3,6 @@
 from typing import Any
 
 from digsigclt.os.posix.application import Application, status, version
-from digsigclt.os.posix.checkupdates import checkupdates
 from digsigclt.os.posix.cmdline import cmdline
 from digsigclt.os.posix.cpuinfo import cpuinfo, is_baytrail
 from digsigclt.os.posix.meminfo import meminfo
@@ -31,6 +30,5 @@ def sysinfo() -> dict[str, Any]:
         'cpuinfo': list(cpuinfo()),
         'meminfo': dict(meminfo()),
         'smartctl': device_states(),
-        'updates': checkupdates(),
         'uptime': uptime()
     }
