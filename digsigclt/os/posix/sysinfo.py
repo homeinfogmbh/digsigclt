@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from digsigclt.os.posix.application import Application, status, version
+from digsigclt.os.posix.application import running, status, version
 from digsigclt.os.posix.cmdline import cmdline
 from digsigclt.os.posix.cpuinfo import cpuinfo, is_baytrail
 from digsigclt.os.posix.meminfo import meminfo
@@ -21,7 +21,7 @@ def sysinfo() -> dict[str, Any]:
     return {
         'application': {
             'status': status().to_json(),
-            'version': version(Application.HTML)
+            'version': version(running())
         },
         'baytrail': is_baytrail(),
         'efi': {

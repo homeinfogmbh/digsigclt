@@ -12,7 +12,7 @@ from digsigclt.os.posix.pacman import pacman
 from digsigclt.types import ApplicationVersion, ServiceState
 
 
-__all__ = ['Application', 'enable', 'disable', 'status', 'version']
+__all__ = ['Application', 'enable', 'disable', 'running', 'status', 'version']
 
 
 SERVICES_DIR = Path('/usr/lib/systemd/system')
@@ -91,6 +91,16 @@ def is_running(application: Application) -> list[str]:
     return systemctl('is-active', application.service)
 
 
+def running() -> Application | None:
+    """Returns the currently running application type."""
+
+    for application in Application:
+        if is_running(application):
+            return application
+
+    return None
+
+
 def status() -> ServiceState:
     """Enables the digital signage application."""
 
@@ -100,8 +110,11 @@ def status() -> ServiceState:
     )
 
 
-def version(application: Application) -> str | None:
+def version(application: Application | None) -> str | None:
     """Returns the application version."""
+
+    if application is None:
+        return None
 
     try:
         result = pacman('-Q', f'application-{application.name}')
