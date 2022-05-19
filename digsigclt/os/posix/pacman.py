@@ -29,4 +29,10 @@ def unlock() -> list[str]:
 def pacman(*args) -> CompletedProcess:
     """Runs pacman."""
 
-    return run(['/usr/bin/pacman', *args], text=True, stderr=PIPE, stdout=PIPE)
+    return run(
+        ['/usr/bin/pacman', *args],
+        check=True,
+        text=True,
+        stderr=PIPE,
+        stdout=PIPE
+    )
