@@ -26,7 +26,7 @@ def unlock() -> list[str]:
     return sudo('/usr/bin/rm', '-f', '/var/lib/pacman/db.lck')
 
 
-def pacman(*args) -> CompletedProcess:
+def pacman(*args: str) -> CompletedProcess:
     """Runs pacman."""
 
     return run(
