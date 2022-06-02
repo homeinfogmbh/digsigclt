@@ -17,7 +17,7 @@ BAYTRAIL_CPUS = {
     'Z3745D', 'Z3770', 'Z3770D', 'Z3775', 'Z3775D', 'Z3785', 'Z3795'
 }
 CPUINFO = Path('/proc/cpuinfo')
-LIST_KEYS = {'flags', 'bugs'}
+LIST_KEYS = {'bugs', 'flags', 'vmx flags'}
 CPUInfoValue = str | int | float | list[str]
 
 
