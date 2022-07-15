@@ -1,6 +1,7 @@
 """OS-independent commands."""
 
 from os import name
+from typing import Any
 
 from digsigclt.common import LOGGER
 from digsigclt.os import nt, posix
@@ -106,6 +107,15 @@ def screenshot() -> Screenshot:
 
     if name == 'posix':
         return posix.screenshot()
+
+    raise NotImplementedError()
+
+
+def sensors() -> dict[str, Any]:
+    """Returns the system's temperature sensors and values."""
+
+    if name == 'posix':
+        return posix.sensors()
 
     raise NotImplementedError()
 
