@@ -71,8 +71,8 @@ def mount() -> Iterator[MountPoint]:
 def root_mounted_ro() -> bool | None:
     """Check whether / is mounted read-only."""
 
-    for mnt in mount():
-        if mnt.where == Path('/'):
-            return 'ro' in mnt.flags
+    for mount_point in mount():
+        if mount_point.where == Path('/'):
+            return 'ro' in mount_point.flags
 
     return None
