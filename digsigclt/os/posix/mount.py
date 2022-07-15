@@ -1,7 +1,6 @@
 """Check mount points."""
 
 from __future__ import annotations
-from contextlib import suppress
 from os import linesep
 from pathlib import Path
 from re import fullmatch
@@ -23,7 +22,7 @@ class MountPoint(NamedTuple):
     what: str
     where: Path
     type: str
-    flags: list[str]
+    flags: dict[str, str | int | None]
 
     @classmethod
     def from_string(cls, string: str) -> MountPoint:
@@ -32,7 +31,12 @@ class MountPoint(NamedTuple):
             raise ValueError('Invalid mount value:', string)
 
         what, where, typ, flags = match.groups()
-        return cls(what, Path(where), typ, flags.split(','))
+        return cls(
+            what,
+            Path(where),
+            typ,
+            dict(map(parse_flag, flags.split(',')))
+        )
 
     def to_json(self) -> dict[str, Any]:
         """Return a JSON-ish dict."""
@@ -63,9 +67,8 @@ def efi_not_mounted_as_boot() -> bool:
 def mount() -> Iterator[MountPoint]:
     """Yield mount points on the system."""
 
-    for line in check_output('mount', text=True).split(linesep):
-        with suppress(ValueError):
-            yield MountPoint.from_string(line)
+    for line in filter(None, check_output('mount', text=True).split(linesep)):
+        yield MountPoint.from_string(line)
 
 
 def root_mounted_ro() -> bool | None:
@@ -76,3 +79,17 @@ def root_mounted_ro() -> bool | None:
             return 'ro' in mount_point.flags
 
     return None
+
+
+def parse_flag(flag: str) -> tuple[str, str | int | None]:
+    """Parse a mount flag."""
+
+    try:
+        key, value = flag.split('=')
+    except ValueError:
+        return flag, None
+
+    try:
+        return key, int(value)
+    except ValueError:
+        return key, value
