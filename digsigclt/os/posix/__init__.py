@@ -11,7 +11,7 @@ from digsigclt.os.posix.cmdline import cmdline
 from digsigclt.os.posix.common import list_journal
 from digsigclt.os.posix.cpuinfo import cpuinfo, is_baytrail
 from digsigclt.os.posix.meminfo import meminfo
-from digsigclt.os.posix.mount import efi_mounted_as_boot
+from digsigclt.os.posix.mount import efi_mounted_as_boot, root_mounted_ro
 from digsigclt.os.posix.pacman import unlock as unlock_pacman
 from digsigclt.os.posix.ping import ping
 from digsigclt.os.posix.reboot import reboot
@@ -39,6 +39,7 @@ __all__ = [
     'meminfo',
     'ping',
     'reboot',
+    'root_mounted_ro',
     'screenshot',
     'sensors',
     'sysinfo',
