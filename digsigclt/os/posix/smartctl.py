@@ -2,7 +2,7 @@
 
 from os import linesep
 from subprocess import check_output
-from typing import Generator
+from typing import Iterator
 
 from digsigclt.os.posix.common import sudo
 
@@ -20,7 +20,7 @@ def smartctl(*args: str) -> list[str]:
     return sudo(SMARTCTL, *args)
 
 
-def get_devices() -> Generator[str, None, None]:
+def get_devices() -> Iterator[str]:
     """Yields SMART capable devices."""
 
     text = check_output(smartctl('--scan-open'), text=True)
