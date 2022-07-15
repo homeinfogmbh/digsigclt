@@ -17,8 +17,8 @@ BOOT = Path('/boot')
 MOUNT_REGEX = r'(.+) on (.+) type (.+) \((.+)\)'
 
 
-class Mount(NamedTuple):
-    """Representation of mountpoints."""
+class MountPoint(NamedTuple):
+    """Representation of mount points."""
 
     what: str
     where: Path
@@ -26,8 +26,8 @@ class Mount(NamedTuple):
     flags: list[str]
 
     @classmethod
-    def from_string(cls, string: str) -> Mount:
-        """Creates a mount instance from a string."""
+    def from_string(cls, string: str) -> MountPoint:
+        """Create a mount point from a string."""
         if (match := fullmatch(MOUNT_REGEX, string)) is None:
             raise ValueError('Invalid mount value:', string)
 
@@ -60,12 +60,12 @@ def efi_not_mounted_as_boot() -> bool:
     return EFI_PARTITION.is_block_device() and not BOOT.is_mount()
 
 
-def mount() -> Iterator[Mount]:
-    """Yields mounts on the system."""
+def mount() -> Iterator[MountPoint]:
+    """Yield mount points on the system."""
 
     for line in check_output('mount', text=True).split(linesep):
         with suppress(ValueError):
-            yield Mount.from_string(line)
+            yield MountPoint.from_string(line)
 
 
 def root_mounted_ro() -> bool | None:
