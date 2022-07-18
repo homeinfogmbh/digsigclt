@@ -1,10 +1,8 @@
 """Check mount points."""
 
 from __future__ import annotations
-from os import linesep
 from pathlib import Path
 from re import fullmatch
-from subprocess import check_output
 from typing import Any, Iterator, NamedTuple
 
 
@@ -13,7 +11,8 @@ __all__ = ['efi_mounted_as_boot', 'mount', 'root_mounted_ro']
 
 EFI_PARTITION = Path('/dev/disk/by-label/EFI')
 BOOT = Path('/boot')
-MOUNT_REGEX = r'(.+) on (.+) type (.+) \((.+)\)'
+MOUNT_REGEX = r'(.+) (.+) (.+) (.+) (\d+) (\d+)'
+MOUNTS = Path('/proc/mounts')
 
 
 class MountPoint(NamedTuple):
@@ -23,6 +22,8 @@ class MountPoint(NamedTuple):
     where: Path
     type: str
     flags: dict[str, str | int | None]
+    freq: int
+    passno: int
 
     @classmethod
     def from_string(cls, string: str) -> MountPoint:
@@ -30,12 +31,14 @@ class MountPoint(NamedTuple):
         if (match := fullmatch(MOUNT_REGEX, string)) is None:
             raise ValueError('Invalid mount value:', string)
 
-        what, where, typ, flags = match.groups()
+        what, where, typ, flags, freq, passno = match.groups()
         return cls(
             what,
             Path(where),
             typ,
-            dict(map(parse_flag, flags.split(',')))
+            dict(map(parse_flag, flags.split(','))),
+            int(freq),
+            int(passno)
         )
 
     def to_json(self) -> dict[str, Any]:
@@ -67,8 +70,9 @@ def efi_not_mounted_as_boot() -> bool:
 def mount() -> Iterator[MountPoint]:
     """Yield mount points on the system."""
 
-    for line in filter(None, check_output('mount', text=True).split(linesep)):
-        yield MountPoint.from_string(line)
+    with MOUNTS.open('r') as file:
+        for line in file:
+            yield MountPoint.from_string(line.strip())
 
 
 def root_mounted_ro() -> bool | None:
