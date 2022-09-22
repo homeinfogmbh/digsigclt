@@ -10,6 +10,7 @@ __all__ = [
     'IPAddress',
     'Manifest',
     'Payload',
+    'ResponseContent',
     'Screenshot',
     'ServiceState',
     'Socket'
@@ -34,6 +35,13 @@ class Command(NamedTuple):
     command: Sequence[str]
     crucial: bool = True
     exit_ok: set[int] = frozenset()
+
+
+class ResponseContent(NamedTuple):
+    """A HTTP response content."""
+
+    payload: bytes
+    content_type: str
 
 
 class Screenshot(NamedTuple):

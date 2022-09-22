@@ -7,26 +7,19 @@ from json import dumps, loads
 from os import linesep, name
 from pathlib import Path
 from tempfile import TemporaryFile
-from typing import NamedTuple
 
 from digsigclt.common import LOGFILE, LOGGER, copy_file
 from digsigclt.lock import Locked, Lock
 from digsigclt.rpc import COMMANDS, http_screenshot
 from digsigclt.os import application_status, sysinfo
 from digsigclt.sync import gen_manifest, update
+from digsigclt.types import ResponseContent
 
 
 __all__ = ['HTTPRequestHandler']
 
 
 LOCK = Lock()
-
-
-class ResponseContent(NamedTuple):
-    """A HTTP response content."""
-
-    payload: bytes
-    content_type: str
 
 
 def get_manifest(directory: Path, chunk_size: int) -> list | None:
