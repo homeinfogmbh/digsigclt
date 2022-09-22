@@ -3,7 +3,9 @@
 from dataclasses import dataclass
 from subprocess import CalledProcessError
 
-from digsigclt.exceptions import UnderAdministration, PackageManagerActive
+from digsigclt.exceptions import CalledProcessErrors
+from digsigclt.exceptions import UnderAdministration
+from digsigclt.exceptions import PackageManagerActive
 from digsigclt.types import Payload
 
 
@@ -15,6 +17,7 @@ ERRORS = {
     NotImplementedError:
         lambda error: ('Action is not implemented on this platform.', 501),
     CalledProcessError: lambda error: (str(error), 500),
+    CalledProcessErrors: lambda error: (str(error), 500),
     UnderAdministration:
         lambda error: ('The system is currently under administration.', 503),
     PackageManagerActive:

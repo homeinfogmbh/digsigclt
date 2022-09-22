@@ -1,11 +1,12 @@
 """Custom types for type hints."""
 
 from ipaddress import IPv4Address, IPv6Address
-from typing import Iterator, NamedTuple
+from typing import Iterator, NamedTuple, Sequence
 
 
 __all__ = [
     'ApplicationVersion',
+    'Command',
     'IPAddress',
     'Manifest',
     'Payload',
@@ -25,6 +26,14 @@ class ApplicationVersion(NamedTuple):
 
     name: str
     service: str
+
+
+class Command(NamedTuple):
+    """Command wrapper for command chaining with metadata."""
+
+    command: Sequence[str]
+    crucial: bool = True
+    exit_ok: set[int] = frozenset()
 
 
 class Screenshot(NamedTuple):

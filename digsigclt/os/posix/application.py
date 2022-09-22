@@ -5,24 +5,36 @@ from contextlib import suppress
 from enum import Enum
 from pathlib import Path
 from subprocess import CalledProcessError
+from typing import Iterator
 
-from digsigclt.os.common import command
+from digsigclt.os.common import command, commands
 from digsigclt.os.posix.common import sudo, systemctl
 from digsigclt.os.posix.pacman import pacman
-from digsigclt.types import ApplicationVersion, ServiceState
+from digsigclt.types import ApplicationVersion, Command, ServiceState
 
 
 __all__ = ['Application', 'enable', 'disable', 'running', 'status', 'version']
 
 
+APPLICATION_AIR = ApplicationVersion('air', 'application.service')
+APPLICATION_HTML = ApplicationVersion('html', 'html5ds.service')
+PRODUCTIVE_APPLICATIONS = (APPLICATION_AIR, APPLICATION_HTML)
 SERVICES_DIR = Path('/usr/lib/systemd/system')
 
 
 class Application(ApplicationVersion, Enum):
     """Application types."""
 
-    HTML = ApplicationVersion('html', 'html5ds.service')
-    AIR = ApplicationVersion('air', 'application.service')
+    HTML = APPLICATION_HTML
+    AIR = APPLICATION_AIR
+    NOT_CONFIGURED = ApplicationVersion(
+        'not configured',
+        'unconfigured-warning.service'
+    )
+    INSTALLATION_INSTRUCTIONS = ApplicationVersion(
+        'html',
+        'installation-instructions.service'
+    )
 
     @classmethod
     def get(cls, identifier: str) -> Application:
@@ -43,11 +55,11 @@ class Application(ApplicationVersion, Enum):
 def get_preferred_application() -> Application:
     """Returns the preferred service on the system."""
 
-    for application in Application:
-        if SERVICES_DIR.joinpath(application.service).is_file():
-            return application
+    for application_version in PRODUCTIVE_APPLICATIONS:
+        if SERVICES_DIR.joinpath(application_version.service).is_file():
+            return Application(application_version)
 
-    raise ValueError('No service installed.')
+    raise ValueError('No productive application installed.')
 
 
 def get_application(identifier: str | None = None) -> Application:
@@ -59,13 +71,20 @@ def get_application(identifier: str | None = None) -> Application:
     return Application.get(identifier)
 
 
-@command()
-def enable(identifier: str | None = None) -> list[str]:
+@commands()
+def enable(identifier: str | None = None) -> Iterator[list[str]]:
     """Enables the digital signage application."""
 
-    return sudo(
-        systemctl('enable', '--now', get_application(identifier).service)
-    )
+    to_be_enabled = get_application(identifier)
+
+    for application in Application:
+        if application is not to_be_enabled:
+            yield Command(
+                sudo(systemctl('disable', '--now', application.service)),
+                exit_ok={1}
+            )
+
+    yield Command(sudo(systemctl('enable', '--now', to_be_enabled.service)))
 
 
 @command()
