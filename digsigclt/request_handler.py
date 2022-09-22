@@ -22,31 +22,6 @@ __all__ = ['HTTPRequestHandler']
 LOCK = Lock()
 
 
-def get_manifest(directory: Path, chunk_size: int) -> list | None:
-    """Returns the manifest."""
-
-    with suppress(Locked):
-        with LOCK:
-            return list(gen_manifest(directory, chunk_size=chunk_size))
-
-    return None
-
-
-def format_response(payload, content_type: str) -> ResponseContent:
-    """Detects the content type and formats the HTTP payload accordingly."""
-
-    if payload is None or isinstance(payload, (dict, list)):
-        payload = dumps(payload)
-        content_type = content_type or 'application/json'
-    elif isinstance(payload, str):
-        content_type = content_type or 'text/plain'
-
-    with suppress(AttributeError):
-        payload = payload.encode()
-
-    return ResponseContent(payload, content_type)
-
-
 class ExtendedHTTPRequestHandler(BaseHTTPRequestHandler):
     """Extension of the BaseHTTPRequestHandler with convenience methods."""
 
@@ -234,3 +209,28 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
             response.status_code,
             content_type=response.content_type
         )
+
+
+def get_manifest(directory: Path, chunk_size: int) -> list | None:
+    """Returns the manifest."""
+
+    with suppress(Locked):
+        with LOCK:
+            return list(gen_manifest(directory, chunk_size=chunk_size))
+
+    return None
+
+
+def format_response(payload, content_type: str) -> ResponseContent:
+    """Detects the content type and formats the HTTP payload accordingly."""
+
+    if payload is None or isinstance(payload, (dict, list)):
+        payload = dumps(payload)
+        content_type = content_type or 'application/json'
+    elif isinstance(payload, str):
+        content_type = content_type or 'text/plain'
+
+    with suppress(AttributeError):
+        payload = payload.encode()
+
+    return ResponseContent(payload, content_type)
