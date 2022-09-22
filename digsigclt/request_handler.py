@@ -7,6 +7,7 @@ from json import dumps, loads
 from os import linesep, name
 from pathlib import Path
 from tempfile import TemporaryFile
+from typing import Any
 
 from digsigclt.common import LOGFILE, LOGGER, copy_file
 from digsigclt.lock import Locked, Lock
@@ -26,22 +27,22 @@ class ExtendedHTTPRequestHandler(BaseHTTPRequestHandler):
     """Extension of the BaseHTTPRequestHandler with convenience methods."""
 
     @property
-    def content_length(self):
+    def content_length(self) -> int:
         """Returns the content length."""
         return int(self.headers['Content-Length'])
 
     @property
-    def bytes(self):
+    def bytes(self) -> bytes:
         """Returns sent JSON data."""
         return self.rfile.read(self.content_length)
 
     @property
-    def json(self):
+    def json(self) -> Any:
         """Returns sent JSON data."""
         return loads(self.bytes)
 
     @property
-    def remote_socket(self):
+    def remote_socket(self) -> tuple[str, int]:
         """Returns the remote socket."""
         return self.client_address[:2]
 
