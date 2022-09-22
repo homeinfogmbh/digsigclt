@@ -8,10 +8,10 @@ from typing import Iterable
 __all__ = [
     'CalledProcessErrors',
     'ManifestError',
-    'UnderAdministration',
+    'NoAddressFound',
     'PackageManagerActive',
     'RequestError',
-    'NoAddressFound',
+    'UnderAdministration',
     'UpdateProtocolError'
 ]
 
@@ -32,9 +32,9 @@ class ManifestError(Exception):
     """Indicates general errors with the files manifest."""
 
 
-class UnderAdministration(Exception):
-    """Indicates that the system is currently
-    under administrative use, blocking an action.
+class NoAddressFound(Exception):
+    """Indicates that no address matching
+    the respective network could be found.
     """
 
 
@@ -51,9 +51,9 @@ class RequestError(Exception):
         self.status_code = status_code
 
 
-class NoAddressFound(Exception):
-    """Indicates that no address matching
-    the respective network could be found.
+class UnderAdministration(Exception):
+    """Indicates that the system is currently
+    under administrative use, blocking an action.
     """
 
 
