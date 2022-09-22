@@ -4,9 +4,7 @@ from http.server import BaseHTTPRequestHandler
 from json import loads
 from typing import Any
 
-from digsigclt.types import Payload
-
-from digsigclt.request_handler.functions import format_response
+from digsigclt.types import Payload, ResponseContent
 
 
 __all__ = ['HTTPRequestHandlerBase']
@@ -35,15 +33,21 @@ class HTTPRequestHandlerBase(BaseHTTPRequestHandler):
         """Returns the remote socket."""
         return self.client_address[:2]
 
+    def send_content(self, content: ResponseContent, status_code: int) -> None:
+        """Sends the respective response content."""
+        self.send_response(status_code)
+        self.send_header('Content-Type', content.content_type)
+        self.end_headers()
+        self.wfile.write(content.payload)
+
     def send_data(
             self,
             payload: Payload,
             status_code: int,
-            content_type: str = None
+            content_type: str | None = None
     ) -> None:
         """Sends the respective data."""
-        payload, content_type = format_response(payload, content_type)
-        self.send_response(status_code)
-        self.send_header('Content-Type', content_type)
-        self.end_headers()
-        self.wfile.write(payload)
+        self.send_content(
+            ResponseContent.from_payload(payload, content_type=content_type),
+            status_code
+        )

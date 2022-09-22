@@ -1,6 +1,9 @@
 """Custom types for type hints."""
 
+from __future__ import annotations
+from contextlib import suppress
 from ipaddress import IPv4Address, IPv6Address
+from json import dumps
 from typing import Iterator, NamedTuple, Sequence
 
 
@@ -42,6 +45,28 @@ class ResponseContent(NamedTuple):
 
     payload: bytes
     content_type: str
+
+    @classmethod
+    def from_payload(
+            cls,
+            payload: Payload,
+            *,
+            content_type: str | None = None
+    ) -> ResponseContent:
+        """Create response content from the given payload and content type."""
+        if payload is None or isinstance(payload, (dict, list)):
+            return cls(
+                dumps(payload).encode(),
+                content_type or 'application/json'
+            )
+
+        if isinstance(payload, str):
+            content_type = content_type or 'text/plain'
+
+        with suppress(AttributeError):
+            payload = payload.encode()
+
+        return cls(payload, content_type)
 
 
 class Screenshot(NamedTuple):

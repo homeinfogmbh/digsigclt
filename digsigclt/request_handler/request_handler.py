@@ -12,8 +12,7 @@ from digsigclt.rpc import COMMANDS, http_screenshot
 from digsigclt.os import application_status, sysinfo
 from digsigclt.sync import update
 
-from digsigclt.request_handler.common import LOCK
-from digsigclt.request_handler.functions import get_manifest
+from digsigclt.request_handler.common import LOCK, get_manifest
 from digsigclt.request_handler.handler_base import HTTPRequestHandlerBase
 
 
