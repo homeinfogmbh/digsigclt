@@ -2,65 +2,25 @@
 
 from contextlib import suppress
 from datetime import datetime
-from http.server import BaseHTTPRequestHandler
-from json import dumps, loads
 from os import linesep, name
 from pathlib import Path
 from tempfile import TemporaryFile
-from typing import Any
 
 from digsigclt.common import LOGFILE, LOGGER, copy_file
-from digsigclt.lock import Locked, Lock
+from digsigclt.lock import Locked
 from digsigclt.rpc import COMMANDS, http_screenshot
 from digsigclt.os import application_status, sysinfo
-from digsigclt.sync import gen_manifest, update
-from digsigclt.types import Payload, ResponseContent
+from digsigclt.sync import update
+
+from digsigclt.request_handler.common import LOCK
+from digsigclt.request_handler.functions import get_manifest
+from digsigclt.request_handler.handler_base import HTTPRequestHandlerBase
 
 
 __all__ = ['HTTPRequestHandler']
 
 
-LOCK = Lock()
-
-
-class ExtendedHTTPRequestHandler(BaseHTTPRequestHandler):
-    """Extension of the BaseHTTPRequestHandler with convenience methods."""
-
-    @property
-    def content_length(self) -> int:
-        """Returns the content length."""
-        return int(self.headers['Content-Length'])
-
-    @property
-    def bytes(self) -> bytes:
-        """Returns sent JSON data."""
-        return self.rfile.read(self.content_length)
-
-    @property
-    def json(self) -> Any:
-        """Returns sent JSON data."""
-        return loads(self.bytes)
-
-    @property
-    def remote_socket(self) -> tuple[str, int]:
-        """Returns the remote socket."""
-        return self.client_address[:2]
-
-    def send_data(
-            self,
-            payload: Payload,
-            status_code: int,
-            content_type: str = None
-    ) -> None:
-        """Sends the respective data."""
-        payload, content_type = format_response(payload, content_type)
-        self.send_response(status_code)
-        self.send_header('Content-Type', content_type)
-        self.end_headers()
-        self.wfile.write(payload)
-
-
-class HTTPRequestHandler(ExtendedHTTPRequestHandler):
+class HTTPRequestHandler(HTTPRequestHandlerBase):
     """HTTP request handler with additional properties and functions."""
 
     last_sync = None
@@ -225,28 +185,3 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
             response.status_code,
             content_type=response.content_type
         )
-
-
-def get_manifest(directory: Path, chunk_size: int) -> list | None:
-    """Returns the manifest."""
-
-    with suppress(Locked):
-        with LOCK:
-            return list(gen_manifest(directory, chunk_size=chunk_size))
-
-    return None
-
-
-def format_response(payload: Payload, content_type: str) -> ResponseContent:
-    """Detects the content type and formats the HTTP payload accordingly."""
-
-    if payload is None or isinstance(payload, (dict, list)):
-        payload = dumps(payload)
-        content_type = content_type or 'application/json'
-    elif isinstance(payload, str):
-        content_type = content_type or 'text/plain'
-
-    with suppress(AttributeError):
-        payload = payload.encode()
-
-    return ResponseContent(payload, content_type)

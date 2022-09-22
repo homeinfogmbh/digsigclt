@@ -17,6 +17,7 @@ setup(
         'digsigclt',
         'digsigclt.os',
         'digsigclt.os.posix',
+        'digsigclt.request_handler',
         'digsigclt.rpc'
     ],
     install_requires=['netifaces'],
