@@ -35,6 +35,79 @@ class HTTPRequestHandler(HTTPRequestHandlerBase):
         """Returns the log file."""
         return self.directory / LOGFILE
 
+    def do_GET(self) -> None:
+        """Returns current status information."""
+        if self.path in {'', '/'}:
+            self.send_sysinfo()
+            return
+
+        if self.path == '/manifest':
+            self.send_manifest()
+            return
+
+        if self.path == '/screenshot':
+            self.send_screenshot()
+            return
+
+        self.send_data('Invalid path.', 404)
+
+    def do_POST(self) -> None:
+        """Retrieves and updates digital signage data."""
+        LOGGER.info('Incoming sync from %s:%s.', *self.remote_socket)
+
+        try:
+            with LOCK:
+                self.update_digsig_data()
+        except Locked:
+            text = 'Synchronization already in progress.'
+            LOGGER.error(text)
+            self.send_data(text, 503)
+
+    def do_PUT(self) -> None:
+        """Handles special commands."""
+        LOGGER.info('Incoming command from %s:%s.', *self.remote_socket)
+
+        try:
+            self.handle_put_request()
+        except RequestError as error:
+            LOGGER.error(error.message)
+            self.send_data(error.message, error.status_code)
+
+    def handle_put_request(self) -> None:
+        """Handles incoming PUT requests."""
+        try:
+            json = self.json
+        except MemoryError:
+            raise RequestError('Out of memory.', 500)
+        except ValueError:
+            raise RequestError('Received data is not JSON.', 406)
+
+        try:
+            command = json.pop('command')
+        except KeyError:
+            raise RequestError('No command specified.', 400)
+
+        LOGGER.debug('Received command: "%s".', command)
+
+        try:
+            function = COMMANDS[command]
+        except KeyError:
+            raise RequestError(f'Invalid command specified: {command}', 400)
+
+        LOGGER.debug('Executing function "%s" with args "%s".', function, json)
+
+        try:
+            response = function(**json)
+        except TypeError:
+            raise RequestError(f'Invalid arguments specified: {json}', 400)
+
+        LOGGER.debug('Function returned: "%s".', response)
+        self.send_data(
+            response.payload,
+            response.status_code,
+            content_type=response.content_type
+        )
+
     def send_sysinfo(self) -> None:
         """Returns system information."""
         if (last_sync := type(self).last_sync) is not None:
@@ -110,76 +183,3 @@ class HTTPRequestHandler(HTTPRequestHandlerBase):
             return
 
         self.send_data(payload, status_code, content_type)
-
-    def do_GET(self) -> None:
-        """Returns current status information."""
-        if self.path in {'', '/'}:
-            self.send_sysinfo()
-            return
-
-        if self.path == '/manifest':
-            self.send_manifest()
-            return
-
-        if self.path == '/screenshot':
-            self.send_screenshot()
-            return
-
-        self.send_data('Invalid path.', 404)
-
-    def do_POST(self) -> None:
-        """Retrieves and updates digital signage data."""
-        LOGGER.info('Incoming sync from %s:%s.', *self.remote_socket)
-
-        try:
-            with LOCK:
-                self.update_digsig_data()
-        except Locked:
-            text = 'Synchronization already in progress.'
-            LOGGER.error(text)
-            self.send_data(text, 503)
-
-    def do_PUT(self) -> None:
-        """Handles special commands."""
-        LOGGER.info('Incoming command from %s:%s.', *self.remote_socket)
-
-        try:
-            self.handle_put_request()
-        except RequestError as error:
-            LOGGER.error(error.message)
-            self.send_data(error.message, error.status_code)
-
-    def handle_put_request(self) -> None:
-        """Handles incoming PUT requests."""
-        try:
-            json = self.json
-        except MemoryError:
-            raise RequestError('Out of memory.', 500)
-        except ValueError:
-            raise RequestError('Received data is not JSON.', 406)
-
-        try:
-            command = json.pop('command')
-        except KeyError:
-            raise RequestError('No command specified.', 400)
-
-        LOGGER.debug('Received command: "%s".', command)
-
-        try:
-            function = COMMANDS[command]
-        except KeyError:
-            raise RequestError(f'Invalid command specified: {command}', 400)
-
-        LOGGER.debug('Executing function "%s" with args "%s".', function, json)
-
-        try:
-            response = function(**json)
-        except TypeError:
-            raise RequestError(f'Invalid arguments specified: {json}', 400)
-
-        LOGGER.debug('Function returned: "%s".', response)
-        self.send_data(
-            response.payload,
-            response.status_code,
-            content_type=response.content_type
-        )
