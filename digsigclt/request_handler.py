@@ -13,7 +13,7 @@ from digsigclt.lock import Locked, Lock
 from digsigclt.rpc import COMMANDS, http_screenshot
 from digsigclt.os import application_status, sysinfo
 from digsigclt.sync import gen_manifest, update
-from digsigclt.types import ResponseContent
+from digsigclt.types import Payload, ResponseContent
 
 
 __all__ = ['HTTPRequestHandler']
@@ -221,7 +221,7 @@ def get_manifest(directory: Path, chunk_size: int) -> list | None:
     return None
 
 
-def format_response(payload, content_type: str) -> ResponseContent:
+def format_response(payload: Payload, content_type: str) -> ResponseContent:
     """Detects the content type and formats the HTTP payload accordingly."""
 
     if payload is None or isinstance(payload, (dict, list)):
