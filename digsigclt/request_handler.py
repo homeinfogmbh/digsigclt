@@ -115,7 +115,7 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
                 status_code = 500
                 LOGGER.error(text)
 
-        return self.send_data(text, status_code)
+        self.send_data(text, status_code)
 
     def send_manifest(self) -> None:
         """Sends the manifest."""
@@ -124,7 +124,8 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
         if (manifest := get_manifest(self.directory, self.chunk_size)) is None:
             text = 'System is currently locked.'
             LOGGER.error(text)
-            return self.send_data(text, 503)
+            self.send_data(text, 503)
+            return
 
         json = {'manifest': manifest}
 
@@ -135,7 +136,7 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
             json['last_sync'] = last_sync.isoformat()
 
         LOGGER.debug('Sending manifest.')
-        return self.send_data(json, 200)
+        self.send_data(json, 200)
 
     def send_screenshot(self) -> None:
         """Sends an HTTP screenshot."""
@@ -145,22 +146,26 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
             payload, content_type, status_code = http_screenshot()
         except Exception as error:
             json = {'message': str(error), 'type': str(type(error))}
-            return self.send_data(json, 500)
+            self.send_data(json, 500)
+            return
 
-        return self.send_data(payload, status_code, content_type)
+        self.send_data(payload, status_code, content_type)
 
     def do_GET(self) -> None:
         """Returns current status information."""
         if self.path in {'', '/'}:
-            return self.send_sysinfo()
+            self.send_sysinfo()
+            return
 
         if self.path == '/manifest':
-            return self.send_manifest()
+            self.send_manifest()
+            return
 
         if self.path == '/screenshot':
-            return self.send_screenshot()
+            self.send_screenshot()
+            return
 
-        return self.send_data('Invalid path.', 404)
+        self.send_data('Invalid path.', 404)
 
     def do_POST(self) -> None:
         """Retrieves and updates digital signage data."""
@@ -182,16 +187,19 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
             json = self.json
         except MemoryError:
             LOGGER.error('Out of memory.')
-            return self.send_data('Out of memory.', 500)
+            self.send_data('Out of memory.', 500)
+            return
         except ValueError:
             LOGGER.warning('Received data is not JSON.')
-            return self.send_data('Received data is not JSON.', 406)
+            self.send_data('Received data is not JSON.', 406)
+            return
 
         try:
             command = json.pop('command')
         except KeyError:
             LOGGER.warning('No command specified.')
-            return self.send_data('No command specified.', 400)
+            self.send_data('No command specified.', 400)
+            return
 
         LOGGER.debug('Received command: "%s".', command)
 
@@ -199,7 +207,8 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
             function = COMMANDS[command]
         except KeyError:
             LOGGER.warning('Invalid command specified: "%s".', command)
-            return self.send_data('Invalid command specified.', 400)
+            self.send_data('Invalid command specified.', 400)
+            return
 
         LOGGER.debug('Executing function "%s" with args "%s".', function, json)
 
@@ -207,10 +216,11 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
             response = function(**json)
         except TypeError:
             LOGGER.warning('Invalid arguments specified: "%s".', json)
-            return self.send_data('Invalid arguments specified.', 400)
+            self.send_data('Invalid arguments specified.', 400)
+            return
 
         LOGGER.debug('Function returned: "%s".', response)
-        return self.send_data(
+        self.send_data(
             response.payload,
             response.status_code,
             content_type=response.content_type
