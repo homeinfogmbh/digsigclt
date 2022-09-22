@@ -46,7 +46,12 @@ class ExtendedHTTPRequestHandler(BaseHTTPRequestHandler):
         """Returns the remote socket."""
         return self.client_address[:2]
 
-    def send_data(self, payload, status_code: int, content_type: str = None):
+    def send_data(
+            self,
+            payload: Payload,
+            status_code: int,
+            content_type: str = None
+    ) -> None:
         """Sends the respective data."""
         payload, content_type = format_response(payload, content_type)
         self.send_response(status_code)
@@ -66,11 +71,11 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
         cls.directory = directory
 
     @property
-    def logfile(self):
+    def logfile(self) -> Path:
         """Returns the log file."""
         return self.directory / LOGFILE
 
-    def send_sysinfo(self):
+    def send_sysinfo(self) -> None:
         """Returns system information."""
         if (last_sync := type(self).last_sync) is not None:
             last_sync = last_sync.isoformat()
@@ -82,7 +87,7 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
 
         self.send_data(json, 200)
 
-    def log_sync(self):
+    def log_sync(self) -> None:
         """Logs the synchronization."""
         type(self).last_sync = last_sync = datetime.now()
 
@@ -92,7 +97,7 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
             if name == 'posix':
                 logfile.write(linesep)
 
-    def update_digsig_data(self):
+    def update_digsig_data(self) -> None:
         """Updates the digital signage data."""
         with TemporaryFile('w+b') as file:
             copy_file(self.rfile, file, self.content_length, self.chunk_size)
@@ -112,7 +117,7 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
 
         return self.send_data(text, status_code)
 
-    def send_manifest(self):
+    def send_manifest(self) -> None:
         """Sends the manifest."""
         LOGGER.info('Manifest queried from %s:%s.', *self.remote_socket)
 
@@ -132,7 +137,7 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
         LOGGER.debug('Sending manifest.')
         return self.send_data(json, 200)
 
-    def send_screenshot(self):
+    def send_screenshot(self) -> None:
         """Sends an HTTP screenshot."""
         LOGGER.info('Screenshot queried from %s:%s.', *self.remote_socket)
 
@@ -144,7 +149,7 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
 
         return self.send_data(payload, status_code, content_type)
 
-    def do_GET(self):
+    def do_GET(self) -> None:
         """Returns current status information."""
         if self.path in {'', '/'}:
             return self.send_sysinfo()
@@ -157,7 +162,7 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
 
         return self.send_data('Invalid path.', 404)
 
-    def do_POST(self):
+    def do_POST(self) -> None:
         """Retrieves and updates digital signage data."""
         LOGGER.info('Incoming sync from %s:%s.', *self.remote_socket)
 
@@ -169,7 +174,7 @@ class HTTPRequestHandler(ExtendedHTTPRequestHandler):
             LOGGER.error(text)
             self.send_data(text, 503)
 
-    def do_PUT(self):
+    def do_PUT(self) -> None:
         """Handles special commands."""
         LOGGER.info('Incoming command from %s:%s.', *self.remote_socket)
 
