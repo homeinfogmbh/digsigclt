@@ -32,7 +32,7 @@ class Application(ApplicationVersion, Enum):
         'unconfigured-warning.service'
     )
     INSTALLATION_INSTRUCTIONS = ApplicationVersion(
-        'html',
+        'installation instructions',
         'installation-instructions.service'
     )
 
