@@ -7,6 +7,7 @@ from pathlib import Path
 from tempfile import TemporaryFile
 
 from digsigclt.common import LOGFILE, LOGGER, copy_file
+from digsigclt.exceptions import RequestError
 from digsigclt.lock import Locked
 from digsigclt.rpc import COMMANDS, http_screenshot
 from digsigclt.os import application_status, sysinfo
@@ -143,40 +144,38 @@ class HTTPRequestHandler(HTTPRequestHandlerBase):
         LOGGER.info('Incoming command from %s:%s.', *self.remote_socket)
 
         try:
+            self.handle_put_request()
+        except RequestError as error:
+            LOGGER.error(error.message)
+            self.send_data(error.message, error.status_code)
+
+    def handle_put_request(self) -> None:
+        """Handles incoming PUT requests."""
+        try:
             json = self.json
         except MemoryError:
-            LOGGER.error('Out of memory.')
-            self.send_data('Out of memory.', 500)
-            return
+            raise RequestError('Out of memory.', 500)
         except ValueError:
-            LOGGER.warning('Received data is not JSON.')
-            self.send_data('Received data is not JSON.', 406)
-            return
+            raise RequestError('Received data is not JSON.', 406)
 
         try:
             command = json.pop('command')
         except KeyError:
-            LOGGER.warning('No command specified.')
-            self.send_data('No command specified.', 400)
-            return
+            raise RequestError('No command specified.', 400)
 
         LOGGER.debug('Received command: "%s".', command)
 
         try:
             function = COMMANDS[command]
         except KeyError:
-            LOGGER.warning('Invalid command specified: "%s".', command)
-            self.send_data('Invalid command specified.', 400)
-            return
+            raise RequestError(f'Invalid command specified: {command}', 400)
 
         LOGGER.debug('Executing function "%s" with args "%s".', function, json)
 
         try:
             response = function(**json)
         except TypeError:
-            LOGGER.warning('Invalid arguments specified: "%s".', json)
-            self.send_data('Invalid arguments specified.', 400)
-            return
+            raise RequestError(f'Invalid arguments specified: {json}', 400)
 
         LOGGER.debug('Function returned: "%s".', response)
         self.send_data(

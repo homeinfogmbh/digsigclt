@@ -10,6 +10,7 @@ __all__ = [
     'ManifestError',
     'UnderAdministration',
     'PackageManagerActive',
+    'RequestError',
     'NoAddressFound',
     'UpdateProtocolError'
 ]
@@ -39,6 +40,15 @@ class UnderAdministration(Exception):
 
 class PackageManagerActive(Exception):
     """Indicates that a running package manager is blocking an action."""
+
+
+class RequestError(Exception):
+    """Indicates an error during handling of a HTTP request."""
+
+    def __init__(self, message: str, status_code: int):
+        super().__init__(message)
+        self.message = message
+        self.status_code = status_code
 
 
 class NoAddressFound(Exception):
