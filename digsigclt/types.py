@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 from contextlib import suppress
+from enum import Enum, auto
 from ipaddress import IPv4Address, IPv6Address
 from json import dumps
 from typing import Iterator, NamedTuple, Sequence
 
 
 __all__ = [
+    'ApplicationMode',
     'Command',
     'IPAddress',
     'Manifest',
@@ -22,6 +24,15 @@ __all__ = [
 IPAddress = IPv4Address | IPv6Address
 Manifest = Iterator[tuple[list[str], str]]
 Payload = None | bytes | str | dict | list | int | float
+
+
+class ApplicationMode(int, Enum):
+    """Application modes."""
+
+    PRODUCTIVE = auto()
+    INSTALLATION_INSTRUCTIONS = auto()
+    NOT_CONFIGURED = auto()
+    OFF = auto()
 
 
 class Command(NamedTuple):

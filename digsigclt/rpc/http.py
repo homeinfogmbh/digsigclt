@@ -1,10 +1,10 @@
 """Wrapper functions to run commands from HTTP requests."""
 
-from digsigclt.os import application_status
+from digsigclt.os import application_get_mode
+from digsigclt.os import application_set_mode
 from digsigclt.os import beep
 from digsigclt.os import checkupdates
 from digsigclt.os import reboot
-from digsigclt.os import set_application
 from digsigclt.os import screenshot
 from digsigclt.os import smartctl
 from digsigclt.os import unlock_pacman
@@ -19,9 +19,9 @@ def http_application(mode: str | None = None) -> Response:
 
     with Response() as response:
         if mode is None:
-            response.payload = application_status().to_json()
+            response.payload = application_get_mode().name
         else:
-            set_application(mode)
+            application_set_mode(mode)
 
     return response
 

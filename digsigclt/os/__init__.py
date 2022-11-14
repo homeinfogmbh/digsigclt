@@ -5,11 +5,12 @@ from typing import Any
 
 from digsigclt.common import LOGGER
 from digsigclt.os import nt, posix
-from digsigclt.types import Screenshot, ServiceState
+from digsigclt.types import ApplicationMode, Screenshot, ServiceState
 
 
 __all__ = [
-    'set_application',
+    'application_get_mode',
+    'application_set_mode',
     'application_status',
     'application_versions',
     'beep',
@@ -22,6 +23,24 @@ __all__ = [
     'unlock_pacman',
     'uptime'
 ]
+
+
+def application_get_mode() -> ApplicationMode:
+    """Get current digital signage application mode."""
+
+    if name == 'posix':
+        return posix.application_get_mode()
+
+    raise NotImplementedError()
+
+
+def application_set_mode(mode: str) -> int:
+    """Enable the digital signage application."""
+
+    if name == 'posix':
+        return posix.application_set_mode(mode)
+
+    raise NotImplementedError()
 
 
 def application_status() -> ServiceState:
@@ -62,15 +81,6 @@ def checkupdates() -> dict:
 
     if name == 'posix':
         return posix.checkupdates()
-
-    raise NotImplementedError()
-
-
-def set_application(mode: str) -> int:
-    """Enable the digital signage application."""
-
-    if name == 'posix':
-        return posix.application_set(mode)
 
     raise NotImplementedError()
 

@@ -1,17 +1,16 @@
 """Application-related commands."""
 
 from __future__ import annotations
-from enum import Enum
 from pathlib import Path
 from subprocess import CalledProcessError, check_call
 
 from digsigclt.os.common import commands
 from digsigclt.os.posix.common import sudo, systemctl
 from digsigclt.os.posix.pacman import package_version
-from digsigclt.types import Command, ServiceState
+from digsigclt.types import ApplicationMode, Command, ServiceState
 
 
-__all__ = ['set_mode', 'status', 'versions']
+__all__ = ['set_mode', 'get_mode', 'status', 'versions']
 
 
 SERVICES_DIR = Path('/usr/lib/systemd/system')
@@ -19,9 +18,11 @@ PRODUCTIVE_APPLICATIONS = ('html5ds.service', 'application.service')
 NOT_CONFIGURED_WARNING = 'unconfigured-warning.service'
 INSTALLATION_INSTRUCTIONS = 'installation-instructions.service'
 UNITS = {
-    *PRODUCTIVE_APPLICATIONS,
-    NOT_CONFIGURED_WARNING,
-    INSTALLATION_INSTRUCTIONS
+    **{
+        unit: ApplicationMode.PRODUCTIVE for unit in PRODUCTIVE_APPLICATIONS
+    },
+    NOT_CONFIGURED_WARNING: ApplicationMode.NOT_CONFIGURED,
+    INSTALLATION_INSTRUCTIONS: ApplicationMode.NOT_CONFIGURED
 }
 PACKAGES = {
     'application-air',
@@ -29,15 +30,6 @@ PACKAGES = {
     'html5ds',
     'chromium'
 }
-
-
-class Mode(str, Enum):
-    """Application modes."""
-
-    PRODUCTIVE = 'productive'
-    INSTALLATION_INSTRUCTIONS = 'installation instructions'
-    NOT_CONFIGURED = 'not configured'
-    OFF = 'off'
 
 
 def get_preferred_application() -> str:
@@ -50,19 +42,19 @@ def get_preferred_application() -> str:
     raise ValueError('No productive application installed.')
 
 
-def get_application(mode: Mode) -> str | None:
+def get_application(mode: ApplicationMode) -> str | None:
     """Return the respective application type."""
 
-    if mode is Mode.PRODUCTIVE:
+    if mode is ApplicationMode.PRODUCTIVE:
         return get_preferred_application()
 
-    if mode is Mode.INSTALLATION_INSTRUCTIONS:
+    if mode is ApplicationMode.INSTALLATION_INSTRUCTIONS:
         return INSTALLATION_INSTRUCTIONS
 
-    if mode is Mode.NOT_CONFIGURED:
+    if mode is ApplicationMode.NOT_CONFIGURED:
         return NOT_CONFIGURED_WARNING
 
-    if mode is Mode.OFF:
+    if mode is ApplicationMode.OFF:
         return None
 
     raise ValueError('Invalid mode:', mode)
@@ -75,8 +67,18 @@ def set_mode(mode: str) -> int:
     for unit in UNITS:
         yield Command(sudo(systemctl('disable', '--now', unit)), exit_ok={1})
 
-    if unit := get_application(Mode[mode.upper()]):
+    if unit := get_application(ApplicationMode[mode.upper()]):
         yield Command(sudo(systemctl('enable', '--now', unit)))
+
+
+def get_mode() -> ApplicationMode:
+    """Return the current mode."""
+
+    for unit, mode in UNITS.items():
+        if is_enabled(unit) and is_running(unit):
+            return mode
+
+    return ApplicationMode.OFF
 
 
 def status() -> ServiceState:
