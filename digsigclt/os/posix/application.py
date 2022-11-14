@@ -7,10 +7,10 @@ from subprocess import CalledProcessError, check_call
 from digsigclt.os.common import commands
 from digsigclt.os.posix.common import sudo, systemctl
 from digsigclt.os.posix.pacman import package_version
-from digsigclt.types import ApplicationMode, Command, ServiceState
+from digsigclt.types import ApplicationMode, Command
 
 
-__all__ = ['set_mode', 'get_mode', 'status', 'versions']
+__all__ = ['set_mode', 'status', 'versions']
 
 
 SERVICES_DIR = Path('/usr/lib/systemd/system')
@@ -71,7 +71,7 @@ def set_mode(mode: str) -> int:
         yield Command(sudo(systemctl('enable', '--now', unit)))
 
 
-def get_mode() -> ApplicationMode:
+def status() -> ApplicationMode:
     """Return the current mode."""
 
     for unit, mode in UNITS.items():
@@ -79,15 +79,6 @@ def get_mode() -> ApplicationMode:
             return mode
 
     return ApplicationMode.OFF
-
-
-def status() -> ServiceState:
-    """Return unit statuses."""
-
-    return ServiceState(
-        set(filter(is_running, UNITS)),
-        set(filter(is_enabled, UNITS))
-    )
 
 
 def versions() -> dict[str, str | None]:

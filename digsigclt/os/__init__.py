@@ -9,7 +9,6 @@ from digsigclt.types import ApplicationMode, Screenshot, ServiceState
 
 
 __all__ = [
-    'application_get_mode',
     'application_set_mode',
     'application_status',
     'application_versions',
@@ -25,15 +24,6 @@ __all__ = [
 ]
 
 
-def application_get_mode() -> ApplicationMode:
-    """Get current digital signage application mode."""
-
-    if name == 'posix':
-        return posix.application_get_mode()
-
-    raise NotImplementedError()
-
-
 def application_set_mode(mode: str) -> int:
     """Enable the digital signage application."""
 
@@ -43,8 +33,8 @@ def application_set_mode(mode: str) -> int:
     raise NotImplementedError()
 
 
-def application_status() -> ServiceState:
-    """Check the status of the digital signage application."""
+def application_status() -> ApplicationMode:
+    """Return the mode of the digital signage application."""
 
     if name == 'posix':
         return posix.application_status()
