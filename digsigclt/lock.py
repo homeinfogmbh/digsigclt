@@ -7,7 +7,7 @@ __all__ = ['Locked', 'Lock']
 
 
 class Locked(Exception):
-    """Indicates that the lock is currently acquired."""
+    """Indicate that the lock is currently acquired."""
 
 
 class Lock:

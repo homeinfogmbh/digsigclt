@@ -29,21 +29,21 @@ class CalledProcessErrors(Exception):
 
 
 class ManifestError(Exception):
-    """Indicates general errors with the files manifest."""
+    """Indicate general errors with the files manifest."""
 
 
 class NoAddressFound(Exception):
-    """Indicates that no address matching
+    """Indicate that no address matching
     the respective network could be found.
     """
 
 
 class PackageManagerActive(Exception):
-    """Indicates that a running package manager is blocking an action."""
+    """Indicate that a running package manager is blocking an action."""
 
 
 class RequestError(Exception):
-    """Indicates an error during handling of a HTTP request."""
+    """Indicate an error during handling of a HTTP request."""
 
     def __init__(self, message: str, status_code: int):
         super().__init__(message)
@@ -52,15 +52,15 @@ class RequestError(Exception):
 
 
 class UnderAdministration(Exception):
-    """Indicates that the system is currently
+    """Indicate that the system is currently
     under administrative use, blocking an action.
     """
 
 
 class UpdateProtocolError(Exception):
-    """Indicates an error within the update protocol."""
+    """Indicate an error within the update protocol."""
 
     def __init__(self, code: int):
-        """Sets the HTTP status code."""
+        """Set the HTTP status code."""
         super().__init__()
         self.code = code

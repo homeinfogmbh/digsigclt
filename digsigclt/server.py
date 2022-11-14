@@ -23,7 +23,7 @@ class ImprovedHTTPServer(HTTPServer):
             request_handler: type,
             bind_and_activate: bool = True
     ):
-        """Initializes the HTTP server with an IP address,
+        """Initialize the HTTP server with an IP address,
         port and request handler.
         """
         if isinstance(address, IPv6Address):
@@ -34,7 +34,7 @@ class ImprovedHTTPServer(HTTPServer):
 
 
 def spawn(socket: Socket, directory: Path, chunk_size: int) -> int:
-    """Spawns a HTTP server."""
+    """Spawn an HTTP server."""
 
     class _RH(HTTPRequestHandler, chunk_size=chunk_size, directory=directory):
         """Implementation of the actual request handler."""

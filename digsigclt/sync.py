@@ -112,7 +112,7 @@ def strip_files(directory: Path, manifest: set[Path]):
 
 
 def strip_tree(directory: Path, *, basedir: bool = True):
-    """Removes all empty directory sub-trees."""
+    """Remove all empty directory subtrees."""
 
     for inode in directory.iterdir():
         if basedir and inode.stem.startswith('.'):
@@ -133,7 +133,7 @@ def strip_tree(directory: Path, *, basedir: bool = True):
 
 
 def load_manifest(directory: Path) -> set[Path]:
-    """Reads the manifest from the respective directory."""
+    """Read the manifest from the respective directory."""
 
     path = directory / MANIFEST
     LOGGER.debug('Reading manifest from: %s', path)
@@ -165,7 +165,7 @@ def load_manifest(directory: Path) -> set[Path]:
 
 
 def gen_manifest(directory: Path, *, chunk_size: int = CHUNK_SIZE) -> Manifest:
-    """Generates the manifest of relative
+    """Generate the manifest of relative
     file paths and their SHA-256 checksums.
     """
 
@@ -183,7 +183,7 @@ def gen_manifest(directory: Path, *, chunk_size: int = CHUNK_SIZE) -> Manifest:
 
 
 def update(file: IO, directory: Path, *, chunk_size: int = CHUNK_SIZE) -> bool:
-    """Updates the digital signage data
+    """Update the digital signage data
     from the respective tar.xz archive.
     """
 

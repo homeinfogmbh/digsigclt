@@ -29,31 +29,31 @@ LOGGER = getLogger(Path(argv[0]).name)
 
 
 class FileInfo(NamedTuple):
-    """Stores meta information about a file."""
+    """Store meta information about a file."""
 
     sha256sum: str
     ctime: float
 
     def __bytes__(self) -> bytes:
-        """Returns JSON-ish bytes."""
+        """Return JSON-ish bytes."""
         return str(self).encode()
 
     def __str__(self) -> str:
-        """Returns a JSON-ish string."""
+        """Return a JSON-ish string."""
         return dumps(self.to_json())
 
     @classmethod
     def from_file(cls, filename: Path | str) -> FileInfo:
-        """Creates the file info from a file path."""
+        """Create the file info from a file path."""
         return cls(sha256sum(filename), getctime(filename))
 
     def to_json(self) -> dict:
-        """Returns JSON-ish dict."""
+        """Return JSON-ish dict."""
         return {'sha256sum': self.sha256sum, 'ctime': self.ctime}
 
 
 def copy_file(src: IO, dst: IO, size: int, chunk_size: int = CHUNK_SIZE):
-    """Copies two files."""
+    """Copy two files."""
 
     while size > 0:
         size -= (bytes_ := min(size, chunk_size))
@@ -61,7 +61,7 @@ def copy_file(src: IO, dst: IO, size: int, chunk_size: int = CHUNK_SIZE):
 
 
 def sha256sum(filename: Path | str) -> str:
-    """Returns a SHA-256 sum of the specified file."""
+    """Return an SHA-256 sum of the specified file."""
 
     with open(filename, 'rb') as file:
         return sha256(file.read()).hexdigest()

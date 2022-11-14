@@ -62,7 +62,7 @@ class ResponseContent(NamedTuple):
 
 
 class Screenshot(NamedTuple):
-    """Represents screenshot data."""
+    """Screenshot data."""
 
     bytes: bytes
     content_type: str
