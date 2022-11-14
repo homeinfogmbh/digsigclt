@@ -1,10 +1,8 @@
 """POSIX system commands."""
 
-from digsigclt.os.posix.application import Application
-from digsigclt.os.posix.application import enable as enable_application
-from digsigclt.os.posix.application import disable as disable_application
+from digsigclt.os.posix.application import set_mode as application_set
 from digsigclt.os.posix.application import status as application_status
-from digsigclt.os.posix.application import version as application_version
+from digsigclt.os.posix.application import versions as application_versions
 from digsigclt.os.posix.beep import beep
 from digsigclt.os.posix.checkupdates import checkupdates
 from digsigclt.os.posix.cmdline import cmdline
@@ -23,17 +21,15 @@ from digsigclt.os.posix.uptime import uptime
 
 
 __all__ = [
-    'Application',
+    'application_set',
     'application_status',
-    'application_version',
+    'application_versions',
     'beep',
     'checkupdates',
     'cmdline',
     'cpuinfo',
     'device_states',
-    'disable_application',
     'efi_mounted_as_boot',
-    'enable_application',
     'is_baytrail',
     'list_journal',
     'meminfo',

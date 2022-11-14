@@ -8,7 +8,6 @@ from typing import Iterator, NamedTuple, Sequence
 
 
 __all__ = [
-    'ApplicationVersion',
     'Command',
     'IPAddress',
     'Manifest',
@@ -23,13 +22,6 @@ __all__ = [
 IPAddress = IPv4Address | IPv6Address
 Manifest = Iterator[tuple[list[str], str]]
 Payload = None | bytes | str | dict | list | int | float
-
-
-class ApplicationVersion(NamedTuple):
-    """Application version."""
-
-    name: str
-    service: str
 
 
 class Command(NamedTuple):

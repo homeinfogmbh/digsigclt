@@ -3,9 +3,8 @@
 from digsigclt.os import application_status
 from digsigclt.os import beep
 from digsigclt.os import checkupdates
-from digsigclt.os import disable_application
-from digsigclt.os import enable_application
 from digsigclt.os import reboot
+from digsigclt.os import set_application
 from digsigclt.os import screenshot
 from digsigclt.os import smartctl
 from digsigclt.os import unlock_pacman
@@ -15,23 +14,14 @@ from digsigclt.rpc.response import Response
 __all__ = ['COMMANDS', 'http_screenshot']
 
 
-def http_application(state: bool | None = None) -> Response:
+def http_application(mode: str | None = None) -> Response:
     """Handles the application state."""
 
-    if state is None:
-        with Response() as response:
+    with Response() as response:
+        if mode is None:
             response.payload = application_status().to_json()
-
-        return response
-
-    if state:
-        with Response('Application enabled.') as response:
-            enable_application()
-
-        return response
-
-    with Response('Application disabled.') as response:
-        disable_application()
+        else:
+            set_application(mode)
 
     return response
 

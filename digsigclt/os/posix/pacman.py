@@ -1,12 +1,12 @@
 """Pacman related commands."""
 
-from subprocess import PIPE, CompletedProcess, run
+from subprocess import PIPE, CalledProcessError, CompletedProcess, run
 from digsigclt.exceptions import PackageManagerActive
 from digsigclt.os.common import command
 from digsigclt.os.posix.common import sudo
 
 
-__all__ = ['is_running', 'pacman', 'unlock']
+__all__ = ['is_running', 'pacman', 'unlock', 'package_version']
 
 
 @command(as_bool=True)
@@ -36,3 +36,14 @@ def pacman(*args: str) -> CompletedProcess:
         stderr=PIPE,
         stdout=PIPE
     )
+
+
+def package_version(package: str) -> str | None:
+    """Returns the package version."""
+
+    try:
+        result = pacman('-Q', package)
+    except CalledProcessError:
+        return None
+
+    return result.stdout.strip().split()[1]

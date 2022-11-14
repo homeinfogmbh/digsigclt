@@ -9,11 +9,11 @@ from digsigclt.types import Screenshot, ServiceState
 
 
 __all__ = [
+    'set_application',
     'application_status',
+    'application_versions',
     'beep',
     'checkupdates',
-    'disable_application',
-    'enable_application',
     'ping',
     'reboot',
     'screenshot',
@@ -29,6 +29,15 @@ def application_status() -> ServiceState:
 
     if name == 'posix':
         return posix.application_status()
+
+    raise NotImplementedError()
+
+
+def application_versions() -> dict[str, str | None]:
+    """Return the application versions."""
+
+    if name == 'posix':
+        return posix.application_versions()
 
     raise NotImplementedError()
 
@@ -57,20 +66,11 @@ def checkupdates() -> dict:
     raise NotImplementedError()
 
 
-def disable_application(service: str | None = None) -> int:
-    """Disables the digital signage application."""
-
-    if name == 'posix':
-        return posix.disable_application(service)
-
-    raise NotImplementedError()
-
-
-def enable_application(service: str | None = None) -> int:
+def set_application(mode: str) -> int:
     """Enables the digital signage application."""
 
     if name == 'posix':
-        return posix.enable_application(service)
+        return posix.application_set(mode)
 
     raise NotImplementedError()
 
