@@ -16,7 +16,6 @@ __all__ = [
     'Payload',
     'ResponseContent',
     'Screenshot',
-    'ServiceState',
     'Socket'
 ]
 
@@ -77,20 +76,6 @@ class Screenshot(NamedTuple):
 
     bytes: bytes
     content_type: str
-
-
-class ServiceState(NamedTuple):
-    """System service state."""
-
-    running: set[str]
-    enabled: set[str]
-
-    def to_json(self) -> dict:
-        """Returns a JSON-ish dict."""
-        return {
-            'enabled': sorted(self.enabled),
-            'running': sorted(self.running)
-        }
 
 
 class Socket(NamedTuple):

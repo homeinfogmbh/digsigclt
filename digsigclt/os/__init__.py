@@ -5,7 +5,7 @@ from typing import Any
 
 from digsigclt.common import LOGGER
 from digsigclt.os import nt, posix
-from digsigclt.types import ApplicationMode, Screenshot, ServiceState
+from digsigclt.types import ApplicationMode, Screenshot
 
 
 __all__ = [
