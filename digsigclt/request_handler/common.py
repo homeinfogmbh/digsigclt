@@ -14,7 +14,7 @@ LOCK = Lock()
 
 
 def get_manifest(directory: Path, chunk_size: int) -> list | None:
-    """Returns the manifest."""
+    """Return the manifest."""
 
     with suppress(Locked):
         with LOCK:

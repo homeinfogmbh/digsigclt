@@ -11,7 +11,7 @@ PING = '/usr/bin/ping'
 
 @command()
 def ping(host: str, count: int = 4, quiet: bool = True) -> list[str]:
-    """Pings a host."""
+    """Ping a host."""
 
     if count is None:
         return [PING, str(host)] + ['-q'] * quiet

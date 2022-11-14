@@ -14,7 +14,7 @@ __all__ = ['reboot']
 
 @command()
 def reboot() -> list[str]:
-    """Reboots the system."""
+    """Reboot the system."""
 
     if logged_in_users() & ADMIN_USERS:
         raise UnderAdministration()

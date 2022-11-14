@@ -41,7 +41,7 @@ class Mode(str, Enum):
 
 
 def get_preferred_application() -> str:
-    """Returns the preferred service on the system."""
+    """Return the preferred service on the system."""
 
     for unit in PRODUCTIVE_APPLICATIONS:
         if SERVICES_DIR.joinpath(unit).is_file():
@@ -51,7 +51,7 @@ def get_preferred_application() -> str:
 
 
 def get_application(mode: Mode) -> str | None:
-    """Returns the respective application type."""
+    """Return the respective application type."""
 
     if mode is Mode.PRODUCTIVE:
         return get_preferred_application()
@@ -80,7 +80,7 @@ def set_mode(mode: str) -> int:
 
 
 def status() -> ServiceState:
-    """Returns unit statuses."""
+    """Return unit statuses."""
 
     return ServiceState(
         set(filter(is_running, UNITS)),
@@ -89,13 +89,13 @@ def status() -> ServiceState:
 
 
 def versions() -> dict[str, str | None]:
-    """Returns the package versions."""
+    """Return the package versions."""
 
     return {package: package_version(package) for package in PACKAGES}
 
 
 def is_enabled(unit: str) -> bool:
-    """Checks whether the unit is enabled."""
+    """Check whether the unit is enabled."""
 
     try:
         check_call(systemctl('is-enabled', unit))
@@ -106,7 +106,7 @@ def is_enabled(unit: str) -> bool:
 
 
 def is_running(unit: str) -> bool:
-    """Checks whether the unit is running."""
+    """Check whether the unit is running."""
 
     try:
         check_call(systemctl('is-running', unit))

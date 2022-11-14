@@ -1,4 +1,4 @@
-"""System adminstration command handling."""
+"""System administration command handling."""
 
 from digsigclt.rpc.http import COMMANDS, http_screenshot
 

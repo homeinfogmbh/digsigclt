@@ -52,7 +52,7 @@ class MountPoint(NamedTuple):
 
 
 def efi_mounted_as_boot() -> bool:
-    """Checks whether the EFI partition is mounted on /boot.
+    """Check whether the EFI partition is mounted on /boot.
     Also return True if not applicable.
     """
 

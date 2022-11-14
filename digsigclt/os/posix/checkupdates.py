@@ -11,7 +11,7 @@ CHECKUPDATES = '/usr/bin/checkupdates'
 
 
 def checkupdates() -> dict:
-    """Returns package updates in a JSON-ish dict."""
+    """Return package updates in a JSON-ish dict."""
 
     json = {}
 

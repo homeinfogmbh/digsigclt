@@ -28,7 +28,7 @@ def http_application(mode: str | None = None) -> Response:
 
 def http_beep(args: tuple = ()) -> Response:
     """Runs the beep function, handles exceptions
-    and returns a JSON response and a HTTP status code.
+    and returns a JSON response and an HTTP status code.
     """
 
     with Response('System should have beeped.') as response:

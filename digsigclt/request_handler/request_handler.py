@@ -26,17 +26,17 @@ class HTTPRequestHandler(HTTPRequestHandlerBase):
     last_sync = None
 
     def __init_subclass__(cls, *, chunk_size: int, directory: Path):
-        """Initializes the subclass."""
+        """Initialize the subclass."""
         cls.chunk_size = chunk_size
         cls.directory = directory
 
     @property
     def logfile(self) -> Path:
-        """Returns the log file."""
+        """Return the log file."""
         return self.directory / LOGFILE
 
     def do_GET(self) -> None:
-        """Returns current status information."""
+        """Return current status information."""
         if self.path in {'', '/'}:
             self.send_sysinfo()
             return
@@ -52,7 +52,7 @@ class HTTPRequestHandler(HTTPRequestHandlerBase):
         self.send_data('Invalid path.', 404)
 
     def do_POST(self) -> None:
-        """Retrieves and updates digital signage data."""
+        """Retrieve and updates digital signage data."""
         LOGGER.info('Incoming sync from %s:%s.', *self.remote_socket)
 
         try:
@@ -64,7 +64,7 @@ class HTTPRequestHandler(HTTPRequestHandlerBase):
             self.send_data(text, 503)
 
     def do_PUT(self) -> None:
-        """Handles special commands."""
+        """Handle special commands."""
         LOGGER.info('Incoming command from %s:%s.', *self.remote_socket)
 
         try:
@@ -74,7 +74,7 @@ class HTTPRequestHandler(HTTPRequestHandlerBase):
             self.send_data(error.message, error.status_code)
 
     def handle_put_request(self) -> None:
-        """Handles incoming PUT requests."""
+        """Handle incoming PUT requests."""
         try:
             json = self.json
         except MemoryError:
@@ -109,7 +109,7 @@ class HTTPRequestHandler(HTTPRequestHandlerBase):
         )
 
     def send_sysinfo(self) -> None:
-        """Returns system information."""
+        """Return system information."""
         if (last_sync := type(self).last_sync) is not None:
             last_sync = last_sync.isoformat()
 
@@ -121,7 +121,7 @@ class HTTPRequestHandler(HTTPRequestHandlerBase):
         self.send_data(json, 200)
 
     def log_sync(self) -> None:
-        """Logs the synchronization."""
+        """Log the synchronization."""
         type(self).last_sync = last_sync = datetime.now()
 
         with self.logfile.open('w') as logfile:
@@ -131,7 +131,7 @@ class HTTPRequestHandler(HTTPRequestHandlerBase):
                 logfile.write(linesep)
 
     def update_digsig_data(self) -> None:
-        """Updates the digital signage data."""
+        """Update the digital signage data."""
         with TemporaryFile('w+b') as file:
             copy_file(self.rfile, file, self.content_length, self.chunk_size)
             LOGGER.debug('Flushing temporary file.')
@@ -151,7 +151,7 @@ class HTTPRequestHandler(HTTPRequestHandlerBase):
         self.send_data(text, status_code)
 
     def send_manifest(self) -> None:
-        """Sends the manifest."""
+        """Send the manifest."""
         LOGGER.info('Manifest queried from %s:%s.', *self.remote_socket)
 
         if (manifest := get_manifest(self.directory, self.chunk_size)) is None:
@@ -172,7 +172,7 @@ class HTTPRequestHandler(HTTPRequestHandlerBase):
         self.send_data(json, 200)
 
     def send_screenshot(self) -> None:
-        """Sends an HTTP screenshot."""
+        """Send an HTTP screenshot."""
         LOGGER.info('Screenshot queried from %s:%s.', *self.remote_socket)
 
         try:

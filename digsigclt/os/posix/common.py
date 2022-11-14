@@ -32,7 +32,7 @@ SCROT = '/usr/bin/scrot'
 
 
 def sudo(command: str | Iterable[str], *args: str) -> list[str]:
-    """Returns the command ran as sudo."""
+    """Return the command ran as sudo."""
 
     if isinstance(command, str):
         return [SUDO, command, *args]
@@ -41,13 +41,13 @@ def sudo(command: str | Iterable[str], *args: str) -> list[str]:
 
 
 def systemctl(command: str, *args: str) -> list[str]:
-    """Runs systemctl with the respective arguments."""
+    """Run systemctl with the respective arguments."""
 
     return [SYSTEMCTL, command, *args]
 
 
 def journalctl(unit: str, boot: str | None = None) -> list[str]:
-    """Returns a journalctl command."""
+    """Return a journalctl command."""
 
     command = [JOURNALCTL, '-u', unit, '--output=json', '-b']
 
@@ -58,7 +58,7 @@ def journalctl(unit: str, boot: str | None = None) -> list[str]:
 
 
 def list_journal(unit: str, boot: str | None = None) -> Iterator[dict]:
-    """Lists the journal of the given unit."""
+    """List the journal of the given unit."""
 
     if not (lines := check_output(journalctl(unit, boot), text=True)):
         return
@@ -68,12 +68,12 @@ def list_journal(unit: str, boot: str | None = None) -> Iterator[dict]:
 
 
 def list_sessions() -> list[dict[str, str | int]]:
-    """Lists the currently active sessions."""
+    """List the currently active sessions."""
 
     return loads(check_output(LIST_SESSIONS_JSON, text=True))
 
 
 def logged_in_users() -> set[str]:
-    """Returns a set of users with an active session."""
+    """Return a set of users with an active session."""
 
     return {session['user'] for session in list_sessions()}

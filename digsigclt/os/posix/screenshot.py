@@ -27,7 +27,7 @@ def screenshot(
         multidisp: bool = False,
         pointer: bool = False
 ) -> Screenshot:
-    """Takes a screenshot."""
+    """Take a screenshot."""
 
     try:
         content_type = FORMATS[filetype]

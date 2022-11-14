@@ -22,7 +22,7 @@ CPUInfoValue = str | int | float | list[str]
 
 
 def parse(key: str, value: str) -> CPUInfoValue:
-    """Parses a key / value pair."""
+    """Parse a key / value pair."""
 
     if key in LIST_KEYS:
         return value.split()
@@ -37,7 +37,7 @@ def parse(key: str, value: str) -> CPUInfoValue:
 
 
 def cpuinfo() -> Iterator[dict[str, CPUInfoValue]]:
-    """Yields information about the built-in CPUs."""
+    """Yield information about the built-in CPUs."""
 
     core = {}
 
@@ -52,7 +52,7 @@ def cpuinfo() -> Iterator[dict[str, CPUInfoValue]]:
 
 
 def is_baytrail() -> bool:
-    """Checks whether this system is a baytrail system."""
+    """Check whether this system is a baytrail system."""
 
     return any(
         baytrail in cpu.get('model name')

@@ -15,13 +15,13 @@ SEARCH_STRING = 'SMART overall-health self-assessment test result:'
 
 
 def smartctl(*args: str) -> list[str]:
-    """Runs smartctl."""
+    """Run smartctl."""
 
     return sudo(SMARTCTL, *args)
 
 
 def get_devices() -> Iterator[str]:
-    """Yields SMART capable devices."""
+    """Yield SMART capable devices."""
 
     text = check_output(smartctl('--scan-open'), text=True)
 
@@ -32,7 +32,7 @@ def get_devices() -> Iterator[str]:
 
 
 def check_device(device: str) -> str:
-    """Checks the SMART status of the given device."""
+    """Check the SMART status of the given device."""
 
     text = check_output(smartctl('-H', device), text=True)
 
@@ -45,6 +45,6 @@ def check_device(device: str) -> str:
 
 
 def device_states() -> dict:
-    """Checks the devices SMART status using smartctl."""
+    """Check the devices SMART status using smartctl."""
 
     return {device: check_device(device) for device in get_devices()}

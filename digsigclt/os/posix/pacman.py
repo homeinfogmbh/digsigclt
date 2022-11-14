@@ -11,14 +11,14 @@ __all__ = ['is_running', 'pacman', 'unlock', 'package_version']
 
 @command(as_bool=True)
 def is_running() -> list[str]:
-    """Checks if pacman is running."""
+    """Check if pacman is running."""
 
     return ['/usr/bin/pidof', 'pacman']
 
 
 @command()
 def unlock() -> list[str]:
-    """Unlocks the package manager."""
+    """Unlock the package manager."""
 
     if is_running():
         raise PackageManagerActive()
@@ -27,7 +27,7 @@ def unlock() -> list[str]:
 
 
 def pacman(*args: str) -> CompletedProcess:
-    """Runs pacman."""
+    """Run pacman."""
 
     return run(
         ['/usr/bin/pacman', *args],
@@ -39,7 +39,7 @@ def pacman(*args: str) -> CompletedProcess:
 
 
 def package_version(package: str) -> str | None:
-    """Returns the package version."""
+    """Return the package version."""
 
     try:
         result = pacman('-Q', package)

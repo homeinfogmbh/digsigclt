@@ -11,7 +11,7 @@ MEMINFO = Path('/proc/meminfo')
 
 
 def meminfo() -> Iterator[tuple[str, int | dict[str, str | int]]]:
-    """Returns memory information."""
+    """Return memory information."""
 
     with MEMINFO.open('r', encoding='ascii') as file:
         for line in file:

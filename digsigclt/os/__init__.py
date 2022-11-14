@@ -25,7 +25,7 @@ __all__ = [
 
 
 def application_status() -> ServiceState:
-    """Checks the status of the digital signage application."""
+    """Check the status of the digital signage application."""
 
     if name == 'posix':
         return posix.application_status()
@@ -43,7 +43,7 @@ def application_versions() -> dict[str, str | None]:
 
 
 def beep(args: tuple = ()) -> int:
-    """Performs a speaker beep to identify the system."""
+    """Perform a speaker beep to identify the system."""
 
     if name == 'posix':
         return posix.beep(args=args)
@@ -58,7 +58,7 @@ def beep(args: tuple = ()) -> int:
 
 
 def checkupdates() -> dict:
-    """Returns available updates."""
+    """Return available updates."""
 
     if name == 'posix':
         return posix.checkupdates()
@@ -67,7 +67,7 @@ def checkupdates() -> dict:
 
 
 def set_application(mode: str) -> int:
-    """Enables the digital signage application."""
+    """Enable the digital signage application."""
 
     if name == 'posix':
         return posix.application_set(mode)
@@ -76,7 +76,7 @@ def set_application(mode: str) -> int:
 
 
 def ping(host: str, count: int = 4) -> int:
-    """Pings a host."""
+    """Ping a host."""
 
     if name == 'posix':
         return posix.ping(host, count=count)
@@ -88,7 +88,7 @@ def ping(host: str, count: int = 4) -> int:
 
 
 def reboot(delay: int = 0) -> int:
-    """Reboots the system."""
+    """Reboot the system."""
 
     if name == 'posix':
         if delay:
@@ -103,7 +103,7 @@ def reboot(delay: int = 0) -> int:
 
 
 def screenshot() -> Screenshot:
-    """Takes a screenshot."""
+    """Take a screenshot."""
 
     if name == 'posix':
         return posix.screenshot()
@@ -112,7 +112,7 @@ def screenshot() -> Screenshot:
 
 
 def sensors() -> dict[str, Any]:
-    """Returns the system's temperature sensors and values."""
+    """Return the system's temperature sensors and values."""
 
     if name == 'posix':
         return posix.sensors()
@@ -121,7 +121,7 @@ def sensors() -> dict[str, Any]:
 
 
 def smartctl() -> dict:
-    """Checks SMART values of disks."""
+    """Check SMART values of disks."""
 
     if name == 'posix':
         return posix.device_states()
@@ -130,7 +130,7 @@ def smartctl() -> dict:
 
 
 def sysinfo() -> dict:
-    """Returns miscellaneous system information."""
+    """Return miscellaneous system information."""
 
     if name != 'posix':
         raise NotImplementedError()
@@ -139,7 +139,7 @@ def sysinfo() -> dict:
 
 
 def unlock_pacman() -> int:
-    """Unlocks the package manager."""
+    """Unlock the package manager."""
 
     if name == 'posix':
         return posix.unlock_pacman()
@@ -148,7 +148,7 @@ def unlock_pacman() -> int:
 
 
 def uptime() -> dict:
-    """Returns the system uptime."""
+    """Return the system uptime."""
 
     if name == 'posix':
         return posix.uptime()

@@ -12,13 +12,13 @@ UPTIME = '/usr/bin/uptime'
 
 
 def parse_float(string: str) -> float:
-    """Parses a float from a string."""
+    """Parse a float from a string."""
 
     return float(string.replace(',', '.'))
 
 
 def parse_timedelta(days: str | None, time_: str) -> timedelta:
-    """Parses a timedelta from the given days and time."""
+    """Parse a timedelta from the given days and time."""
 
     if days:
         days, _ = days.split()
@@ -103,6 +103,6 @@ class Uptime(NamedTuple):
 
 
 def uptime() -> dict:
-    """Returns the system uptime."""
+    """Return the system uptime."""
 
     return Uptime.get().to_json()

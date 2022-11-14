@@ -11,6 +11,6 @@ BEEP = '/usr/bin/beep'
 
 @command()
 def beep(args: tuple = ()) -> list[str]:
-    """Performs a speaker beep to identify the system."""
+    """Perform a speaker beep to identify the system."""
 
     return [BEEP, *args]
