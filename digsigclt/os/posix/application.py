@@ -94,9 +94,12 @@ def status() -> Applications:
     """Return the current mode."""
 
     for application in Applications:
-        if application.unit:
-            if is_enabled(application.unit) and is_running(application.unit):
-                return application
+        if (
+                application.unit
+                and is_enabled(application.unit)
+                and is_running(application.unit)
+        ):
+            return application
 
     return Applications.NONE
 
