@@ -12,6 +12,10 @@ Cmnd_Alias ENABLE_APPLICATION_AIR = /usr/bin/systemctl enable --now application.
 Cmnd_Alias DISABLE_APPLICATION_AIR = /usr/bin/systemctl disable --now application.service
 Cmnd_Alias ENABLE_APPLICATION_HTML = /usr/bin/systemctl enable --now html5ds.service
 Cmnd_Alias DISABLE_APPLICATION_HTML = /usr/bin/systemctl disable --now html5ds.service
+Cmnd_Alias ENABLE_UNCONFIGURED_WARNING = /usr/bin/systemctl enable --now unconfigured-warning.service
+Cmnd_Alias DISABLE_UNCONFIGURED_WARNING = /usr/bin/systemctl disable --now unconfigured-warning.service
+Cmnd_Alias ENABLE_INSTALLATION_INSTRUCTIONS = /usr/bin/systemctl enable --now installation-instructions.service
+Cmnd_Alias DISABLE_INSTALLATION_INSTRUCTIONS = /usr/bin/systemctl disable --now installation-instructions.service
 Cmnd_Alias SMARTCTL = /usr/bin/smartctl
 
 digsig ALL = NOPASSWD:	REBOOT, \
@@ -20,4 +24,8 @@ digsig ALL = NOPASSWD:	REBOOT, \
 			DISABLE_APPLICATION_AIR, \
 			ENABLE_APPLICATION_HTML, \
 			DISABLE_APPLICATION_HTML, \
+			ENABLE_UNCONFIGURED_WARNING, \
+			DISABLE_UNCONFIGURED_WARNING, \
+			ENABLE_INSTALLATION_INSTRUCTIONS, \
+			DISABLE_INSTALLATION_INSTRUCTIONS, \
 			SMARTCTL
