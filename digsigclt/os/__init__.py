@@ -37,7 +37,7 @@ def application_status() -> dict[str, str]:
     """Return the mode of the digital signage application."""
 
     if name == 'posix':
-        return posix.application_status()
+        return posix.application_status().to_json()
 
     raise NotImplementedError()
 

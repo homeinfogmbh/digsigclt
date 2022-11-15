@@ -1,29 +1,20 @@
 """Application-related commands."""
 
 from __future__ import annotations
+from enum import Enum
 from pathlib import Path
 from subprocess import CalledProcessError, check_call
 
 from digsigclt.os.common import commands
 from digsigclt.os.posix.common import sudo, systemctl
 from digsigclt.os.posix.pacman import package_version
-from digsigclt.types import ApplicationMode, Command
+from digsigclt.types import Application, ApplicationMode, Command
 
 
-__all__ = ['set_mode', 'status', 'versions']
+__all__ = ['Applications', 'set_mode', 'status', 'versions']
 
 
 SERVICES_DIR = Path('/usr/lib/systemd/system')
-PRODUCTIVE_APPLICATIONS = ('html5ds.service', 'application.service')
-NOT_CONFIGURED_WARNING = 'unconfigured-warning.service'
-INSTALLATION_INSTRUCTIONS = 'installation-instructions.service'
-UNITS = {
-    **{
-        unit: ApplicationMode.PRODUCTIVE for unit in PRODUCTIVE_APPLICATIONS
-    },
-    NOT_CONFIGURED_WARNING: ApplicationMode.NOT_CONFIGURED,
-    INSTALLATION_INSTRUCTIONS: ApplicationMode.NOT_CONFIGURED
-}
 PACKAGES = {
     'application-air',
     'application-html',
@@ -32,30 +23,57 @@ PACKAGES = {
 }
 
 
-def get_preferred_application() -> str:
+class Applications(Application, Enum):
+    """Available applications."""
+
+    AIR = Application(
+        'html',
+        ApplicationMode.PRODUCTIVE,
+        'application.service'
+    )
+    HTML = Application('html', ApplicationMode.PRODUCTIVE, 'html5ds.service')
+    NOT_CONFIGURED_WARNING = Application(
+        'not configured',
+        ApplicationMode.NOT_CONFIGURED,
+        'unconfigured-warning.service'
+    )
+    INSTALLATION_INSTRUCTIONS = Application(
+        'installation instructions',
+        ApplicationMode.INSTALLATION_INSTRUCTIONS,
+        'installation-instructions.service'
+    )
+    NONE = Application(
+        'none',
+        ApplicationMode.OFF,
+        None
+    )
+
+
+def get_preferred_application() -> Applications:
     """Return the preferred service on the system."""
 
-    for unit in PRODUCTIVE_APPLICATIONS:
-        if SERVICES_DIR.joinpath(unit).is_file():
-            return unit
+    for application in Applications:
+        if application.mode == ApplicationMode.PRODUCTIVE:
+            if SERVICES_DIR.joinpath(application.unit).is_file():
+                return application
 
     raise ValueError('No productive application installed.')
 
 
-def get_application(mode: ApplicationMode) -> str | None:
+def get_application(mode: ApplicationMode) -> Application:
     """Return the respective application type."""
 
     if mode is ApplicationMode.PRODUCTIVE:
         return get_preferred_application()
 
     if mode is ApplicationMode.INSTALLATION_INSTRUCTIONS:
-        return INSTALLATION_INSTRUCTIONS
+        return Applications.INSTALLATION_INSTRUCTIONS
 
     if mode is ApplicationMode.NOT_CONFIGURED:
-        return NOT_CONFIGURED_WARNING
+        return Applications.NOT_CONFIGURED_WARNING
 
     if mode is ApplicationMode.OFF:
-        return None
+        return Applications.NONE
 
     raise ValueError('Invalid mode:', mode)
 
@@ -64,26 +82,27 @@ def get_application(mode: ApplicationMode) -> str | None:
 def set_mode(mode: str) -> int:
     """Set application mode."""
 
-    for unit in UNITS:
-        yield Command(sudo(systemctl('disable', '--now', unit)), exit_ok={1})
+    for application in Applications:
+        yield Command(
+            sudo(
+                systemctl('disable', '--now', application.unit)
+            ),
+            exit_ok={1}
+        )
 
-    if unit := get_application(ApplicationMode[mode.upper()]):
+    if unit := get_application(ApplicationMode[mode.upper()]).unit:
         yield Command(sudo(systemctl('enable', '--now', unit)))
 
 
-def status() -> dict[str, str]:
+def status() -> Applications:
     """Return the current mode."""
 
-    for unit, mode in UNITS.items():
-        if is_enabled(unit) and is_running(unit):
-            return {
-                'mode': mode.name,
-                'unit': unit
-            }
+    for application in Applications:
+        if application.unit:
+            if is_enabled(application.unit) and is_running(application.unit):
+                return application
 
-    return {
-        'mode': ApplicationMode.OFF.name
-    }
+    return Applications.NONE
 
 
 def versions() -> dict[str, str | None]:
