@@ -28,7 +28,7 @@ class Applications(Application, Enum):
 
     HTML = Application('html', ApplicationMode.PRODUCTIVE, 'html5ds.service')
     AIR = Application(
-        'html',
+        'air',
         ApplicationMode.PRODUCTIVE,
         'application.service'
     )
