@@ -11,7 +11,6 @@ from digsigclt.types import Screenshot
 __all__ = [
     'application_set_mode',
     'application_status',
-    'application_versions',
     'beep',
     'checkupdates',
     'ping',
@@ -38,15 +37,6 @@ def application_status() -> dict[str, str]:
 
     if name == 'posix':
         return posix.application_status().to_json()
-
-    raise NotImplementedError()
-
-
-def application_versions() -> dict[str, str | None]:
-    """Return the application versions."""
-
-    if name == 'posix':
-        return posix.application_versions()
 
     raise NotImplementedError()
 

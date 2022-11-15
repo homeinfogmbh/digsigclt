@@ -4,33 +4,61 @@ from __future__ import annotations
 from enum import Enum
 from pathlib import Path
 from subprocess import CalledProcessError, check_call
+from typing import NamedTuple
 
 from digsigclt.os.common import commands
 from digsigclt.os.posix.common import sudo, systemctl
 from digsigclt.os.posix.pacman import package_version
-from digsigclt.types import Application, ApplicationMode, Command
+from digsigclt.types import ApplicationMode, Command
 
 
-__all__ = ['Applications', 'set_mode', 'status', 'versions']
+__all__ = ['Applications', 'set_mode', 'status']
 
 
 SERVICES_DIR = Path('/usr/lib/systemd/system')
-PACKAGES = {
-    'application-air',
-    'application-html',
-    'html5ds',
-    'chromium'
-}
+
+
+class Application(NamedTuple):
+    """Application types."""
+
+    name: str
+    mode: ApplicationMode
+    unit: str | None = None
+    package: str | None = None
+
+    @property
+    def version(self) -> str | None:
+        """Return the package version."""
+        if package := self.package:
+            return package_version(package)
+
+        return None
+
+    def to_json(self) -> dict[str, str]:
+        """Return a JSON-ish dict."""
+        return {
+            'name': self.name,
+            'mode': self.mode.name,
+            'unit': self.unit,
+            'package': self.package,
+            'version': self.version
+        }
 
 
 class Applications(Application, Enum):
     """Available applications."""
 
-    HTML = Application('html', ApplicationMode.PRODUCTIVE, 'html5ds.service')
+    HTML = Application(
+        'html',
+        ApplicationMode.PRODUCTIVE,
+        'html5ds.service',
+        'application-html'
+    )
     AIR = Application(
         'air',
         ApplicationMode.PRODUCTIVE,
-        'application.service'
+        'application.service',
+        'application-air'
     )
     NOT_CONFIGURED_WARNING = Application(
         'not configured',
@@ -42,7 +70,7 @@ class Applications(Application, Enum):
         ApplicationMode.INSTALLATION_INSTRUCTIONS,
         'installation-instructions.service'
     )
-    NONE = Application('none', ApplicationMode.OFF, None)
+    NONE = Application('none', ApplicationMode.OFF)
 
 
 def get_preferred_application() -> Applications:
@@ -94,20 +122,16 @@ def status() -> Applications:
     """Return the current mode."""
 
     for application in Applications:
-        if (
-                application.unit
-                and is_enabled(application.unit)
-                and is_running(application.unit)
-        ):
+        if application.unit and is_active(application.unit):
             return application
 
     return Applications.NONE
 
 
-def versions() -> dict[str, str | None]:
-    """Return the package versions."""
+def is_active(unit: str) -> bool:
+    """Check whether the unit is enabled and running."""
 
-    return {package: package_version(package) for package in PACKAGES}
+    return is_enabled(unit) and is_running(unit)
 
 
 def is_enabled(unit: str) -> bool:

@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from digsigclt.os.posix.application import status, versions
+from digsigclt.os.posix.application import status
 from digsigclt.os.posix.cmdline import cmdline
 from digsigclt.os.posix.cpuinfo import cpuinfo, is_baytrail
 from digsigclt.os.posix.df import df
@@ -21,10 +21,7 @@ def sysinfo() -> dict[str, Any]:
     """Return miscellaneous system information."""
 
     return {
-        'application': {
-            'status': status().to_json(),
-            'versions': versions()
-        },
+        'application': status().to_json(),
         'baytrail': is_baytrail(),
         'efi': {
             'mounted': efi_mounted_as_boot()

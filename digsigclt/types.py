@@ -9,7 +9,6 @@ from typing import Iterator, NamedTuple, Sequence
 
 
 __all__ = [
-    'Application',
     'ApplicationMode',
     'Command',
     'IPAddress',
@@ -33,22 +32,6 @@ class ApplicationMode(int, Enum):
     INSTALLATION_INSTRUCTIONS = auto()
     NOT_CONFIGURED = auto()
     OFF = auto()
-
-
-class Application(NamedTuple):
-    """Application types."""
-
-    name: str
-    mode: ApplicationMode
-    unit: str | None
-
-    def to_json(self) -> dict[str, str]:
-        """Return a JSON-ish dict."""
-        return {
-            'name': self.name,
-            'mode': self.mode.name,
-            'unit': self.unit
-        }
 
 
 class Command(NamedTuple):
