@@ -42,11 +42,7 @@ class Applications(Application, Enum):
         ApplicationMode.INSTALLATION_INSTRUCTIONS,
         'installation-instructions.service'
     )
-    NONE = Application(
-        'none',
-        ApplicationMode.OFF,
-        None
-    )
+    NONE = Application('none', ApplicationMode.OFF, None)
 
 
 def get_preferred_application() -> Applications:
