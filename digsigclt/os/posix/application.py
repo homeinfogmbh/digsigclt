@@ -106,12 +106,11 @@ def set_mode(mode: str) -> int:
     """Set application mode."""
 
     for application in Applications:
-        yield Command(
-            sudo(
-                systemctl('disable', '--now', application.unit)
-            ),
-            exit_ok={1}
-        )
+        if unit := application.unit:
+            yield Command(
+                sudo(systemctl('disable', '--now', unit)),
+                exit_ok={1}
+            )
 
     if unit := get_application(ApplicationMode[mode.upper()]).unit:
         yield Command(sudo(systemctl('enable', '--now', unit)))
