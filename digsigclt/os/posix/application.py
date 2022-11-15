@@ -69,7 +69,7 @@ class Applications(Application, Enum):
         ApplicationMode.INSTALLATION_INSTRUCTIONS,
         'installation-instructions.service'
     )
-    NONE = Application('none', ApplicationMode.OFF)
+    OFF = Application('off', ApplicationMode.OFF)
 
 
 def get_preferred_application() -> Applications:
@@ -96,7 +96,7 @@ def get_application(mode: ApplicationMode) -> Application:
         return Applications.NOT_CONFIGURED_WARNING
 
     if mode is ApplicationMode.OFF:
-        return Applications.NONE
+        return Applications.OFF
 
     raise ValueError('Invalid mode:', mode)
 
@@ -127,4 +127,4 @@ def status() -> Applications:
         ):
             return application
 
-    return Applications.NONE
+    return Applications.OFF
