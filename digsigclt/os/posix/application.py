@@ -53,7 +53,7 @@ def get_preferred_application() -> Applications:
     """Return the preferred service on the system."""
 
     for application in Applications:
-        if application.mode == ApplicationMode.PRODUCTIVE:
+        if application.unit and application.mode == ApplicationMode.PRODUCTIVE:
             if SERVICES_DIR.joinpath(application.unit).is_file():
                 return application
 
