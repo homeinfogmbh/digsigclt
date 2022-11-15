@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import NamedTuple
 
 from digsigclt.os.common import commands
-from digsigclt.os.posix.common import sudo, systemctl, is_active
+from digsigclt.os.posix.common import sudo, systemctl, is_active, is_enabled
 from digsigclt.os.posix.pacman import package_version
 from digsigclt.types import ApplicationMode, Command
 
@@ -121,7 +121,11 @@ def status() -> Applications:
     """Return the current mode."""
 
     for application in Applications:
-        if application.unit and is_active(application.unit):
+        if (
+                application.unit
+                and is_enabled(application.unit)
+                and is_active(application.unit)
+        ):
             return application
 
     return Applications.NONE

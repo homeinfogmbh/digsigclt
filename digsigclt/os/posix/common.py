@@ -19,8 +19,7 @@ __all__ = [
     'list_sessions',
     'logged_in_users',
     'is_active',
-    'is_enabled',
-    'is_running'
+    'is_enabled'
 ]
 
 
@@ -82,28 +81,22 @@ def logged_in_users() -> set[str]:
     return {session['user'] for session in list_sessions()}
 
 
-def is_active(unit: str) -> bool:
-    """Check whether the unit is enabled and running."""
-
-    return is_enabled(unit) and is_running(unit)
-
-
 def is_enabled(unit: str) -> bool:
     """Check whether the unit is enabled."""
 
     try:
-        check_call(systemctl('is-enabled', unit))
+        check_call(systemctl('is-enabled', unit, '--quiet'))
     except CalledProcessError:
         return False
 
     return True
 
 
-def is_running(unit: str) -> bool:
+def is_active(unit: str) -> bool:
     """Check whether the unit is running."""
 
     try:
-        check_call(systemctl('is-running', unit))
+        check_call(systemctl('is-active', unit, '--quiet'))
     except CalledProcessError:
         return False
 
