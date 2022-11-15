@@ -52,7 +52,8 @@ def commands(*, as_bool: bool = False) -> CommandsDecorator:
                     check_call(cmd.command)
                 except CalledProcessError as called_process_error:
                     if called_process_error.returncode not in cmd.exit_ok:
-                        errors[cmd] = called_process_error
+                        if cmd.crucial:
+                            errors[cmd] = called_process_error
 
             if as_bool:
                 return not errors
