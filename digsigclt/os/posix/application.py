@@ -26,12 +26,12 @@ PACKAGES = {
 class Applications(Application, Enum):
     """Available applications."""
 
+    HTML = Application('html', ApplicationMode.PRODUCTIVE, 'html5ds.service')
     AIR = Application(
         'html',
         ApplicationMode.PRODUCTIVE,
         'application.service'
     )
-    HTML = Application('html', ApplicationMode.PRODUCTIVE, 'html5ds.service')
     NOT_CONFIGURED_WARNING = Application(
         'not configured',
         ApplicationMode.NOT_CONFIGURED,
