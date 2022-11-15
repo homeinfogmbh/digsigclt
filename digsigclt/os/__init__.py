@@ -5,7 +5,7 @@ from typing import Any
 
 from digsigclt.common import LOGGER
 from digsigclt.os import nt, posix
-from digsigclt.types import ApplicationMode, Screenshot
+from digsigclt.types import Screenshot
 
 
 __all__ = [
@@ -33,7 +33,7 @@ def application_set_mode(mode: str) -> int:
     raise NotImplementedError()
 
 
-def application_status() -> ApplicationMode:
+def application_status() -> dict[str, str]:
     """Return the mode of the digital signage application."""
 
     if name == 'posix':

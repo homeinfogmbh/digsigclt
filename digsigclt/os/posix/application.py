@@ -71,14 +71,19 @@ def set_mode(mode: str) -> int:
         yield Command(sudo(systemctl('enable', '--now', unit)))
 
 
-def status() -> ApplicationMode:
+def status() -> dict[str, str]:
     """Return the current mode."""
 
     for unit, mode in UNITS.items():
         if is_enabled(unit) and is_running(unit):
-            return mode
+            return {
+                'mode': mode.name,
+                'unit': unit
+            }
 
-    return ApplicationMode.OFF
+    return {
+        'mode': ApplicationMode.OFF.name
+    }
 
 
 def versions() -> dict[str, str | None]:

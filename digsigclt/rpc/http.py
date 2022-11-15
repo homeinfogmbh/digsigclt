@@ -19,7 +19,7 @@ def http_application(mode: str | None = None) -> Response:
 
     with Response() as response:
         if mode is None:
-            response.payload = application_status().name
+            response.payload = application_status()
         else:
             application_set_mode(mode)
 
