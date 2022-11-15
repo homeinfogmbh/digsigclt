@@ -3,11 +3,10 @@
 from __future__ import annotations
 from enum import Enum
 from pathlib import Path
-from subprocess import CalledProcessError, check_call
 from typing import NamedTuple
 
 from digsigclt.os.common import commands
-from digsigclt.os.posix.common import sudo, systemctl
+from digsigclt.os.posix.common import sudo, systemctl, is_active
 from digsigclt.os.posix.pacman import package_version
 from digsigclt.types import ApplicationMode, Command
 
@@ -126,31 +125,3 @@ def status() -> Applications:
             return application
 
     return Applications.NONE
-
-
-def is_active(unit: str) -> bool:
-    """Check whether the unit is enabled and running."""
-
-    return is_enabled(unit) and is_running(unit)
-
-
-def is_enabled(unit: str) -> bool:
-    """Check whether the unit is enabled."""
-
-    try:
-        check_call(systemctl('is-enabled', unit))
-    except CalledProcessError:
-        return False
-
-    return True
-
-
-def is_running(unit: str) -> bool:
-    """Check whether the unit is running."""
-
-    try:
-        check_call(systemctl('is-running', unit))
-    except CalledProcessError:
-        return False
-
-    return True

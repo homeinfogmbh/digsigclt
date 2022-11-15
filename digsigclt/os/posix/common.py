@@ -3,7 +3,7 @@
 from json import loads
 from os import linesep
 from pathlib import Path
-from subprocess import check_output
+from subprocess import CalledProcessError, check_call, check_output
 from typing import Iterable, Iterator
 
 
@@ -17,7 +17,10 @@ __all__ = [
     'journalctl',
     'list_journal',
     'list_sessions',
-    'logged_in_users'
+    'logged_in_users',
+    'is_active',
+    'is_enabled',
+    'is_running'
 ]
 
 
@@ -77,3 +80,31 @@ def logged_in_users() -> set[str]:
     """Return a set of users with an active session."""
 
     return {session['user'] for session in list_sessions()}
+
+
+def is_active(unit: str) -> bool:
+    """Check whether the unit is enabled and running."""
+
+    return is_enabled(unit) and is_running(unit)
+
+
+def is_enabled(unit: str) -> bool:
+    """Check whether the unit is enabled."""
+
+    try:
+        check_call(systemctl('is-enabled', unit))
+    except CalledProcessError:
+        return False
+
+    return True
+
+
+def is_running(unit: str) -> bool:
+    """Check whether the unit is running."""
+
+    try:
+        check_call(systemctl('is-running', unit))
+    except CalledProcessError:
+        return False
+
+    return True
