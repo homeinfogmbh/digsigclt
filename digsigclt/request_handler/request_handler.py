@@ -162,7 +162,7 @@ class HTTPRequestHandler(HTTPRequestHandlerBase):
 
         json = {'manifest': manifest}
 
-        with suppress(NotImplementedError):
+        with suppress(NotImplementedError, ValueError):
             json['application'] = get_preferred_application().to_json()
 
         if (last_sync := type(self).last_sync) is not None:
