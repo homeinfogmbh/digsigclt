@@ -1,5 +1,6 @@
 """POSIX system commands."""
 
+from digsigclt.os.posix.application import Application
 from digsigclt.os.posix.application import set_mode as application_set_mode
 from digsigclt.os.posix.application import status as application_status
 from digsigclt.os.posix.beep import beep
@@ -20,6 +21,7 @@ from digsigclt.os.posix.uptime import uptime
 
 
 __all__ = [
+    'Application',
     'application_set_mode',
     'application_status',
     'beep',

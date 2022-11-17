@@ -32,11 +32,11 @@ def application_set_mode(mode: str) -> int:
     raise NotImplementedError()
 
 
-def application_status() -> dict[str, str]:
+def application_status() -> posix.Application:
     """Return the mode of the digital signage application."""
 
     if name == 'posix':
-        return posix.application_status().to_json()
+        return posix.application_status()
 
     raise NotImplementedError()
 

@@ -11,7 +11,7 @@ from digsigclt.os.posix.pacman import package_version
 from digsigclt.types import ApplicationMode, Command
 
 
-__all__ = ['Applications', 'set_mode', 'status']
+__all__ = ['Application', 'set_mode', 'status']
 
 
 SERVICES_DIR = Path('/usr/lib/systemd/system')
@@ -116,7 +116,7 @@ def set_mode(mode: str) -> int:
         yield Command(sudo(systemctl('enable', '--now', unit)))
 
 
-def status() -> Applications:
+def status() -> Application:
     """Return the current mode."""
 
     for application in Applications:
