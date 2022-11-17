@@ -72,7 +72,7 @@ class Applications(Application, Enum):
     OFF = Application('off', ApplicationMode.OFF)
 
 
-def get_preferred_application() -> Applications:
+def get_preferred_application() -> Application:
     """Return the preferred service on the system."""
 
     for application in Applications:
