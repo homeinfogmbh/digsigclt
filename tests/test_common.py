@@ -1,37 +1,16 @@
 """Tests the common.py module."""
 
-from json import dumps
 from pathlib import Path
 from tempfile import TemporaryFile
 from unittest import TestCase
 
-from digsigclt.common import FileInfo, copy_file, sha256sum
+from digsigclt.common import copy_file, sha256sum
 
 
-CONTENT = 'Hello, world.\n'
 PATH = Path(__file__).parent.joinpath('testfile.txt')
-CTIME = 1611050058.40735
 SHA256 = '1ab1a2bb8502820a83881a5b66910b819121bafe336d76374637aa4ea7ba2616'
-JSON = {'sha256sum': SHA256, 'ctime': CTIME}
 CHUNK_SIZE = 1024
 SIZE = CHUNK_SIZE ** 2
-
-
-class TestFileInfo(TestCase):
-    """Test the FileInfo class."""
-
-    def _test_file_info(self, file_info: FileInfo):
-        """Tests a FileInfo object."""
-        self.assertEqual(file_info.sha256sum, SHA256)
-        self.assertEqual(file_info.ctime, CTIME)
-        self.assertEqual(file_info.to_json(), JSON)
-        self.assertEqual(str(file_info), dumps(JSON))
-        self.assertEqual(bytes(file_info), dumps(JSON).encode())
-
-    def test_from_file(self):
-        """Tests the FileInfo.from_file classmethod."""
-        self._test_file_info(FileInfo.from_file(PATH))
-        self._test_file_info(FileInfo.from_file(str(PATH)))
 
 
 class TestCopyFile(TestCase):
