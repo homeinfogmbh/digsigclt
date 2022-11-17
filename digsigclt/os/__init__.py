@@ -13,6 +13,7 @@ __all__ = [
     'application_status',
     'beep',
     'checkupdates',
+    'get_preferred_application',
     'ping',
     'reboot',
     'screenshot',
@@ -61,6 +62,15 @@ def checkupdates() -> dict:
 
     if name == 'posix':
         return posix.checkupdates()
+
+    raise NotImplementedError()
+
+
+def get_preferred_application() -> posix.Application:
+    """Return the preferred application."""
+
+    if name == 'posix':
+        return posix.get_preferred_application()
 
     raise NotImplementedError()
 

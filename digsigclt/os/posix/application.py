@@ -11,7 +11,7 @@ from digsigclt.os.posix.pacman import package_version
 from digsigclt.types import ApplicationMode, Command
 
 
-__all__ = ['Application', 'set_mode', 'status']
+__all__ = ['Application', 'get_preferred_application', 'set_mode', 'status']
 
 
 SERVICES_DIR = Path('/usr/lib/systemd/system')

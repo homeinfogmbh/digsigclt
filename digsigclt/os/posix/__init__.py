@@ -3,6 +3,7 @@
 from digsigclt.os.posix.application import Application
 from digsigclt.os.posix.application import set_mode as application_set_mode
 from digsigclt.os.posix.application import status as application_status
+from digsigclt.os.posix.application import get_preferred_application
 from digsigclt.os.posix.beep import beep
 from digsigclt.os.posix.checkupdates import checkupdates
 from digsigclt.os.posix.cmdline import cmdline
@@ -30,6 +31,7 @@ __all__ = [
     'cpuinfo',
     'device_states',
     'efi_mounted_as_boot',
+    'get_preferred_application',
     'is_baytrail',
     'list_journal',
     'meminfo',

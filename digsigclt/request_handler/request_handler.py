@@ -10,7 +10,7 @@ from digsigclt.common import LOGFILE, LOGGER, copy_file
 from digsigclt.exceptions import RequestError
 from digsigclt.lock import Locked
 from digsigclt.rpc import COMMANDS, http_screenshot
-from digsigclt.os import application_status, sysinfo
+from digsigclt.os import get_preferred_application, sysinfo
 from digsigclt.sync import update
 
 from digsigclt.request_handler.common import LOCK, get_manifest
@@ -163,7 +163,7 @@ class HTTPRequestHandler(HTTPRequestHandlerBase):
         json = {'manifest': manifest}
 
         with suppress(NotImplementedError):
-            json['application'] = application_status().to_json()
+            json['application'] = get_preferred_application().to_json()
 
         if (last_sync := type(self).last_sync) is not None:
             json['last_sync'] = last_sync.isoformat()
