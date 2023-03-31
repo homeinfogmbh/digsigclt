@@ -1,4 +1,4 @@
-"""Adding of presentation."""
+"""Reading of local CMS presentation."""
 
 from contextlib import suppress
 from json import load, loads
