@@ -12,7 +12,7 @@ BASEDIR = Path('/sys/class/net')
 
 
 def netstats() -> dict[str, dict[str, int | str]]:
-    """Return network RX and TX statistics for each interface."""
+    """Return network statistics for each interface."""
 
     return {
         path.name: dict(interface_stats(path))
@@ -21,7 +21,7 @@ def netstats() -> dict[str, dict[str, int | str]]:
 
 
 def interface_stats(path: Path) -> Iterator[tuple[str, int | str]]:
-    """Return network RX and TX statistics for the given interface."""
+    """Yield network statistics for the given interface."""
 
     for file in filter(Path.is_file, path.iterdir()):
         with suppress(OSError):
@@ -29,7 +29,9 @@ def interface_stats(path: Path) -> Iterator[tuple[str, int | str]]:
 
 
 def read_file(path: Path) -> int | str:
-    """Read the integer value of the given file."""
+    """Read the integer value of the given file,
+    iff applicable, else file content as str.
+    """
 
     with path.open('r', encoding='utf-8') as file:
         content = file.read()
