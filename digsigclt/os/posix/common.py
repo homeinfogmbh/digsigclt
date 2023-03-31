@@ -23,7 +23,7 @@ __all__ = [
 ]
 
 
-ADMIN_USERS = {'homeinfo'}
+ADMIN_USERS = {'homeinfo', 'root'}
 SUDO = '/usr/bin/sudo'
 SYSTEMCTL = '/usr/bin/systemctl'
 JOURNALCTL = '/usr/bin/journalctl'
