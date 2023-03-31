@@ -2,6 +2,7 @@
 
 from contextlib import suppress
 from pathlib import Path
+from typing import Iterator
 
 
 __all__ = ['netstats']
@@ -13,17 +14,18 @@ BASEDIR = Path('/sys/class/net')
 def netstats() -> dict[str, dict[str, int | str]]:
     """Return network RX and TX statistics for each interface."""
 
-    return {path.name: interface_stats(path) for path in BASEDIR.iterdir()}
+    return {
+        path.name: dict(interface_stats(path))
+        for path in BASEDIR.iterdir()
+    }
 
 
-def interface_stats(path: Path) -> dict[str, int | str]:
+def interface_stats(path: Path) -> Iterator[tuple[str, int | str]]:
     """Return network RX and TX statistics for the given interface."""
 
-    return {
-        file.name: read_file(path / file)
-        for file in path.iterdir()
-        if file.is_file()
-    }
+    for file in filter(Path.is_file, path.iterdir()):
+        with suppress(OSError):
+            yield file.name, read_file(path / file)
 
 
 def read_file(path: Path) -> int | str:
