@@ -7,10 +7,10 @@ from unittest import TestCase
 from digsigclt.common import copy_file, sha256sum
 
 
-PATH = Path(__file__).parent.joinpath('testfile.txt')
-SHA256 = '1ab1a2bb8502820a83881a5b66910b819121bafe336d76374637aa4ea7ba2616'
+PATH = Path(__file__).parent.joinpath("testfile.txt")
+SHA256 = "1ab1a2bb8502820a83881a5b66910b819121bafe336d76374637aa4ea7ba2616"
 CHUNK_SIZE = 1024
-SIZE = CHUNK_SIZE ** 2
+SIZE = CHUNK_SIZE**2
 
 
 class TestCopyFile(TestCase):
@@ -18,7 +18,7 @@ class TestCopyFile(TestCase):
 
     def test_copy_file(self):
         """Tests the copy_file() function."""
-        with open('/dev/zero', 'rb') as src, TemporaryFile('w+b') as dst:
+        with open("/dev/zero", "rb") as src, TemporaryFile("w+b") as dst:
             copy_file(src, dst, SIZE, chunk_size=CHUNK_SIZE)
             dst.flush()
             dst.seek(0)

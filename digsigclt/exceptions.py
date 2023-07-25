@@ -6,13 +6,13 @@ from typing import Iterable
 
 
 __all__ = [
-    'CalledProcessErrors',
-    'ManifestError',
-    'NoAddressFound',
-    'PackageManagerActive',
-    'RequestError',
-    'UnderAdministration',
-    'UpdateProtocolError'
+    "CalledProcessErrors",
+    "ManifestError",
+    "NoAddressFound",
+    "PackageManagerActive",
+    "RequestError",
+    "UnderAdministration",
+    "UpdateProtocolError",
 ]
 
 

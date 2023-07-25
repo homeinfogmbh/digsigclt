@@ -3,7 +3,7 @@
 from threading import Lock as _Lock
 
 
-__all__ = ['Locked', 'Lock']
+__all__ = ["Locked", "Lock"]
 
 
 class Locked(Exception):
@@ -14,7 +14,7 @@ class Lock:
     """A custom thread lock context manager."""
 
     def __init__(self):
-        self._lock = _Lock()    # _Lock() is a function!
+        self._lock = _Lock()  # _Lock() is a function!
 
     def __enter__(self):
         if not self._lock.acquire(blocking=False):

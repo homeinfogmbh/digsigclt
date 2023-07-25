@@ -7,11 +7,11 @@ from typing import Iterator
 from digsigclt.os.posix.common import sudo
 
 
-__all__ = ['device_states']
+__all__ = ["device_states"]
 
 
-SMARTCTL = '/usr/bin/smartctl'
-SEARCH_STRING = 'SMART overall-health self-assessment test result:'
+SMARTCTL = "/usr/bin/smartctl"
+SEARCH_STRING = "SMART overall-health self-assessment test result:"
 
 
 def smartctl(*args: str) -> list[str]:
@@ -23,7 +23,7 @@ def smartctl(*args: str) -> list[str]:
 def get_devices() -> Iterator[str]:
     """Yield SMART capable devices."""
 
-    text = check_output(smartctl('--scan-open'), text=True)
+    text = check_output(smartctl("--scan-open"), text=True)
 
     for line in text.split(linesep):
         if line := line.strip():
@@ -34,14 +34,14 @@ def get_devices() -> Iterator[str]:
 def check_device(device: str) -> str:
     """Check the SMART status of the given device."""
 
-    text = check_output(smartctl('-H', device), text=True)
+    text = check_output(smartctl("-H", device), text=True)
 
     for line in text.split(linesep):
         if (line := line.strip()).startswith(SEARCH_STRING):
-            _, result = line.split(':')
+            _, result = line.split(":")
             return result.strip()
 
-    return 'UNKNOWN'
+    return "UNKNOWN"
 
 
 def device_states() -> dict:

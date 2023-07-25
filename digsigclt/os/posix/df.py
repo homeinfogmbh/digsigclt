@@ -6,10 +6,10 @@ from subprocess import check_output
 from typing import Iterator, NamedTuple
 
 
-__all__ = ['DFEntry', 'df']
+__all__ = ["DFEntry", "df"]
 
 
-DF = '/usr/bin/df'
+DF = "/usr/bin/df"
 
 
 class DFEntry(NamedTuple):
@@ -31,19 +31,19 @@ class DFEntry(NamedTuple):
             int(blocks),
             int(used),
             int(available),
-            int(use_pct.rstrip('%')),
-            mountpoint
+            int(use_pct.rstrip("%")),
+            mountpoint,
         )
 
     def to_json(self) -> dict[str, str | int]:
         """Return a JSON-ish dict."""
         return {
-            'filesystem': self.filesystem,
-            'blocks': self.blocks,
-            'used': self.used,
-            'available': self.available,
-            'use_pct': self.use_pct,
-            'mountpoint': self.mountpoint
+            "filesystem": self.filesystem,
+            "blocks": self.blocks,
+            "used": self.used,
+            "available": self.available,
+            "use_pct": self.use_pct,
+            "mountpoint": self.mountpoint,
         }
 
 
@@ -51,10 +51,10 @@ def get_args(*, local: bool = False, posix: bool = False) -> Iterator[str]:
     """Yield command line arguments."""
 
     if local:
-        yield '-l'
+        yield "-l"
 
     if posix:
-        yield'-P'
+        yield "-P"
 
 
 def df(*, local: bool = False, posix: bool = False) -> Iterator[DFEntry]:

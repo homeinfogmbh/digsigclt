@@ -8,7 +8,7 @@ from digsigclt.exceptions import CalledProcessErrors
 from digsigclt.types import Command
 
 
-__all__ = ['command', 'commands']
+__all__ = ["command", "commands"]
 
 
 CommandGenerator = Callable[..., Sequence[str]]

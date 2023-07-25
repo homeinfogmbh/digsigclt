@@ -7,7 +7,7 @@ from typing import Any
 from digsigclt.types import Payload, ResponseContent
 
 
-__all__ = ['HTTPRequestHandlerBase']
+__all__ = ["HTTPRequestHandlerBase"]
 
 
 class HTTPRequestHandlerBase(BaseHTTPRequestHandler):
@@ -16,7 +16,7 @@ class HTTPRequestHandlerBase(BaseHTTPRequestHandler):
     @property
     def content_length(self) -> int:
         """Return the content length."""
-        return int(self.headers['Content-Length'])
+        return int(self.headers["Content-Length"])
 
     @property
     def bytes(self) -> bytes:
@@ -36,18 +36,15 @@ class HTTPRequestHandlerBase(BaseHTTPRequestHandler):
     def send_content(self, content: ResponseContent, status_code: int) -> None:
         """Send the respective response content."""
         self.send_response(status_code)
-        self.send_header('Content-Type', content.content_type)
+        self.send_header("Content-Type", content.content_type)
         self.end_headers()
         self.wfile.write(content.payload)
 
     def send_data(
-            self,
-            payload: Payload,
-            status_code: int,
-            content_type: str | None = None
+        self, payload: Payload, status_code: int, content_type: str | None = None
     ) -> None:
         """Send the respective data."""
         self.send_content(
             ResponseContent.from_payload(payload, content_type=content_type),
-            status_code
+            status_code,
         )

@@ -4,10 +4,10 @@ from os import linesep
 from subprocess import CalledProcessError, check_output
 
 
-__all__ = ['checkupdates']
+__all__ = ["checkupdates"]
 
 
-CHECKUPDATES = '/usr/bin/checkupdates'
+CHECKUPDATES = "/usr/bin/checkupdates"
 
 
 def checkupdates() -> dict:

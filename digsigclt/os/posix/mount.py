@@ -6,13 +6,13 @@ from re import fullmatch
 from typing import Any, Iterator, NamedTuple
 
 
-__all__ = ['efi_mounted_as_boot', 'mount', 'root_mounted_ro']
+__all__ = ["efi_mounted_as_boot", "mount", "root_mounted_ro"]
 
 
-EFI_PARTITION = Path('/dev/disk/by-label/EFI')
-BOOT = Path('/boot')
-MOUNT_REGEX = r'(.+) (.+) (.+) (.+) (\d+) (\d+)'
-MOUNTS = Path('/proc/mounts')
+EFI_PARTITION = Path("/dev/disk/by-label/EFI")
+BOOT = Path("/boot")
+MOUNT_REGEX = r"(.+) (.+) (.+) (.+) (\d+) (\d+)"
+MOUNTS = Path("/proc/mounts")
 
 
 class MountPoint(NamedTuple):
@@ -29,25 +29,25 @@ class MountPoint(NamedTuple):
     def from_string(cls, string: str) -> MountPoint:
         """Create a mount point from a string."""
         if (match := fullmatch(MOUNT_REGEX, string)) is None:
-            raise ValueError('Invalid mount value:', string)
+            raise ValueError("Invalid mount value:", string)
 
         what, where, typ, flags, freq, passno = match.groups()
         return cls(
             what,
             Path(where),
             typ,
-            dict(map(parse_flag, flags.split(','))),
+            dict(map(parse_flag, flags.split(","))),
             int(freq),
-            int(passno)
+            int(passno),
         )
 
     def to_json(self) -> dict[str, Any]:
         """Return a JSON-ish dict."""
         return {
-            'what': self.what,
-            'where': str(self.where),
-            'type': self.type,
-            'flags': self.flags
+            "what": self.what,
+            "where": str(self.where),
+            "type": self.type,
+            "flags": self.flags,
         }
 
 
@@ -70,7 +70,7 @@ def efi_not_mounted_as_boot() -> bool:
 def mount() -> Iterator[MountPoint]:
     """Yield mount points on the system."""
 
-    with MOUNTS.open('r') as file:
+    with MOUNTS.open("r") as file:
         for line in file:
             yield MountPoint.from_string(line.strip())
 
@@ -79,8 +79,8 @@ def root_mounted_ro() -> bool | None:
     """Check whether / is mounted read-only."""
 
     for mount_point in mount():
-        if mount_point.where == Path('/'):
-            return 'ro' in mount_point.flags
+        if mount_point.where == Path("/"):
+            return "ro" in mount_point.flags
 
     return None
 
@@ -89,7 +89,7 @@ def parse_flag(flag: str) -> tuple[str, str | int | None]:
     """Parse a mount flag."""
 
     try:
-        key, value = flag.split('=')
+        key, value = flag.split("=")
     except ValueError:
         return flag, None
 

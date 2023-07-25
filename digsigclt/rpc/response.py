@@ -9,19 +9,25 @@ from digsigclt.exceptions import PackageManagerActive
 from digsigclt.types import Payload
 
 
-__all__ = ['Response']
+__all__ = ["Response"]
 
 
 ERRORS = {
-    ValueError: lambda error: (', '.join(error.args), 400),
-    NotImplementedError:
-        lambda error: ('Action is not implemented on this platform.', 501),
+    ValueError: lambda error: (", ".join(error.args), 400),
+    NotImplementedError: lambda error: (
+        "Action is not implemented on this platform.",
+        501,
+    ),
     CalledProcessError: lambda error: (str(error), 500),
     CalledProcessErrors: lambda error: (str(error), 500),
-    UnderAdministration:
-        lambda error: ('The system is currently under administration.', 503),
-    PackageManagerActive:
-        lambda error: ('The package manager is currently running.', 503)
+    UnderAdministration: lambda error: (
+        "The system is currently under administration.",
+        503,
+    ),
+    PackageManagerActive: lambda error: (
+        "The package manager is currently running.",
+        503,
+    ),
 }
 
 
@@ -30,7 +36,7 @@ class Response:
     """Represents response data with error handling capability."""
 
     payload: Payload = None
-    content_type: str = 'application/json'
+    content_type: str = "application/json"
     status_code: int = 200
 
     def __enter__(self):
@@ -57,7 +63,7 @@ class Response:
     def message(self):
         """Returns the JSON message if set."""
         try:
-            return self.payload.get('message')
+            return self.payload.get("message")
         except AttributeError:
             return None
 
@@ -66,5 +72,5 @@ class Response:
         """Sets the payload to a JSON message
         and the content type to JSON.
         """
-        self.payload = {'message': message}
-        self.content_type = 'application/json'
+        self.payload = {"message": message}
+        self.content_type = "application/json"

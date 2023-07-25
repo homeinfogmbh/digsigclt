@@ -12,10 +12,10 @@ from digsigclt.server import spawn
 from digsigclt.types import Socket
 
 
-__all__ = ['main']
+__all__ = ["main"]
 
 
-DESCRIPTION = 'HOMEINFO cross-platform digital signage client.'
+DESCRIPTION = "HOMEINFO cross-platform digital signage client."
 
 
 def get_args() -> Namespace:
@@ -23,22 +23,33 @@ def get_args() -> Namespace:
 
     parser = ArgumentParser(description=DESCRIPTION)
     parser.add_argument(
-        '-a', '--address', metavar='address', type=ip_address,
-        help='IP address to listen on'
+        "-a",
+        "--address",
+        metavar="address",
+        type=ip_address,
+        help="IP address to listen on",
     )
     parser.add_argument(
-        '-p', '--port', type=int, default=8000, metavar='port',
-        help='port to listen on'
+        "-p", "--port", type=int, default=8000, metavar="port", help="port to listen on"
     )
     parser.add_argument(
-        '-d', '--directory', type=Path, metavar='dir', default=Path.cwd(),
-        help='sets the target directory'
+        "-d",
+        "--directory",
+        type=Path,
+        metavar="dir",
+        default=Path.cwd(),
+        help="sets the target directory",
     )
     parser.add_argument(
-        '-c', '--chunk-size', type=int, default=CHUNK_SIZE, metavar='bytes',
-        help='chunk size to use on file operations')
+        "-c",
+        "--chunk-size",
+        type=int,
+        default=CHUNK_SIZE,
+        metavar="bytes",
+        help="chunk size to use on file operations",
+    )
     parser.add_argument(
-        '-v', '--verbose', action='store_true', help='turn on verbose logging'
+        "-v", "--verbose", action="store_true", help="turn on verbose logging"
     )
     return parser.parse_args()
 
@@ -53,13 +64,11 @@ def main() -> int:
     try:
         address = discover_address()
     except NoAddressFound:
-        LOGGER.critical('No private network address found.')
+        LOGGER.critical("No private network address found.")
         return 2
 
     if args.directory.is_dir():
-        return spawn(
-            Socket(address, args.port), args.directory, args.chunk_size
-        )
+        return spawn(Socket(address, args.port), args.directory, args.chunk_size)
 
     LOGGER.critical('Target directory "%s" does not exist.', args.directory)
     return 3

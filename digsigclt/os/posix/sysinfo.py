@@ -15,26 +15,24 @@ from digsigclt.os.posix.smartctl import device_states
 from digsigclt.os.posix.uptime import uptime
 
 
-__all__ = ['sysinfo']
+__all__ = ["sysinfo"]
 
 
 def sysinfo() -> dict[str, Any]:
     """Return miscellaneous system information."""
 
     return {
-        'application': status().to_json(),
-        'baytrail': is_baytrail(),
-        'efi': {
-            'mounted': efi_mounted_as_boot()
-        },
-        'cmdline': dict(cmdline()),
-        'cpuinfo': list(cpuinfo()),
-        'df': [item.to_json() for item in df(local=True, posix=True)],
-        'meminfo': dict(meminfo()),
-        'netstats': netstats(),
-        'presentation': read_presentation(),
-        'root_ro': root_mounted_ro(),
-        'sensors': sensors(),
-        'smartctl': device_states(),
-        'uptime': uptime()
+        "application": status().to_json(),
+        "baytrail": is_baytrail(),
+        "efi": {"mounted": efi_mounted_as_boot()},
+        "cmdline": dict(cmdline()),
+        "cpuinfo": list(cpuinfo()),
+        "df": [item.to_json() for item in df(local=True, posix=True)],
+        "meminfo": dict(meminfo()),
+        "netstats": netstats(),
+        "presentation": read_presentation(),
+        "root_ro": root_mounted_ro(),
+        "sensors": sensors(),
+        "smartctl": device_states(),
+        "uptime": uptime(),
     }

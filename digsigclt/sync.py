@@ -12,10 +12,10 @@ from digsigclt.exceptions import ManifestError
 from digsigclt.types import Manifest
 
 
-__all__ = ['gen_manifest', 'update']
+__all__ = ["gen_manifest", "update"]
 
 
-MANIFEST = 'manifest.json'
+MANIFEST = "manifest.json"
 
 
 def get_files(directory: Path, *, basedir: bool = True) -> Iterable[Path]:
@@ -24,8 +24,8 @@ def get_files(directory: Path, *, basedir: bool = True) -> Iterable[Path]:
     """
 
     for inode in directory.iterdir():
-        if basedir and inode.stem.startswith('.'):
-            continue    # Ignore dotfiles in the base directory.
+        if basedir and inode.stem.startswith("."):
+            continue  # Ignore dotfiles in the base directory.
 
         if inode.is_dir():
             yield from get_files(inode, basedir=False)
@@ -44,8 +44,8 @@ def get_orphans(directory: Path, manifest: set[Path]) -> Iterable[Path]:
 def copy_file(src: Path, dst: Path, *, chunk_size: int = CHUNK_SIZE):
     """Copies a file from src to dst."""
 
-    with src.open('rb') as src_file, dst.open('wb') as dst_file:
-        while (chunk := src_file.read(chunk_size)) != b'':
+    with src.open("rb") as src_file, dst.open("wb") as dst_file:
+        while (chunk := src_file.read(chunk_size)) != b"":
             dst_file.write(chunk)
 
 
@@ -57,7 +57,7 @@ def copy_subfile(src: Path, dst: Path, *, chunk_size: int = CHUNK_SIZE):
     try:
         copy_file(src, dst, chunk_size=chunk_size)
     except PermissionError:
-        LOGGER.error('Could not override file: %s', dst)
+        LOGGER.error("Could not override file: %s", dst)
 
 
 def copy_subdir(src: Path, dst: Path, *, chunk_size: int = CHUNK_SIZE):
@@ -67,7 +67,7 @@ def copy_subdir(src: Path, dst: Path, *, chunk_size: int = CHUNK_SIZE):
         try:
             dst.unlink()
         except PermissionError:
-            LOGGER.error('Could not remove file: %s', dst)
+            LOGGER.error("Could not remove file: %s", dst)
             return
 
     if not dst.is_dir():
@@ -81,7 +81,7 @@ def copy_directory(src: Path, dst: Path, *, chunk_size: int = CHUNK_SIZE):
     into the destination directory dst, overwriting all files.
     """
 
-    LOGGER.debug('%s -> %s', src, dst)
+    LOGGER.debug("%s -> %s", src, dst)
 
     for src_path in src.iterdir():
         relpath = src_path.relative_to(src)
@@ -92,7 +92,7 @@ def copy_directory(src: Path, dst: Path, *, chunk_size: int = CHUNK_SIZE):
         elif src_path.is_dir():
             copy_subdir(src_path, dst_path, chunk_size=chunk_size)
         else:
-            LOGGER.warning('Skipping unknown file: %s', src_path)
+            LOGGER.warning("Skipping unknown file: %s", src_path)
 
 
 def strip_files(directory: Path, manifest: set[Path]):
@@ -101,22 +101,22 @@ def strip_files(directory: Path, manifest: set[Path]):
     """
 
     for path in get_orphans(directory, manifest):
-        LOGGER.debug('Removing obsolete file: %s', path)
+        LOGGER.debug("Removing obsolete file: %s", path)
 
         try:
             path.unlink()
         except FileNotFoundError:
-            LOGGER.warning('File vanished: %s', path)
+            LOGGER.warning("File vanished: %s", path)
         except PermissionError:
-            LOGGER.error('Could not delete file: %s', path)
+            LOGGER.error("Could not delete file: %s", path)
 
 
 def strip_tree(directory: Path, *, basedir: bool = True):
     """Remove all empty directory subtrees."""
 
     for inode in directory.iterdir():
-        if basedir and inode.stem.startswith('.'):
-            continue    # Do not remove dotfiles in the base directory.
+        if basedir and inode.stem.startswith("."):
+            continue  # Do not remove dotfiles in the base directory.
 
         if inode.is_dir():
             strip_tree(inode, basedir=False)
@@ -127,33 +127,33 @@ def strip_tree(directory: Path, *, basedir: bool = True):
     try:
         directory.rmdir()
     except OSError:
-        LOGGER.warning('Could not remove directory: %s', directory)
+        LOGGER.warning("Could not remove directory: %s", directory)
     else:
-        LOGGER.debug('Removed empty directory: %s', directory)
+        LOGGER.debug("Removed empty directory: %s", directory)
 
 
 def load_manifest(directory: Path) -> set[Path]:
     """Read the manifest from the respective directory."""
 
     path = directory / MANIFEST
-    LOGGER.debug('Reading manifest from: %s', path)
+    LOGGER.debug("Reading manifest from: %s", path)
 
     try:
-        with path.open('r') as file:
+        with path.open("r") as file:
             text = file.read()
     except FileNotFoundError:
-        LOGGER.error('Manifest not found: %s', path)
+        LOGGER.error("Manifest not found: %s", path)
         raise ManifestError() from None
 
     try:
         manifest = loads(text)
     except ValueError:
-        LOGGER.error('Manifest is not valid JSON: %s', path)
+        LOGGER.error("Manifest is not valid JSON: %s", path)
         LOGGER.debug(text)
         raise ManifestError() from None
 
     if not isinstance(manifest, list):
-        LOGGER.error('Manifest is not a list: %s', path)
+        LOGGER.error("Manifest is not a list: %s", path)
         LOGGER.debug(type(manifest))
         LOGGER.debug(manifest)
         raise ManifestError()
@@ -172,12 +172,12 @@ def gen_manifest(directory: Path, *, chunk_size: int = CHUNK_SIZE) -> Manifest:
     for filename in get_files(directory):
         sha256sum = sha256()
 
-        with filename.open('rb') as file:
-            while (chunk := file.read(chunk_size)) != b'':
+        with filename.open("rb") as file:
+            while (chunk := file.read(chunk_size)) != b"":
                 sha256sum.update(chunk)
 
         sha256sum = sha256sum.hexdigest()
-        LOGGER.debug('%s  %s', sha256sum, filename)
+        LOGGER.debug("%s  %s", sha256sum, filename)
         relpath = filename.relative_to(directory)
         yield relpath.parts, sha256sum
 
@@ -188,9 +188,9 @@ def update(file: IO, directory: Path, *, chunk_size: int = CHUNK_SIZE) -> bool:
     """
 
     with TemporaryDirectory() as temp_dir:
-        LOGGER.debug('Extracting archive to: %s', temp_dir := Path(temp_dir))
+        LOGGER.debug("Extracting archive to: %s", temp_dir := Path(temp_dir))
 
-        with tar_open(mode='r:xz', fileobj=file, bufsize=chunk_size) as tar:
+        with tar_open(mode="r:xz", fileobj=file, bufsize=chunk_size) as tar:
             try:
                 tar.extractall(path=temp_dir)
             except EOFError as eof_error:

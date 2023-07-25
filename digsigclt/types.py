@@ -9,14 +9,14 @@ from typing import Iterator, NamedTuple, Sequence
 
 
 __all__ = [
-    'ApplicationMode',
-    'Command',
-    'IPAddress',
-    'Manifest',
-    'Payload',
-    'ResponseContent',
-    'Screenshot',
-    'Socket'
+    "ApplicationMode",
+    "Command",
+    "IPAddress",
+    "Manifest",
+    "Payload",
+    "ResponseContent",
+    "Screenshot",
+    "Socket",
 ]
 
 
@@ -50,20 +50,14 @@ class ResponseContent(NamedTuple):
 
     @classmethod
     def from_payload(
-            cls,
-            payload: Payload,
-            *,
-            content_type: str | None = None
+        cls, payload: Payload, *, content_type: str | None = None
     ) -> ResponseContent:
         """Create response content from the given payload and content type."""
         if payload is None or isinstance(payload, (dict, list)):
-            return cls(
-                dumps(payload).encode(),
-                content_type or 'application/json'
-            )
+            return cls(dumps(payload).encode(), content_type or "application/json")
 
         if isinstance(payload, str):
-            content_type = content_type or 'text/plain'
+            content_type = content_type or "text/plain"
 
         with suppress(AttributeError):
             payload = payload.encode()

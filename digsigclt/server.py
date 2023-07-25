@@ -10,18 +10,18 @@ from digsigclt.request_handler import HTTPRequestHandler
 from digsigclt.types import IPAddress, Socket
 
 
-__all__ = ['spawn']
+__all__ = ["spawn"]
 
 
 class ImprovedHTTPServer(HTTPServer):
     """A better HTTP server."""
 
     def __init__(
-            self,
-            address: IPAddress,
-            port: int,
-            request_handler: type,
-            bind_and_activate: bool = True
+        self,
+        address: IPAddress,
+        port: int,
+        request_handler: type,
+        bind_and_activate: bool = True,
     ):
         """Initialize the HTTP server with an IP address,
         port and request handler.

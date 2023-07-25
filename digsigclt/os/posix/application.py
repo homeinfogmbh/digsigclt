@@ -11,10 +11,10 @@ from digsigclt.os.posix.pacman import package_version
 from digsigclt.types import ApplicationMode, Command
 
 
-__all__ = ['Application', 'get_preferred_application', 'set_mode', 'status']
+__all__ = ["Application", "get_preferred_application", "set_mode", "status"]
 
 
-SERVICES_DIR = Path('/usr/lib/systemd/system')
+SERVICES_DIR = Path("/usr/lib/systemd/system")
 
 
 class Application(NamedTuple):
@@ -36,11 +36,11 @@ class Application(NamedTuple):
     def to_json(self) -> dict[str, str]:
         """Return a JSON-ish dict."""
         return {
-            'name': self.name,
-            'mode': self.mode.name,
-            'unit': self.unit,
-            'package': self.package,
-            'version': self.version
+            "name": self.name,
+            "mode": self.mode.name,
+            "unit": self.unit,
+            "package": self.package,
+            "version": self.version,
         }
 
 
@@ -48,28 +48,20 @@ class Applications(Application, Enum):
     """Available applications."""
 
     HTML = Application(
-        'html',
-        ApplicationMode.PRODUCTIVE,
-        'html5ds.service',
-        'application-html'
+        "html", ApplicationMode.PRODUCTIVE, "html5ds.service", "application-html"
     )
     AIR = Application(
-        'air',
-        ApplicationMode.PRODUCTIVE,
-        'application.service',
-        'application-air'
+        "air", ApplicationMode.PRODUCTIVE, "application.service", "application-air"
     )
     NOT_CONFIGURED_WARNING = Application(
-        'not configured',
-        ApplicationMode.NOT_CONFIGURED,
-        'unconfigured-warning.service'
+        "not configured", ApplicationMode.NOT_CONFIGURED, "unconfigured-warning.service"
     )
     INSTALLATION_INSTRUCTIONS = Application(
-        'installation instructions',
+        "installation instructions",
         ApplicationMode.INSTALLATION_INSTRUCTIONS,
-        'installation-instructions.service'
+        "installation-instructions.service",
     )
-    OFF = Application('off', ApplicationMode.OFF)
+    OFF = Application("off", ApplicationMode.OFF)
 
 
 def get_preferred_application() -> Application:
@@ -80,7 +72,7 @@ def get_preferred_application() -> Application:
             if SERVICES_DIR.joinpath(application.unit).is_file():
                 return application
 
-    raise ValueError('No productive application installed.')
+    raise ValueError("No productive application installed.")
 
 
 def get_application(mode: ApplicationMode) -> Application:
@@ -98,7 +90,7 @@ def get_application(mode: ApplicationMode) -> Application:
     if mode is ApplicationMode.OFF:
         return Applications.OFF
 
-    raise ValueError('Invalid mode:', mode)
+    raise ValueError("Invalid mode:", mode)
 
 
 @commands()
@@ -107,13 +99,10 @@ def set_mode(mode: str) -> int:
 
     for application in Applications:
         if unit := application.unit:
-            yield Command(
-                sudo(systemctl('disable', '--now', unit)),
-                exit_ok={1}
-            )
+            yield Command(sudo(systemctl("disable", "--now", unit)), exit_ok={1})
 
     if unit := get_application(ApplicationMode[mode.upper()]).unit:
-        yield Command(sudo(systemctl('enable', '--now', unit)))
+        yield Command(sudo(systemctl("enable", "--now", unit)))
 
 
 def status() -> Application:
@@ -121,9 +110,9 @@ def status() -> Application:
 
     for application in Applications:
         if (
-                application.unit
-                and is_enabled(application.unit)
-                and is_active(application.unit)
+            application.unit
+            and is_enabled(application.unit)
+            and is_active(application.unit)
         ):
             return application
 

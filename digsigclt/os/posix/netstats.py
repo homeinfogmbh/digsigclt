@@ -3,19 +3,16 @@
 from pathlib import Path
 
 
-__all__ = ['netstats']
+__all__ = ["netstats"]
 
 
-BASEDIR = Path('/sys/class/net')
+BASEDIR = Path("/sys/class/net")
 
 
 def netstats() -> dict[str, dict[str, int]]:
     """Return network statistics for each interface."""
 
-    return {
-        path.name: dict(interface_stats(path))
-        for path in BASEDIR.iterdir()
-    }
+    return {path.name: dict(interface_stats(path)) for path in BASEDIR.iterdir()}
 
 
 def interface_stats(path: Path) -> dict[str, int]:
@@ -23,7 +20,7 @@ def interface_stats(path: Path) -> dict[str, int]:
 
     return {
         file.name: read_file(path / file)
-        for file in path.joinpath('statistics').iterdir()
+        for file in path.joinpath("statistics").iterdir()
         if file.is_file()
     }
 
@@ -33,5 +30,5 @@ def read_file(path: Path) -> int:
     iff applicable, else file content as str.
     """
 
-    with path.open('r', encoding='utf-8') as file:
+    with path.open("r", encoding="utf-8") as file:
         return int(file.read())

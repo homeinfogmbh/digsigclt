@@ -9,7 +9,7 @@ from digsigclt.os.posix.common import logged_in_users
 from digsigclt.os.posix.common import sudo
 
 
-__all__ = ['reboot']
+__all__ = ["reboot"]
 
 
 @command()
@@ -22,4 +22,4 @@ def reboot() -> list[str]:
     if PACMAN_LOCKFILE.exists() or pacman.is_running():
         raise PackageManagerActive()
 
-    return sudo('/usr/bin/systemctl', 'reboot')
+    return sudo("/usr/bin/systemctl", "reboot")

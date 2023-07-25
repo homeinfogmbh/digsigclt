@@ -3,10 +3,10 @@
 from digsigclt.os.common import command
 
 
-__all__ = ['beep']
+__all__ = ["beep"]
 
 
-BEEP = '/usr/bin/beep'
+BEEP = "/usr/bin/beep"
 
 
 @command()

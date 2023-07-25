@@ -5,16 +5,16 @@ from subprocess import check_output
 from typing import NamedTuple
 
 
-__all__ = ['uptime']
+__all__ = ["uptime"]
 
 
-UPTIME = '/usr/bin/uptime'
+UPTIME = "/usr/bin/uptime"
 
 
 def parse_float(string: str) -> float:
     """Parse a float from a string."""
 
-    return float(string.replace(',', '.'))
+    return float(string.replace(",", "."))
 
 
 def parse_timedelta(days: str | None, time_: str) -> timedelta:
@@ -25,11 +25,11 @@ def parse_timedelta(days: str | None, time_: str) -> timedelta:
     else:
         days = 0
 
-    if time_.endswith('min'):
+    if time_.endswith("min"):
         hours = 0
         minutes, _ = time_.split()
     else:
-        hours, minutes = time_.split(':')
+        hours, minutes = time_.split(":")
 
     return timedelta(days=int(days), hours=int(hours), minutes=int(minutes))
 
@@ -44,16 +44,12 @@ class Load(NamedTuple):
     @classmethod
     def from_string(cls, string: str):
         """Parses load from a substring of uptime."""
-        _, load = string.split(': ')
-        return cls(*map(parse_float, load.split(', ')))
+        _, load = string.split(": ")
+        return cls(*map(parse_float, load.split(", ")))
 
     def to_json(self) -> dict:
         """Returns a JSON-ish dict."""
-        return {
-            'past1': self.past1,
-            'past5': self.past5,
-            'past15': self.past15
-        }
+        return {"past1": self.past1, "past5": self.past5, "past15": self.past15}
 
 
 class Uptime(NamedTuple):
@@ -67,17 +63,17 @@ class Uptime(NamedTuple):
     @classmethod
     def from_string(cls, string: str):
         """Returns the uptime information from a string."""
-        uptime_, users, load = string.split(',', maxsplit=2)
+        uptime_, users, load = string.split(",", maxsplit=2)
 
-        if users.endswith('user') or users.endswith('users'):
+        if users.endswith("user") or users.endswith("users"):
             time_ = None
         else:
-            uptime_, time_, users, load = string.split(',', maxsplit=3)
+            uptime_, time_, users, load = string.split(",", maxsplit=3)
             time_ = time_.strip()
 
         uptime_, users, load = uptime_.strip(), users.strip(), load.strip()
-        timestamp, secondary = uptime_.split(' up ')
-        timestamp = datetime.strptime(timestamp, '%H:%M:%S').time()
+        timestamp, secondary = uptime_.split(" up ")
+        timestamp = datetime.strptime(timestamp, "%H:%M:%S").time()
 
         if time_ is None:
             uptime_ = parse_timedelta(None, secondary)
@@ -95,10 +91,10 @@ class Uptime(NamedTuple):
     def to_json(self) -> dict:
         """Returns a JSON-ish dict."""
         return {
-            'timestamp': self.timestamp.isoformat(),
-            'uptime': self.uptime.total_seconds(),
-            'users': self.users,
-            'load': self.load.to_json()
+            "timestamp": self.timestamp.isoformat(),
+            "uptime": self.uptime.total_seconds(),
+            "users": self.users,
+            "load": self.load.to_json(),
         }
 
 

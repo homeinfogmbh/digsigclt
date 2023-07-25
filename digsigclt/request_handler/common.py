@@ -7,7 +7,7 @@ from digsigclt.lock import Lock, Locked
 from digsigclt.sync import gen_manifest
 
 
-__all__ = ['LOCK', 'get_manifest']
+__all__ = ["LOCK", "get_manifest"]
 
 
 LOCK = Lock()

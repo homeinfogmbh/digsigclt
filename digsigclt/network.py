@@ -9,11 +9,11 @@ from digsigclt.exceptions import NoAddressFound
 from digsigclt.types import IPAddress
 
 
-__all__ = ['discover_address']
+__all__ = ["discover_address"]
 
 
-OPENVPN = IPv4Network('10.8.0.0/16')
-WIREGUARD = IPv6Network('fd56:1dda:8794:cb90::/64')
+OPENVPN = IPv4Network("10.8.0.0/16")
+WIREGUARD = IPv6Network("fd56:1dda:8794:cb90::/64")
 NETWORKS = [OPENVPN, WIREGUARD]
 
 
@@ -23,10 +23,10 @@ def get_addresses() -> Iterator[IPAddress]:
     for interface in interfaces():
         if addresses := ifaddresses(interface):
             for ipv4addr in addresses.get(AF_INET, []):
-                yield ip_address(ipv4addr['addr'])
+                yield ip_address(ipv4addr["addr"])
 
             for ipv6addr in addresses.get(AF_INET6, []):
-                yield ip_address(ipv6addr['addr'])
+                yield ip_address(ipv6addr["addr"])
 
 
 def discover_address() -> IPAddress:

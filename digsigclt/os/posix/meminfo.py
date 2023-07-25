@@ -4,19 +4,19 @@ from pathlib import Path
 from typing import Iterator
 
 
-__all__ = ['meminfo']
+__all__ = ["meminfo"]
 
 
-MEMINFO = Path('/proc/meminfo')
+MEMINFO = Path("/proc/meminfo")
 
 
 def meminfo() -> Iterator[tuple[str, int | dict[str, str | int]]]:
     """Return memory information."""
 
-    with MEMINFO.open('r', encoding='ascii') as file:
+    with MEMINFO.open("r", encoding="ascii") as file:
         for line in file:
             if line := line.strip():
-                key, value = line.split(':')
+                key, value = line.split(":")
                 value = value.strip()
 
                 try:
@@ -24,4 +24,4 @@ def meminfo() -> Iterator[tuple[str, int | dict[str, str | int]]]:
                 except ValueError:
                     yield key, int(value)
                 else:
-                    yield key, {'value': int(value), 'unit': unit}
+                    yield key, {"value": int(value), "unit": unit}
