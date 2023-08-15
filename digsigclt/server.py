@@ -29,8 +29,7 @@ class ImprovedHTTPServer(HTTPServer):
         if isinstance(address, IPv6Address):
             self.address_family = AF_INET6
 
-        socket = (str(address), port)
-        super().__init__(socket, request_handler, bind_and_activate)
+        super().__init__((str(address), port), request_handler, bind_and_activate)
 
 
 def spawn(socket: Socket, directory: Path, chunk_size: int) -> int:
