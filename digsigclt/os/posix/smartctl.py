@@ -1,7 +1,7 @@
 """Disk monitoring using SMART tools."""
 
 from os import linesep
-from subprocess import check_output
+from subprocess import CalledProcessError, check_output
 from typing import Iterator
 
 from digsigclt.os.posix.common import sudo
@@ -23,7 +23,10 @@ def smartctl(*args: str) -> list[str]:
 def get_devices() -> Iterator[str]:
     """Yield SMART capable devices."""
 
-    text = check_output(smartctl("--scan-open"), text=True)
+    try:
+        text = check_output(smartctl("--scan-open"), text=True)
+    except CalledProcessError:
+        return
 
     for line in text.split(linesep):
         if line := line.strip():
@@ -34,7 +37,10 @@ def get_devices() -> Iterator[str]:
 def check_device(device: str) -> str:
     """Check the SMART status of the given device."""
 
-    text = check_output(smartctl("-H", device), text=True)
+    try:
+        text = check_output(smartctl("-H", device), text=True)
+    except CalledProcessError:
+        return "UNKNOWN"
 
     for line in text.split(linesep):
         if (line := line.strip()).startswith(SEARCH_STRING):
